@@ -94,6 +94,7 @@ export interface EvaluationCriterion {
 
 export type NavPage =
   | 'dashboard'
+  | 'companies'
   | 'users'
   | 'students'
   | 'mentors'

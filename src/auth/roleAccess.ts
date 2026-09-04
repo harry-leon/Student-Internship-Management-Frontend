@@ -4,6 +4,7 @@ export const ROLE_PAGES: Record<Role, NavPage[]> = {
   Admin: [
     'landing',
     'dashboard',
+    'companies',
     'users',
     'students',
     'mentors',
@@ -17,6 +18,7 @@ export const ROLE_PAGES: Record<Role, NavPage[]> = {
   Mentor: [
     'landing',
     'dashboard',
+    'companies',
     'students',
     'internship-phases',
     'assignments',
@@ -28,6 +30,7 @@ export const ROLE_PAGES: Record<Role, NavPage[]> = {
   Student: [
     'landing',
     'dashboard',
+    'companies',
     'mentors',
     'internship-phases',
     'assignments',

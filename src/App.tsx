@@ -25,6 +25,7 @@ import { EvaluationCriteriaView } from './views/EvaluationCriteriaView';
 import { AssessmentRoundsView } from './views/AssessmentRoundsView';
 import { AssessmentResultsView } from './views/AssessmentResultsView';
 import { UsersView } from './views/UsersView';
+import { CompaniesView } from './views/CompaniesView';
 import { ProfileView } from './views/ProfileView';
 import { LoginView } from './views/LoginView';
 import { PublicLandingView } from './views/PublicLandingView';
@@ -253,6 +254,7 @@ function AppRoutes() {
                     onSelectAssignment={setSelectedAssignment}
                   />
                 } />
+                <Route path="/admin/companies" element={<CompaniesView currentRole={activeRole} />} />
                 <Route path="/admin/assignments" element={
                   <AssignmentsView
                     currentRole={activeRole}

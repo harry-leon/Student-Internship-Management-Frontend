@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { NavPage, Role } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { NotificationBell } from './NotificationBell';
 
 interface HeaderProps {
   currentRole: Role;
@@ -114,6 +115,8 @@ export const Header: React.FC<HeaderProps> = ({
             ⌘K
           </kbd>
         </button>
+
+        <NotificationBell />
 
         <div className="relative" ref={dropdownRef}>
           <div

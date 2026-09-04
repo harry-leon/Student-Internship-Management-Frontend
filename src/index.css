@@ -1,0 +1,88 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap');
+@import "tailwindcss";
+
+@layer base {
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Be Vietnam Pro', sans-serif;
+    background: #08111c;
+    color: #f4efe4;
+  }
+
+  body {
+    min-height: 100vh;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+}
+
+:root {
+  --landing-ink: #08111c;
+  --landing-paper: #f4efe4;
+  --landing-accent: #f4b860;
+  --landing-accent-soft: #ffd089;
+}
+
+.font-display {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.landing-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent 92%);
+}
+
+.landing-radial {
+  pointer-events: none;
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(90px);
+  opacity: 0.7;
+}
+
+.landing-radial-left {
+  top: 80px;
+  left: -140px;
+  width: 420px;
+  height: 420px;
+  background: rgba(244, 184, 96, 0.16);
+}
+
+.landing-radial-right {
+  top: 220px;
+  right: -180px;
+  width: 480px;
+  height: 480px;
+  background: rgba(69, 169, 255, 0.14);
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

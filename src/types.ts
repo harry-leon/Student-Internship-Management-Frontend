@@ -92,10 +92,40 @@ export interface EvaluationCriterion {
   description: string;
 }
 
+export type WeeklyReportStatus = 'DRAFT' | 'SUBMITTED' | 'REVIEWED' | 'NEEDS_REVISION' | 'LATE';
+
+export interface WeeklyReport {
+  reportId: number;
+  assignmentId: number;
+  studentId: number;
+  studentName?: string;
+  studentCode?: string;
+  mentorId?: number;
+  mentorName?: string;
+  phaseId?: number;
+  phaseName?: string;
+  weekNumber: number;
+  reportTitle?: string;
+  completedTasks: string;
+  difficulties?: string;
+  nextPlan?: string;
+  workingHours?: number;
+  attachmentUrl?: string;
+  status: WeeklyReportStatus;
+  submittedAt?: string;
+  reviewedById?: number;
+  reviewedByName?: string;
+  reviewedAt?: string;
+  mentorComment?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export type NavPage =
   | 'dashboard'
   | 'companies'
   | 'applications'
+  | 'weekly-reports'
   | 'users'
   | 'students'
   | 'mentors'

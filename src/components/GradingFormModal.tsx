@@ -59,12 +59,13 @@ export const GradingFormModal: React.FC<GradingFormModalProps> = ({
   };
 
   // Calculate realtime scores
-  const calculatedTotal = Object.values(scores).reduce((acc, s) => acc + (s || 0), 0);
-  const calculatedWeighted = form?.criteria.reduce((acc, c) => {
+  const scoreValues: number[] = Object.values(scores).map((v) => Number(v) || 0);
+  const calculatedTotal = scoreValues.reduce((acc: number, s: number) => acc + s, 0);
+  const calculatedWeighted = (form?.criteria || []).reduce((acc: number, c) => {
     const sc = scores[c.criterionId] || 0;
     const w = c.weight || 0;
     return acc + sc * (w / 100);
-  }, 0) || 0;
+  }, 0);
 
   const handleScoreChange = (criterionId: number, val: number, maxScore: number) => {
     const clamped = Math.max(0, Math.min(val, maxScore));

@@ -13,6 +13,9 @@ interface HeaderProps {
 
 const PAGE_TITLES: Record<NavPage, { parent: string; current: string }> = {
   dashboard: { parent: 'Dashboard', current: 'Overview' },
+  companies: { parent: 'Internship', current: 'Companies' },
+  applications: { parent: 'Internship', current: 'Applications' },
+  'weekly-reports': { parent: 'Internship', current: 'Weekly Reports' },
   users: { parent: 'People', current: 'Users' },
   students: { parent: 'People', current: 'Students' },
   mentors: { parent: 'People', current: 'Mentors' },

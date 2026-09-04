@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Role } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { authService } from '../api/authService';
 
 interface ProfileViewProps {
   currentRole: Role;

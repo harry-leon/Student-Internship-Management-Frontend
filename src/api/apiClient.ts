@@ -1,4 +1,4 @@
-export interface ApiResponse<T> {
+﻿export interface ApiResponse<T> {
   success: boolean;
   status_code?: number;
   message?: string;
@@ -12,6 +12,24 @@ export interface ApiError {
   error_code?: string;
   message: string;
   errors?: any;
+  timestamp?: string;
+}
+
+export class ApiClientError extends Error implements ApiError {
+  success = false;
+  status_code?: number;
+  error_code?: string;
+  errors?: any;
+  timestamp?: string;
+
+  constructor(error: ApiError) {
+    super(error.message);
+    this.name = 'ApiClientError';
+    this.status_code = error.status_code;
+    this.error_code = error.error_code;
+    this.errors = error.errors;
+    this.timestamp = error.timestamp;
+  }
 }
 
 const TOKEN_KEY = 'study_mgmt_token';
@@ -30,31 +48,72 @@ export const removeStoredToken = (): void => {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
-async function handleResponse<T>(response: Response): Promise<T> {
-  if (response.status === 401) {
-    removeStoredToken();
-    window.dispatchEvent(new Event('auth:unauthorized'));
+const isLoginEndpoint = (endpoint: string): boolean => endpoint.includes('/api/auth/login');
+
+function toUserMessage(status: number, errorCode?: string, backendMessage?: string): string {
+  if (status === 401) {
+    if (errorCode === 'BAD_CREDENTIALS') {
+      return 'Tên đăng nhập hoặc mật khẩu không đúng.';
+    }
+    return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
   }
 
-  let json: any;
+  if (status === 403) {
+    return 'Bạn không có quyền thực hiện thao tác này.';
+  }
+
+  if (status === 404) {
+    return backendMessage || 'Không tìm thấy dữ liệu.';
+  }
+
+  if (status === 502 || status === 503 || status === 504) {
+    return 'Hệ thống tạm thời không khả dụng. Vui lòng thử lại sau.';
+  }
+
+  if (status >= 500) {
+    return 'Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.';
+  }
+
+  return backendMessage || `Lỗi từ hệ thống (${status})`;
+}
+
+async function handleResponse<T>(response: Response, endpoint: string): Promise<T> {
+  let json: any = null;
   try {
     json = await response.json();
   } catch (err) {
     if (!response.ok) {
-      throw new Error(`HTTP Error ${response.status}: ${response.statusText}`);
+      throw new ApiClientError({
+        success: false,
+        status_code: response.status,
+        message: toUserMessage(response.status, undefined, response.statusText),
+      });
     }
     return {} as T;
   }
 
-  if (!response.ok || (json && json.success === false)) {
-    const errorMsg = json?.message || `Lỗi từ hệ thống (${response.status})`;
-    throw new Error(errorMsg);
+  if (response.status === 401 && !isLoginEndpoint(endpoint)) {
+    removeStoredToken();
+    window.dispatchEvent(new Event('auth:unauthorized'));
   }
 
-  // If response is wrapped in SuccessResponse (has 'data' property)
+  if (!response.ok || (json && json.success === false)) {
+    const statusCode = json?.status_code ?? response.status;
+    const errorCode = json?.error_code;
+    const message = toUserMessage(statusCode, errorCode, json?.message);
+
+    throw new ApiClientError({
+      success: false,
+      status_code: statusCode,
+      error_code: errorCode,
+      message,
+      errors: json?.errors,
+      timestamp: json?.timestamp,
+    });
+  }
+
   if (json && typeof json === 'object' && 'data' in json && 'success' in json) {
     const data = json.data;
-    // Unwrap Spring Data Pageable response wrapper { content: [...] }
     if (data && typeof data === 'object' && 'content' in data && Array.isArray(data.content)) {
       const arr = [...data.content] as any;
       arr._page = {
@@ -93,7 +152,7 @@ export async function apiFetch<T>(
     headers,
   });
 
-  return handleResponse<T>(response);
+  return handleResponse<T>(response, endpoint);
 }
 
 export const api = {

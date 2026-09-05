@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { InternshipPhase, Assignment, AssessmentRound } from '../../types';
+import { dashboardService } from '../../api/dashboardService';
 
 interface AdminDashboardProps {
   phase: InternshipPhase;
@@ -17,6 +18,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onOpenExportReport,
   onOpenQuickAction,
 }) => {
+  const [kpis, setKpis] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await dashboardService.getMyDashboard();
+        if (res && res.kpis) {
+          setKpis(res.kpis);
+        }
+      } catch {
+        // Ignore fallback
+      }
+    };
+    fetchStats();
+  }, []);
+
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Admin Action Header */}
@@ -61,23 +78,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
           <div className="text-xs font-medium text-slate-500 uppercase tracking-wider">Tổng Sinh Viên</div>
-          <div className="mt-2 text-2xl font-bold text-slate-900">{phase.totalStudents || 128}</div>
-          <div className="mt-1 text-[11px] text-emerald-600">100% Đã đăng ký</div>
+          <div className="mt-2 text-2xl font-bold text-slate-900">{kpis.totalStudents ?? phase.totalStudents ?? 0}</div>
+          <div className="mt-1 text-[11px] text-emerald-600">Đã đăng ký</div>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
           <div className="text-xs font-medium text-slate-500 uppercase tracking-wider">Giảng Viên Hướng Dẫn</div>
-          <div className="mt-2 text-2xl font-bold text-[#004ac6]">{phase.totalMentors || 14}</div>
-          <div className="mt-1 text-[11px] text-slate-500">Sức chứa trung bình: 9.1 std/mentor</div>
+          <div className="mt-2 text-2xl font-bold text-[#004ac6]">{kpis.totalMentors ?? phase.totalMentors ?? 0}</div>
+          <div className="mt-1 text-[11px] text-slate-500">Giảng viên hệ thống</div>
         </div>
         <div className="rounded-2xl border border-amber-200 bg-amber-50/40 p-4 shadow-xs">
           <div className="text-xs font-medium text-amber-800 uppercase tracking-wider">Đơn Đăng Ký Chờ Phê Duyệt</div>
-          <div className="mt-2 text-2xl font-bold text-amber-900">5</div>
-          <div className="mt-1 text-[11px] text-amber-700">Cần duyệt trong hôm nay</div>
+          <div className="mt-2 text-2xl font-bold text-amber-900">{kpis.pendingApplications ?? 0}</div>
+          <div className="mt-1 text-[11px] text-amber-700">Trạng thái SUBMITTED</div>
         </div>
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-4 shadow-xs">
-          <div className="text-xs font-medium text-emerald-800 uppercase tracking-wider">Tiến Độ Phase Hiện Tại</div>
-          <div className="mt-2 text-2xl font-bold text-emerald-900">{phase.progressPercent || 65}%</div>
-          <div className="mt-1 text-[11px] text-emerald-700">Còn {phase.weeksRemaining || 4} tuần thực tập</div>
+          <div className="text-xs font-medium text-emerald-800 uppercase tracking-wider">Phân Công Đang Thực Hiện</div>
+          <div className="mt-2 text-2xl font-bold text-emerald-900">{kpis.totalAssignments ?? 0}</div>
+          <div className="mt-1 text-[11px] text-emerald-700">Tổng số assignment</div>
         </div>
       </div>
 

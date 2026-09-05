@@ -1,8 +1,24 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { dashboardService } from '../../api/dashboardService';
 
 export const MentorDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const [kpis, setKpis] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await dashboardService.getMyDashboard();
+        if (res && res.kpis) {
+          setKpis(res.kpis);
+        }
+      } catch {
+        // Ignore fallback
+      }
+    };
+    fetchStats();
+  }, []);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -41,23 +57,23 @@ export const MentorDashboard: React.FC = () => {
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
           <div className="text-xs font-medium text-slate-500 uppercase tracking-wider">Sinh Viên Phụ Trách</div>
-          <div className="mt-2 text-2xl font-bold text-slate-900">8 / 10</div>
-          <div className="mt-1 text-[11px] text-emerald-600">80% chỉ tiêu</div>
+          <div className="mt-2 text-2xl font-bold text-slate-900">{kpis.activeStudents ?? 0} sinh viên</div>
+          <div className="mt-1 text-[11px] text-emerald-600">Được phân công trực tiếp</div>
         </div>
         <div className="rounded-2xl border border-blue-200 bg-blue-50/50 p-4 shadow-xs">
           <div className="text-xs font-medium text-blue-800 uppercase tracking-wider">Báo Cáo Chờ Duyệt</div>
-          <div className="mt-2 text-2xl font-bold text-blue-900">3</div>
-          <div className="mt-1 text-[11px] text-blue-700">Tuần 2 & Tuần 3</div>
+          <div className="mt-2 text-2xl font-bold text-blue-900">{kpis.reportsToReview ?? 0}</div>
+          <div className="mt-1 text-[11px] text-blue-700">Trạng thái SUBMITTED</div>
         </div>
         <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4 shadow-xs">
-          <div className="text-xs font-medium text-amber-800 uppercase tracking-wider">Cần Chấm Điểm Rubric</div>
-          <div className="mt-2 text-2xl font-bold text-amber-900">2</div>
-          <div className="mt-1 text-[11px] text-amber-700">Đợt đánh giá 1</div>
+          <div className="text-xs font-medium text-amber-800 uppercase tracking-wider">Hàng Chờ Chấm Điểm</div>
+          <div className="mt-2 text-2xl font-bold text-amber-900">{kpis.gradingQueue ?? 0}</div>
+          <div className="mt-1 text-[11px] text-amber-700">Chấm điểm Rubric</div>
         </div>
-        <div className="rounded-2xl border border-rose-200 bg-rose-50/50 p-4 shadow-xs">
-          <div className="text-xs font-medium text-rose-800 uppercase tracking-wider">Sinh Viên Cảnh Báo Trễ</div>
-          <div className="mt-2 text-2xl font-bold text-rose-900">1</div>
-          <div className="mt-1 text-[11px] text-rose-700">Chưa nộp báo cáo Tuần 2</div>
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 shadow-xs">
+          <div className="text-xs font-medium text-emerald-800 uppercase tracking-wider">Khu Vực Phụ Trách</div>
+          <div className="mt-2 text-lg font-bold text-emerald-900">Hoạt Động</div>
+          <div className="mt-1 text-[11px] text-emerald-700">Đang hướng dẫn</div>
         </div>
       </div>
 

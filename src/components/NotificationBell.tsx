@@ -2,53 +2,19 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppNotification, notificationService } from '../api/notificationService';
 
-const mockNotifications: AppNotification[] = [
-  {
-    notificationId: 1,
-    recipientId: 1,
-    title: 'Báo Cáo Tuần Cần Review',
-    message: 'Sinh viên Nguyễn Văn A vừa nộp báo cáo Tuần 2.',
-    type: 'WEEKLY_REPORT_SUBMITTED',
-    targetType: 'WEEKLY_REPORT',
-    targetId: 2,
-    isRead: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 mins ago
-  },
-  {
-    notificationId: 2,
-    recipientId: 1,
-    title: 'Nhắc Nhở Hạn Nộp Báo Cáo',
-    message: 'Báo cáo Tuần 3 sắp đến hạn nộp vào 17:00 Chủ Nhật.',
-    type: 'WEEKLY_REPORT_DUE_SOON',
-    targetType: 'WEEKLY_REPORT',
-    targetId: 3,
-    isRead: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 120).toISOString(), // 2 hours ago
-  },
-  {
-    notificationId: 3,
-    recipientId: 1,
-    title: 'Đã Phê Duyệt Đơn Đăng Ký',
-    message: 'Đơn đăng ký thực tập tại FPT Software đã được chấp nhận.',
-    type: 'APPLICATION_APPROVED',
-    targetType: 'APPLICATION',
-    targetId: 101,
-    isRead: true,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-  },
-];
+
 
 export const NotificationBell: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState<AppNotification[]>(mockNotifications);
-  const [unreadCount, setUnreadCount] = useState<number>(2);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   const fetchNotifications = async () => {
     try {
       const data = await notificationService.getMyNotifications();
-      if (Array.isArray(data) && data.length > 0) {
+      if (Array.isArray(data)) {
         setNotifications(data);
       }
       const count = await notificationService.getUnreadCount();
@@ -56,7 +22,7 @@ export const NotificationBell: React.FC = () => {
         setUnreadCount(count);
       }
     } catch {
-      // Keep mock fallback on error
+      // Do not fallback to fake mock data
     }
   };
 

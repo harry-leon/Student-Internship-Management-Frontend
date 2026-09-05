@@ -6,75 +6,12 @@ interface WeeklyReportsViewProps {
   currentRole: Role;
 }
 
-const mockReports: WeeklyReport[] = [
-  {
-    reportId: 1,
-    assignmentId: 101,
-    studentId: 1,
-    studentName: 'Nguyen Van A',
-    studentCode: 'SE190001',
-    mentorId: 2,
-    mentorName: 'Dr. Le Thi B',
-    phaseId: 1,
-    phaseName: 'Spring 2026 Batch A',
-    weekNumber: 1,
-    reportTitle: 'Báo cáo Tuần 1: Khảo sát dự án & Setup môi trường',
-    completedTasks: '1. Nghiên cứu tài liệu hệ thống hiện tại\n2. Cài đặt môi trường Spring Boot & React\n3. Tham gia họp kickoff với mentor',
-    difficulties: 'Môi trường Docker gặp lỗi cấp quyền trên Windows',
-    nextPlan: '1. Xây dựng DDL database\n2. Viết API Authentication',
-    workingHours: 40,
-    status: 'REVIEWED',
-    submittedAt: '2026-01-10T17:00:00',
-    reviewedByName: 'Dr. Le Thi B',
-    reviewedAt: '2026-01-11T09:30:00',
-    mentorComment: 'Khởi đầu tốt. Cần chú ý tuân thủ coding standards của công ty.',
-  },
-  {
-    reportId: 2,
-    assignmentId: 101,
-    studentId: 1,
-    studentName: 'Nguyen Van A',
-    studentCode: 'SE190001',
-    mentorId: 2,
-    mentorName: 'Dr. Le Thi B',
-    phaseId: 1,
-    phaseName: 'Spring 2026 Batch A',
-    weekNumber: 2,
-    reportTitle: 'Báo cáo Tuần 2: Thiết kế DB & RESTful APIs',
-    completedTasks: '1. Hoàn thành ERD diagram\n2. Viết CRUD Company & Application API',
-    difficulties: 'Cần hướng dẫn thêm về Spring Security JWT filter',
-    nextPlan: '1. Hoàn thành Weekly Report Module\n2. Đã gửi MR review code',
-    workingHours: 38,
-    status: 'SUBMITTED',
-    submittedAt: '2026-01-17T18:15:00',
-  },
-  {
-    reportId: 3,
-    assignmentId: 102,
-    studentId: 2,
-    studentName: 'Tran Thi C',
-    studentCode: 'SE190002',
-    mentorId: 2,
-    mentorName: 'Dr. Le Thi B',
-    phaseId: 1,
-    phaseName: 'Spring 2026 Batch A',
-    weekNumber: 2,
-    reportTitle: 'Báo cáo Tuần 2: Tích hợp Frontend React',
-    completedTasks: '1. Thiết kế UI Dashboard\n2. Kết nối API Login',
-    difficulties: 'CORS issue khi gọi API local',
-    nextPlan: '1. Fix CORS\n2. Xây dựng màn hình danh sách sinh viên',
-    workingHours: 35,
-    status: 'NEEDS_REVISION',
-    submittedAt: '2026-01-17T20:00:00',
-    reviewedByName: 'Dr. Le Thi B',
-    reviewedAt: '2026-01-18T10:00:00',
-    mentorComment: 'Vui lòng bổ sung rõ số giờ làm việc thực tế từng ngày và link PR GitHub.',
-  },
-];
+
 
 export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRole }) => {
-  const [reports, setReports] = useState<WeeklyReport[]>(mockReports);
+  const [reports, setReports] = useState<WeeklyReport[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [selectedReport, setSelectedReport] = useState<WeeklyReport | null>(null);
 
@@ -98,15 +35,19 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
 
   const fetchReports = async () => {
     setLoading(true);
+    setError(null);
     try {
       const res: any = await weeklyReportService.getReports();
-      if (Array.isArray(res) && res.length > 0) {
+      if (Array.isArray(res)) {
         setReports(res);
-      } else if (res && Array.isArray(res.content) && res.content.length > 0) {
+      } else if (res && Array.isArray(res.content)) {
         setReports(res.content);
+      } else {
+        setReports([]);
       }
-    } catch {
-      // Fallback to mock data on API error
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Không thể tải danh sách báo cáo tuần.');
+      setReports([]);
     } finally {
       setLoading(false);
     }
@@ -126,24 +67,6 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
     try {
       const newRep = await weeklyReportService.createReport(formData);
       setReports((prev) => [newRep, ...prev]);
-    } catch {
-      const newMock: WeeklyReport = {
-        reportId: Date.now(),
-        assignmentId: formData.assignmentId,
-        studentId: 1,
-        studentName: 'Học sinh hiện tại',
-        weekNumber: Number(formData.weekNumber),
-        reportTitle: formData.reportTitle || `Báo cáo Tuần ${formData.weekNumber}`,
-        completedTasks: formData.completedTasks,
-        difficulties: formData.difficulties,
-        nextPlan: formData.nextPlan,
-        workingHours: Number(formData.workingHours),
-        attachmentUrl: formData.attachmentUrl,
-        status: 'DRAFT',
-        createdAt: new Date().toISOString(),
-      };
-      setReports((prev) => [newMock, ...prev]);
-    } finally {
       setIsCreateOpen(false);
       setFormData({
         assignmentId: 101,
@@ -155,6 +78,8 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
         workingHours: 40,
         attachmentUrl: '',
       });
+    } catch (err: any) {
+      alert(err?.response?.data?.message || 'Tạo báo cáo thất bại');
     }
   };
 
@@ -162,17 +87,11 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
     try {
       const updated = await weeklyReportService.submitReport(reportId);
       setReports((prev) => prev.map((r) => (r.reportId === reportId ? updated : r)));
-    } catch {
-      setReports((prev) =>
-        prev.map((r) =>
-          r.reportId === reportId
-            ? { ...r, status: 'SUBMITTED', submittedAt: new Date().toISOString() }
-            : r
-        )
-      );
-    }
-    if (selectedReport?.reportId === reportId) {
-      setSelectedReport((prev) => (prev ? { ...prev, status: 'SUBMITTED' } : null));
+      if (selectedReport?.reportId === reportId) {
+        setSelectedReport(updated);
+      }
+    } catch (err: any) {
+      alert(err?.response?.data?.message || 'Nộp báo cáo thất bại');
     }
   };
 
@@ -186,24 +105,11 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
         status: reviewStatus,
       });
       setReports((prev) => prev.map((r) => (r.reportId === selectedReport.reportId ? updated : r)));
-    } catch {
-      setReports((prev) =>
-        prev.map((r) =>
-          r.reportId === selectedReport.reportId
-            ? {
-                ...r,
-                status: reviewStatus,
-                mentorComment,
-                reviewedByName: 'Mentor',
-                reviewedAt: new Date().toISOString(),
-              }
-            : r
-        )
-      );
-    } finally {
       setIsReviewOpen(false);
-      setSelectedReport(null);
+      setSelectedReport(updated);
       setMentorComment('');
+    } catch (err: any) {
+      alert(err?.response?.data?.message || 'Đánh giá báo cáo thất bại');
     }
   };
 

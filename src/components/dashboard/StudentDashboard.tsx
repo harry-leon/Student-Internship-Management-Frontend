@@ -1,8 +1,26 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { dashboardService } from '../../api/dashboardService';
+import { useAuth } from '../../context/AuthContext';
 
 export const StudentDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [kpis, setKpis] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await dashboardService.getMyDashboard();
+        if (res && res.kpis) {
+          setKpis(res.kpis);
+        }
+      } catch {
+        // Ignore fallback
+      }
+    };
+    fetchStats();
+  }, []);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -13,10 +31,10 @@ export const StudentDashboard: React.FC = () => {
             Cổng Thông Tin Thực Tập Sinh
           </span>
           <h1 className="text-2xl font-bold tracking-tight text-white mt-2">
-            Chào Nguyễn Văn A (SE190001)!
+            Chào {user?.fullName || 'Sinh Viên'}!
           </h1>
           <p className="text-xs text-blue-100 mt-1">
-            Đợt thực tập: <strong>Spring 2026 Batch A</strong> | Doanh nghiệp: <strong>FPT Software</strong>
+            Hệ thống quản lý thực tập sinh viên
           </p>
         </div>
         <div>
@@ -25,7 +43,7 @@ export const StudentDashboard: React.FC = () => {
             onClick={() => navigate('/admin/weekly-reports')}
             className="rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-[#004ac6] shadow-sm hover:bg-blue-50 transition-colors"
           >
-            + Nộp Báo Cáo Tuần 3
+            + Nộp Báo Cáo Tuần
           </button>
         </div>
       </div>
@@ -35,22 +53,22 @@ export const StudentDashboard: React.FC = () => {
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
           <div className="text-xs font-medium text-slate-500 uppercase tracking-wider">Trạng Thái Thực Tập</div>
           <div className="mt-2 text-lg font-bold text-emerald-600">Đang Thực Tập</div>
-          <div className="mt-1 text-[11px] text-slate-500">Giảng viên: Dr. Le Thi B</div>
+          <div className="mt-1 text-[11px] text-slate-500">Cổng sinh viên</div>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
-          <div className="text-xs font-medium text-slate-500 uppercase tracking-wider">Báo Cáo Đã Duyệt</div>
-          <div className="mt-2 text-2xl font-bold text-[#004ac6]">2 / 12</div>
-          <div className="mt-1 text-[11px] text-emerald-600">Tuần 1, Tuần 2 đã duyệt</div>
+          <div className="text-xs font-medium text-slate-500 uppercase tracking-wider">Báo Cáo Đã Nộp</div>
+          <div className="mt-2 text-2xl font-bold text-[#004ac6]">{kpis.myReportsCount ?? 0} báo cáo</div>
+          <div className="mt-1 text-[11px] text-emerald-600">Lịch trình cá nhân</div>
         </div>
         <div className="rounded-2xl border border-amber-200 bg-amber-50/40 p-4 shadow-xs">
-          <div className="text-xs font-medium text-amber-800 uppercase tracking-wider">Hạn Nộp Báo Cáo Tiếp theo</div>
+          <div className="text-xs font-medium text-amber-800 uppercase tracking-wider">Hạn Nộp Tiếp Theo</div>
           <div className="mt-2 text-lg font-bold text-amber-900">17:00 Chủ Nhật</div>
-          <div className="mt-1 text-[11px] text-amber-700">Còn 2 ngày nữa</div>
+          <div className="mt-1 text-[11px] text-amber-700">Định kỳ hàng tuần</div>
         </div>
         <div className="rounded-2xl border border-purple-200 bg-purple-50/40 p-4 shadow-xs">
-          <div className="text-xs font-medium text-purple-800 uppercase tracking-wider">Điểm Đợt 1 (Đã Công Bố)</div>
-          <div className="mt-2 text-2xl font-bold text-purple-900">8.7 / 10</div>
-          <div className="mt-1 text-[11px] text-purple-700">Trọng số 30%</div>
+          <div className="text-xs font-medium text-purple-800 uppercase tracking-wider">Bài Đánh Giá Rubric</div>
+          <div className="mt-2 text-2xl font-bold text-purple-900">{kpis.mySubmissionsCount ?? 0} bài</div>
+          <div className="mt-1 text-[11px] text-purple-700">Đã công bố</div>
         </div>
       </div>
 

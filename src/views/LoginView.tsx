@@ -65,7 +65,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onSuccessNavigate }) => {
     } catch (err: any) {
       setError(
         err.message ||
-          'Đăng nhập không thành công. Vui lòng kiểm tra lại tài khoản hoặc kết nối Backend API (http://localhost:8080).'
+          'Đăng nhập không thành công. Vui lòng kiểm tra lại tên đăng nhập hoặc mật khẩu.'
       );
     } finally {
       setLoading(false);

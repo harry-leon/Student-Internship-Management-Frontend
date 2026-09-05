@@ -14,6 +14,8 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
   const [error, setError] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [selectedReport, setSelectedReport] = useState<WeeklyReport | null>(null);
+  const [viewMode, setViewMode] = useState<'table' | 'timeline'>('table');
+  const [draftSavedMessage, setDraftSavedMessage] = useState(false);
 
   // Modal States
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -32,6 +34,28 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
     workingHours: 40,
     attachmentUrl: '',
   });
+
+  // Restore draft from localStorage on load
+  useEffect(() => {
+    const savedDraft = localStorage.getItem('weekly_report_draft');
+    if (savedDraft) {
+      try {
+        const parsed = JSON.parse(savedDraft);
+        setFormData(prev => ({ ...prev, ...parsed }));
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
+
+  // Auto save draft on form change
+  const handleFormChange = (field: string, value: any) => {
+    const updated = { ...formData, [field]: value };
+    setFormData(updated);
+    localStorage.setItem('weekly_report_draft', JSON.stringify(updated));
+    setDraftSavedMessage(true);
+    setTimeout(() => setDraftSavedMessage(false), 2000);
+  };
 
   const fetchReports = async () => {
     setLoading(true);
@@ -170,7 +194,7 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Filters & View Toggle */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-xs">
         <div className="flex flex-wrap items-center gap-2">
           {['ALL', 'SUBMITTED', 'REVIEWED', 'NEEDS_REVISION', 'DRAFT'].map((st) => (
@@ -187,6 +211,28 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
               {st === 'ALL' ? 'Tất cả' : st}
             </button>
           ))}
+        </div>
+
+        {/* View Mode Toggle */}
+        <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1 border border-slate-200">
+          <button
+            type="button"
+            onClick={() => setViewMode('table')}
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-semibold transition-all ${
+              viewMode === 'table' ? 'bg-white text-[#004ac6] shadow-xs' : 'text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            📋 Bảng
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('timeline')}
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-semibold transition-all ${
+              viewMode === 'timeline' ? 'bg-white text-[#004ac6] shadow-xs' : 'text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            ⏳ Timeline
+          </button>
         </div>
       </div>
 

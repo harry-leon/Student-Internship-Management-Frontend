@@ -1,4 +1,4 @@
-﻿export interface ApiResponse<T> {
+export interface ApiResponse<T> {
   success: boolean;
   status_code?: number;
   message?: string;
@@ -53,28 +53,28 @@ const isLoginEndpoint = (endpoint: string): boolean => endpoint.includes('/api/a
 function toUserMessage(status: number, errorCode?: string, backendMessage?: string): string {
   if (status === 401) {
     if (errorCode === 'BAD_CREDENTIALS') {
-      return 'Tên đăng nhập hoặc mật khẩu không đúng.';
+      return 'T\u00ean \u0111\u0103ng nh\u1eadp ho\u1eb7c m\u1eadt kh\u1ea9u kh\u00f4ng \u0111\u00fang.';
     }
-    return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+    return 'Phi\u00ean \u0111\u0103ng nh\u1eadp \u0111\u00e3 h\u1ebft h\u1ea1n. Vui l\u00f2ng \u0111\u0103ng nh\u1eadp l\u1ea1i.';
   }
 
   if (status === 403) {
-    return 'Bạn không có quyền thực hiện thao tác này.';
+    return 'B\u1ea1n kh\u00f4ng c\u00f3 quy\u1ec1n th\u1ef1c hi\u1ec7n thao t\u00e1c n\u00e0y.';
   }
 
   if (status === 404) {
-    return backendMessage || 'Không tìm thấy dữ liệu.';
+    return backendMessage || 'Kh\u00f4ng t\u00ecm th\u1ea5y d\u1eef li\u1ec7u.';
   }
 
   if (status === 502 || status === 503 || status === 504) {
-    return 'Hệ thống tạm thời không khả dụng. Vui lòng thử lại sau.';
+    return 'H\u1ec7 th\u1ed1ng t\u1ea1m th\u1eddi kh\u00f4ng kh\u1ea3 d\u1ee5ng. Vui l\u00f2ng th\u1eed l\u1ea1i sau.';
   }
 
   if (status >= 500) {
-    return 'Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.';
+    return '\u0110\u00e3 x\u1ea3y ra l\u1ed7i h\u1ec7 th\u1ed1ng. Vui l\u00f2ng th\u1eed l\u1ea1i sau.';
   }
 
-  return backendMessage || `Lỗi từ hệ thống (${status})`;
+  return backendMessage || `L\u1ed7i t\u1eeb h\u1ec7 th\u1ed1ng (${status})`;
 }
 
 async function handleResponse<T>(response: Response, endpoint: string): Promise<T> {
@@ -83,10 +83,14 @@ async function handleResponse<T>(response: Response, endpoint: string): Promise<
     json = await response.json();
   } catch (err) {
     if (!response.ok) {
+      const isLikelyProxyOrNetworkFailure = response.status >= 500;
       throw new ApiClientError({
         success: false,
-        status_code: response.status,
-        message: toUserMessage(response.status, undefined, response.statusText),
+        status_code: isLikelyProxyOrNetworkFailure ? 503 : response.status,
+        error_code: isLikelyProxyOrNetworkFailure ? 'SERVICE_UNAVAILABLE' : undefined,
+        message: isLikelyProxyOrNetworkFailure
+          ? 'H\u1ec7 th\u1ed1ng t\u1ea1m th\u1eddi kh\u00f4ng kh\u1ea3 d\u1ee5ng. Vui l\u00f2ng th\u1eed l\u1ea1i sau.'
+          : toUserMessage(response.status, undefined, response.statusText),
       });
     }
     return {} as T;
@@ -150,6 +154,13 @@ export async function apiFetch<T>(
   const response = await fetch(url, {
     ...options,
     headers,
+  }).catch(() => {
+    throw new ApiClientError({
+      success: false,
+      status_code: 503,
+      error_code: 'SERVICE_UNAVAILABLE',
+      message: 'H\u1ec7 th\u1ed1ng t\u1ea1m th\u1eddi kh\u00f4ng kh\u1ea3 d\u1ee5ng. Vui l\u00f2ng th\u1eed l\u1ea1i sau.',
+    });
   });
 
   return handleResponse<T>(response, endpoint);

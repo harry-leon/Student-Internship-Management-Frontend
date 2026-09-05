@@ -47,6 +47,30 @@ export const Header: React.FC<HeaderProps> = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Dark Mode state
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem('theme') === 'dark' || document.documentElement.classList.contains('dark');
+  });
+
+  const toggleDarkMode = () => {
+    if (isDarkMode) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      setIsDarkMode(false);
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+      setIsDarkMode(true);
+    }
+  };
+
+  useEffect(() => {
+    if (localStorage.getItem('theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+      setIsDarkMode(true);
+    }
+  }, []);
+
   // Handle click outside to close dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -120,6 +144,18 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
 
         <NotificationBell />
+
+        {/* Dark Mode Toggle Button */}
+        <button
+          type="button"
+          onClick={toggleDarkMode}
+          className="rounded-lg border border-slate-200 bg-slate-50 p-1.5 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+          title={isDarkMode ? 'Chuyển sang giao diện Sáng' : 'Chuyển sang giao diện Tối'}
+        >
+          <span className="material-symbols-outlined text-[18px]">
+            {isDarkMode ? 'light_mode' : 'dark_mode'}
+          </span>
+        </button>
 
         <div className="relative" ref={dropdownRef}>
           <div

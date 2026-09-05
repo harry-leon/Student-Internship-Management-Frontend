@@ -256,8 +256,14 @@ export const CompaniesView: React.FC<CompaniesViewProps> = ({ currentRole }) => 
                         </div>
                       )}
                     </td>
-                    <td className="py-3.5 px-4 text-center font-bold text-[#004ac6]">
-                      {comp.maxInterns}
+                    <td className="py-3.5 px-4 text-center">
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="font-bold text-slate-800 text-xs">{comp.maxInterns || 10} Chỉ tiêu</span>
+                        <div className="w-20 bg-slate-100 rounded-full h-1.5 overflow-hidden border border-slate-200">
+                          <div className="h-full bg-[#004ac6] rounded-full" style={{ width: '60%' }}></div>
+                        </div>
+                        <span className="text-[10px] text-emerald-600 font-semibold">Còn chỗ nhận</span>
+                      </div>
                     </td>
                     <td className="py-3.5 px-4 text-center">
                       <span

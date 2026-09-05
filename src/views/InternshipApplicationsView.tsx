@@ -182,6 +182,27 @@ export const InternshipApplicationsView: React.FC<InternshipApplicationsViewProp
         )}
       </div>
 
+      {/* 4-Step Progress Stepper Visualizer for Student Workflow */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+        <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Quy Trình Duyệt Đơn Thực Tập (4 Bước)</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { step: '1', title: 'Tạo Nháp', desc: 'Sinh viên điền thông tin', icon: '📝', color: 'border-blue-500 bg-blue-50/60 text-blue-900' },
+            { step: '2', title: 'Đã Nộp Đơn', desc: 'Chờ Admin xét duyệt', icon: '📤', color: 'border-amber-500 bg-amber-50/60 text-amber-900' },
+            { step: '3', title: 'Admin Phê Duyệt', desc: 'Đơn được chấp thuận', icon: '✅', color: 'border-emerald-500 bg-emerald-50/60 text-emerald-900' },
+            { step: '4', title: 'Phân Công Mentor', desc: 'Bắt đầu đợt thực tập', icon: '👨‍🏫', color: 'border-indigo-500 bg-indigo-50/60 text-indigo-900' },
+          ].map((s) => (
+            <div key={s.step} className={`p-3 rounded-xl border-l-4 ${s.color} flex items-center gap-3`}>
+              <span className="text-xl">{s.icon}</span>
+              <div>
+                <div className="text-xs font-bold">{s.step}. {s.title}</div>
+                <div className="text-[11px] opacity-80">{s.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Filter Tabs */}
       <div className="bg-white p-3 rounded-2xl border border-[#e2e8f0] shadow-xs flex flex-wrap items-center gap-2">
         {['all', 'SUBMITTED', 'APPROVED', 'REJECTED', 'DRAFT'].map((st) => (

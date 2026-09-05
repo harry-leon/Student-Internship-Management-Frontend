@@ -202,17 +202,36 @@ export const GradingFormModal: React.FC<GradingFormModalProps> = ({
               </div>
             ))}
 
-            {/* Score Summary Box */}
-            <div className="rounded-2xl bg-gradient-to-r from-blue-900 to-indigo-900 p-4 text-white flex items-center justify-between shadow-md">
-              <div>
-                <div className="text-xs text-blue-200 uppercase tracking-wider font-medium">Tổng Điểm Trọng Số (Weighted Score)</div>
-                <div className="text-3xl font-extrabold text-white mt-1">{calculatedWeighted.toFixed(2)} / 10</div>
-              </div>
-              <div className="text-right">
-                <div className="text-xs text-blue-200 uppercase tracking-wider font-medium">Tổng Thô (Raw Score)</div>
-                <div className="text-xl font-bold text-blue-100 mt-1">{calculatedTotal.toFixed(1)}</div>
-              </div>
-            </div>
+            {/* Score Summary Box & Live Grade Visualizer */}
+            {(() => {
+              const getRank = (score: number) => {
+                if (score >= 8.5) return { label: '🌟 XUẤT SẮC', bg: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30' };
+                if (score >= 7.0) return { label: '💎 GIỎI', bg: 'bg-blue-500/20 text-blue-300 border-blue-400/30' };
+                if (score >= 5.5) return { label: '👍 KHÁ', bg: 'bg-amber-500/20 text-amber-300 border-amber-400/30' };
+                if (score >= 4.0) return { label: '⚡ TRUNG BÌNH', bg: 'bg-orange-500/20 text-orange-300 border-orange-400/30' };
+                return { label: '⚠️ CẦN CỐ GẮNG', bg: 'bg-rose-500/20 text-rose-300 border-rose-400/30' };
+              };
+              const rank = getRank(calculatedWeighted);
+
+              return (
+                <div className="rounded-2xl bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 p-4 text-white flex items-center justify-between shadow-lg border border-blue-800/40">
+                  <div>
+                    <div className="text-[11px] text-blue-200 uppercase tracking-wider font-semibold">Tổng Điểm Trọng Số (Weighted Score)</div>
+                    <div className="flex items-baseline gap-3 mt-1">
+                      <span className="text-3xl font-extrabold text-white">{calculatedWeighted.toFixed(2)}</span>
+                      <span className="text-sm font-medium text-blue-300">/ 10</span>
+                      <span className={`ml-2 px-3 py-1 rounded-full text-xs font-bold border backdrop-blur-md ${rank.bg}`}>
+                        {rank.label}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[11px] text-blue-200 uppercase tracking-wider font-semibold">Điểm Thô (Raw)</div>
+                    <div className="text-xl font-mono font-bold text-blue-100 mt-1">{calculatedTotal.toFixed(1)}</div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 

@@ -1,7 +1,8 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ROLE_PAGES } from '../auth/roleAccess';
+import { canAccessPage } from '../auth/roleAccess';
 import { NavPage, Role } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 interface SidebarProps {
   currentRole: Role;
@@ -16,6 +17,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { can } = useAuth();
 
   const navSections = [
     {
@@ -52,13 +54,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'assessment-results' as NavPage, label: 'Assessment Results', icon: 'insights' },
       ],
     },
+    {
+      title: 'SYSTEM',
+      items: [
+        { id: 'role-permissions' as NavPage, label: 'Role & Permissions', icon: 'security' },
+      ],
+    },
   ];
 
-  const allowedPages = ROLE_PAGES[currentRole] || ROLE_PAGES.Admin;
   const filteredSections = navSections
     .map((section) => ({
       ...section,
-      items: section.items.filter((item) => allowedPages.includes(item.id)),
+      items: section.items.filter((item) => canAccessPage(currentRole, item.id, can)),
     }))
     .filter((section) => section.items.length > 0);
 

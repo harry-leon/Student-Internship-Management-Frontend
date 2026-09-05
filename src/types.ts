@@ -208,6 +208,7 @@ export type NavPage =
   | 'assessment-rounds'
   | 'assessment-results'
   | 'my-profile'
+  | 'role-permissions'
   | 'login'
   | 'landing';
 

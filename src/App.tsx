@@ -31,6 +31,7 @@ import { InternshipApplicationsView } from './views/InternshipApplicationsView';
 import { WeeklyReportsView } from './views/WeeklyReportsView';
 import { SubmissionsView } from './views/SubmissionsView';
 import { ProfileView } from './views/ProfileView';
+import { RolePermissionsView } from './views/RolePermissionsView';
 import { LoginView } from './views/LoginView';
 import { PublicLandingView } from './views/PublicLandingView';
 
@@ -46,10 +47,10 @@ import {
   assignmentService,
   criterionService,
 } from './api/services';
-import { ROLE_PAGES, canManageSystemData, canUpdateAssignmentStatus } from './auth/roleAccess';
+import { ROLE_PAGES, canAccessPage, canManageSystemData, canUpdateAssignmentStatus } from './auth/roleAccess';
 
 function AppRoutes() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, can } = useAuth();
   const [currentRole, setCurrentRole] = useState<Role>('Admin');
   const location = useLocation();
   const navigate = useNavigate();
@@ -76,7 +77,7 @@ function AppRoutes() {
   const currentPage = (currentPagePath as NavPage) || 'dashboard';
   const activeRole = user?.role ? (user.role as Role) : currentRole;
   const allowedPages = ROLE_PAGES[activeRole] || ROLE_PAGES.Admin;
-  const isCurrentPageAllowed = allowedPages.includes(currentPage);
+  const isCurrentPageAllowed = canAccessPage(activeRole, currentPage, can);
   const canManage = canManageSystemData(activeRole);
 
   const activePhase = phases[0] || {
@@ -309,6 +310,7 @@ function AppRoutes() {
                 <Route path="/admin/assessment-rounds" element={<AssessmentRoundsView rounds={rounds} />} />
                 <Route path="/admin/assessment-results" element={<AssessmentResultsView students={[]} />} />
                 <Route path="/admin/users" element={<UsersView users={[]} onRefreshData={() => {}} />} />
+                <Route path="/admin/role-permissions" element={<RolePermissionsView currentRole={activeRole} />} />
                 <Route path="/admin/my-profile" element={<ProfileView currentRole={activeRole} onRoleChange={setCurrentRole} />} />
                 <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
               </Routes>

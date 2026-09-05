@@ -26,6 +26,7 @@ const PAGE_TITLES: Record<NavPage, { parent: string; current: string }> = {
   'evaluation-criteria': { parent: 'Evaluation', current: 'Evaluation Criteria' },
   'assessment-rounds': { parent: 'Evaluation', current: 'Assessment Rounds' },
   'assessment-results': { parent: 'Evaluation', current: 'Assessment Results' },
+  'role-permissions': { parent: 'System', current: 'Role & Permissions' },
   'my-profile': { parent: 'Account', current: 'My Profile' },
   login: { parent: 'Account', current: 'Xác thực hệ thống' },
   landing: { parent: 'Overview', current: 'Trang chủ' },

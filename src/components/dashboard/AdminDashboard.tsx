@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { InternshipPhase, Assignment, AssessmentRound } from '../../types';
-import { dashboardService } from '../../api/dashboardService';
+import { DashboardCompanyDistribution, DashboardMentorWorkload, dashboardService } from '../../api/dashboardService';
 
 interface AdminDashboardProps {
   phase: InternshipPhase;
@@ -19,6 +19,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onOpenQuickAction,
 }) => {
   const [kpis, setKpis] = useState<Record<string, any>>({});
+  const [mentorWorkloads, setMentorWorkloads] = useState<DashboardMentorWorkload[]>([]);
+  const [companyDistribution, setCompanyDistribution] = useState<DashboardCompanyDistribution[]>([]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -27,12 +29,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         if (res && res.kpis) {
           setKpis(res.kpis);
         }
+        setMentorWorkloads(Array.isArray(res?.details?.mentorWorkloads) ? res.details.mentorWorkloads : []);
+        setCompanyDistribution(Array.isArray(res?.details?.companyDistribution) ? res.details.companyDistribution : []);
       } catch {
         // Ignore fallback
       }
     };
     fetchStats();
   }, []);
+
+  const distributionColors = ['bg-blue-600', 'bg-emerald-500', 'bg-amber-500', 'bg-purple-500', 'bg-cyan-500'];
+  const companyDistributionRows = companyDistribution.map((item, index) => ({
+    ...item,
+    color: distributionColors[index % distributionColors.length],
+  }));
+  const getWorkloadTag = (tag?: string) => {
+    if (tag === 'Da day') return '\u0110\u00e3 \u0111\u1ea7y';
+    if (tag === 'On dinh') return '\u1ed4n \u0111\u1ecbnh';
+    return '\u0043\u00f2n ch\u1ed7';
+  };
 
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
@@ -118,12 +133,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </span>
             </div>
             <div className="space-y-2.5">
-              {[
-                { name: 'Dr. Le Thi B', dept: 'Software Engineering', current: 8, max: 10, percent: 80, tag: 'Ổn định' },
-                { name: 'Prof. Tran Van C', dept: 'Information Systems', current: 10, max: 10, percent: 100, tag: 'Đã đầy' },
-                { name: 'MSc. Pham Hoang D', dept: 'Cyber Security', current: 6, max: 12, percent: 50, tag: 'Còn chỗ' },
-                { name: 'Dr. Nguyen Van E', dept: 'Artificial Intelligence', current: 4, max: 10, percent: 40, tag: 'Còn chỗ' },
-              ].map((m) => (
+              {mentorWorkloads.map((m) => (
                 <div key={m.name} className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-slate-50/70 border border-slate-100 hover:border-slate-300 transition-all">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
@@ -131,10 +141,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <span className={`px-1.5 py-0.2 rounded text-[9.5px] font-bold ${
                         m.percent >= 100 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'
                       }`}>
-                        {m.tag}
+                        {getWorkloadTag(m.tag)}
                       </span>
                     </div>
-                    <div className="text-[10.5px] text-slate-500 mt-0.5">{m.dept}</div>
+                    <div className="text-[10.5px] text-slate-500 mt-0.5">{m.department || 'General'}</div>
                   </div>
                   <div className="flex items-center gap-2.5">
                     <div className="w-24 bg-slate-200 rounded-full h-1.5 overflow-hidden">
@@ -146,6 +156,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
                 </div>
               ))}
+              {mentorWorkloads.length === 0 && (
+                <div className="rounded-lg border border-dashed border-slate-200 p-3 text-center text-[11px] text-slate-500">
+                  Chưa có dữ liệu phân công mentor.
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -158,12 +173,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             
             {/* Visual Bar Chart breakdown */}
             <div className="space-y-2.5">
-              {[
-                { company: 'FPT Software', count: 42, color: 'bg-blue-600', percent: 45 },
-                { company: 'Viettel Telecom', count: 24, color: 'bg-emerald-500', percent: 26 },
-                { company: 'VNG Corporation', count: 18, color: 'bg-amber-500', percent: 19 },
-                { company: 'Doanh nghiệp khác', count: 10, color: 'bg-purple-500', percent: 10 },
-              ].map((c) => (
+              {companyDistributionRows.map((c) => (
                 <div key={c.company} className="space-y-0.5">
                   <div className="flex justify-between text-[11px] font-medium">
                     <span className="text-slate-700">{c.company}</span>
@@ -174,6 +184,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
                 </div>
               ))}
+              {companyDistributionRows.length === 0 && (
+                <div className="rounded-lg border border-dashed border-slate-200 p-3 text-center text-[11px] text-slate-500">
+                  Chưa có dữ liệu phân bổ doanh nghiệp.
+                </div>
+              )}
             </div>
 
             <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Assignment, Role } from '../types';
 import { assignmentService } from '../api/services';
 import { mapAssignmentFromDTO } from '../api/mappers';
@@ -51,46 +51,51 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
   });
 
   return (
-    <div className="flex w-full flex-col animate-in fade-in duration-200">
-      <div className="mb-4 flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
+    <div className="flex w-full flex-col animate-in fade-in duration-200 space-y-3.5">
+      {/* Header */}
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs">
         <div>
-          <h1 className="text-[22px] font-semibold tracking-tight text-[#0b1c30]">
-            Assignments Directory
-          </h1>
-          <p className="mt-0.5 text-[12.5px] text-[#64748b]">
-            Manage student-to-mentor pairings, enterprise host placements, and evaluation statuses.
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#004ac6] text-[20px]">assignment_ind</span>
+            <h1 className="text-[20px] font-bold tracking-tight text-[#0b1c30]">
+              Danh Mục Phân Công Thực Tập
+            </h1>
+          </div>
+          <p className="mt-0.5 text-xs text-slate-500">
+            Quản lý phân công sinh viên - giảng viên hướng dẫn, doanh nghiệp thực tập và trạng thái.
           </p>
         </div>
         {canManage && (
           <button
             type="button"
             onClick={onOpenQuickAction}
-            className="inline-flex h-10 items-center gap-2 self-start rounded-xl bg-[#004ac6] px-4 text-[12.5px] font-medium text-white shadow-xs transition-all hover:bg-[#003ea8] lg:self-auto"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#003ea8] transition-colors cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[18px]">add</span>
-            <span>Assign Student</span>
+            <span className="material-symbols-outlined text-[16px]">add</span>
+            <span>Phân Công Mới</span>
           </button>
         )}
       </div>
 
-      <div className="mb-5 grid gap-3 rounded-2xl border border-[#dbe5f3] bg-white p-4 shadow-xs lg:grid-cols-[minmax(0,1fr)_180px_180px]">
-        <div className="flex items-center gap-2 rounded-xl border border-[#dbe5f3] bg-[#f8f9ff] px-3 py-2.5">
-          <span className="material-symbols-outlined text-[18px] text-[#64748b]">
+      {/* Toolbar Filters */}
+      <div className="grid gap-2.5 rounded-xl border border-slate-200/90 bg-white p-2.5 shadow-2xs sm:grid-cols-[minmax(0,1fr)_160px_160px]">
+        <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-1.5">
+          <span className="material-symbols-outlined text-[17px] text-slate-400">
             search
           </span>
           <input
             type="text"
-            placeholder="Search student name, student ID, mentor, company..."
+            placeholder="Tìm theo tên SV, mã SV, giảng viên, công ty..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-transparent text-[13px] text-[#0b1c30] outline-none placeholder-[#94a3b8]"
+            className="w-full bg-transparent text-xs text-[#0b1c30] outline-none placeholder:text-slate-400"
           />
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="text-[#94a3b8] hover:text-[#0b1c30]"
+              className="text-slate-400 hover:text-slate-700"
             >
-              <span className="material-symbols-outlined text-[16px]">close</span>
+              <span className="material-symbols-outlined text-[15px]">close</span>
             </button>
           )}
         </div>
@@ -98,9 +103,9 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
         <select
           value={phaseFilter}
           onChange={(e) => setPhaseFilter(e.target.value)}
-          className="h-[42px] rounded-xl border border-[#dbe5f3] bg-white px-3 text-[13px] text-[#0b1c30] outline-none"
+          className="h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-[#0b1c30] outline-none"
         >
-          <option value="ALL">All Phases</option>
+          <option value="ALL">Tất cả đợt thực tập</option>
           <option value="Fall 2026">Fall 2026</option>
           <option value="Spring 2027">Spring 2027</option>
           <option value="Summer 2026">Summer 2026</option>
@@ -109,9 +114,9 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="h-[42px] rounded-xl border border-[#dbe5f3] bg-white px-3 text-[13px] text-[#0b1c30] outline-none"
+          className="h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-[#0b1c30] outline-none"
         >
-          <option value="ALL">All Statuses</option>
+          <option value="ALL">Tất cả trạng thái</option>
           <option value="IN PROGRESS">In Progress</option>
           <option value="PENDING">Pending</option>
           <option value="COMPLETED">Completed</option>
@@ -119,36 +124,36 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
         </select>
       </div>
 
-      <div className="rounded-2xl border border-[#dbe5f3] bg-white p-4 shadow-xs">
-        <div className="mb-3 flex items-center justify-between">
-          <div className="text-[12px] text-[#64748b]">
-            Showing <span className="font-semibold text-[#0b1c30]">{filtered.length}</span> assignments
-          </div>
+      {/* Table */}
+      <div className="rounded-xl border border-slate-200/90 bg-white shadow-2xs overflow-hidden">
+        <div className="px-3.5 py-2.5 border-b border-slate-100 flex items-center justify-between text-xs text-slate-500">
+          <span>Tổng số phân công: <strong className="text-slate-800 font-semibold">{filtered.length}</strong></span>
         </div>
 
-        <div className="no-scrollbar overflow-x-auto">
-          <table className="w-full border-collapse text-left">
+        <div className="overflow-x-auto no-scrollbar">
+          <table className="w-full border-collapse text-left text-xs">
             <thead>
-              <tr className="border-b border-[#dce9ff] bg-[#eff4ff] text-[10.5px] font-semibold uppercase tracking-wider text-[#434655]">
-                <th className="rounded-l-lg px-3 py-2.5">Student</th>
-                <th className="px-3 py-2.5">Faculty Advisor</th>
-                <th className="px-3 py-2.5">Enterprise Host</th>
-                <th className="px-3 py-2.5">Phase</th>
-                <th className="px-3 py-2.5">Date</th>
-                <th className="px-3 py-2.5">Status</th>
-                <th className="rounded-r-lg px-2.5 py-2.5 text-right">Action</th>
+              <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+                <th className="px-3.5 py-2.5">Sinh Viên</th>
+                <th className="px-3 py-2.5">Giảng Viên Hướng Dẫn</th>
+                <th className="px-3 py-2.5">Doanh Nghiệp Tiếp Nhận</th>
+                <th className="px-3 py-2.5">Đợt</th>
+                <th className="px-3 py-2.5">Ngày Phân</th>
+                <th className="px-3 py-2.5 text-center">Bài Nộp</th>
+                <th className="px-3 py-2.5 text-center">Trạng Thái</th>
+                <th className="px-3 py-2.5 text-right">Chi Tiết</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#f1f5f9] text-[12px] text-[#0b1c30]">
+            <tbody className="divide-y divide-slate-100 text-slate-800">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-indigo-600">
-                    <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+                  <td colSpan={8} className="py-12 text-center text-[#004ac6]">
+                    <div className="mx-auto h-7 w-7 animate-spin rounded-full border-3 border-[#004ac6] border-t-transparent"></div>
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-[#64748b]">
+                  <td colSpan={8} className="py-10 text-center text-slate-400">
                     Không có phân công nào khớp với điều kiện tìm kiếm.
                   </td>
                 </tr>
@@ -157,71 +162,78 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
                   <tr
                     key={row.id}
                     onClick={() => onSelectAssignment(row)}
-                    className="group cursor-pointer transition-colors hover:bg-[#eff4ff]/60"
+                    className="group cursor-pointer transition-colors hover:bg-blue-50/40"
                   >
-                    <td className="px-3 py-2.5">
+                    <td className="px-3.5 py-2.5">
                       <div className="flex items-center gap-2.5">
                         <img
-                          className="h-8 w-8 rounded-full border border-[#e2e8f0] object-cover shadow-xs"
+                          className="h-8 w-8 rounded-full border border-slate-200 object-cover shadow-2xs"
                           src={row.studentAvatar}
                           alt={row.studentName}
                         />
                         <div className="flex flex-col">
-                          <span className="text-[13px] font-medium text-[#0b1c30] transition-colors group-hover:text-[#004ac6]">
+                          <span className="font-semibold text-slate-900 group-hover:text-[#004ac6] transition-colors">
                             {row.studentName}
                           </span>
-                          <span className="font-mono text-[11px] text-[#434655]">
+                          <span className="font-mono text-[10.5px] text-[#004ac6]">
                             {row.studentCode}
                           </span>
                         </div>
                       </div>
                     </td>
                     <td className="px-3 py-2.5">
-                      <div className="font-medium text-[#0b1c30]">{row.mentorName}</div>
-                      <div className="text-[10.5px] text-[#64748b]">{row.mentorDept}</div>
+                      <div className="font-medium text-slate-900">{row.mentorName}</div>
+                      <div className="text-[10.5px] text-slate-500">{row.mentorDept}</div>
                     </td>
                     <td className="px-3 py-2.5">
-                      <span className="text-[12px] font-medium text-[#0b1c30]">
+                      <span className="font-medium text-slate-800">
                         {row.companyName || 'Campus Lab'}
                       </span>
                     </td>
-                    <td className="px-3 py-2.5 text-[#434655]">{row.phase}</td>
-                    <td className="px-3 py-2.5 font-mono text-[11px] text-[#434655]">{row.date}</td>
-                    <td className="px-3 py-2.5">
+                    <td className="px-3 py-2.5 text-slate-600">{row.phase}</td>
+                    <td className="px-3 py-2.5 font-mono text-[11px] text-slate-500">{row.date}</td>
+                    <td className="px-3 py-2.5 text-center">
+                      {row.latestSubmissionType ? (
+                        <span className="inline-flex items-center gap-1 rounded bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-[#004ac6] border border-blue-200">
+                          <span className="material-symbols-outlined text-[12px]">
+                            {row.latestSubmissionType === 'GITHUB' ? 'code' : 'folder_zip'}
+                          </span>
+                          {row.latestSubmissionType}
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-slate-400">Chưa nộp</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2.5 text-center">
                       {row.status === 'IN PROGRESS' && (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-[#b4c5ff] bg-[#dce9ff] px-2 py-0.5 text-[10px] font-bold text-[#004ac6]">
+                        <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-[#004ac6]">
                           <span className="h-1.5 w-1.5 rounded-full bg-[#004ac6]"></span>
                           IN PROGRESS
                         </span>
                       )}
                       {row.status === 'PENDING' && (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-[#d2bbff] bg-[#eaddff] px-2 py-0.5 text-[10px] font-bold text-[#5a00c6]">
-                          <span className="h-1.5 w-1.5 rounded-full bg-[#712ae2]"></span>
+                        <span className="inline-flex items-center gap-1 rounded-full border border-purple-200 bg-purple-50 px-2 py-0.5 text-[10px] font-bold text-purple-700">
+                          <span className="h-1.5 w-1.5 rounded-full bg-purple-600"></span>
                           PENDING
                         </span>
                       )}
                       {row.status === 'COMPLETED' && (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-[#93ccff] bg-[#cce5ff] px-2 py-0.5 text-[10px] font-bold text-[#004b73]">
-                          <span className="h-1.5 w-1.5 rounded-full bg-[#005a89]"></span>
+                        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
                           COMPLETED
                         </span>
                       )}
                       {row.status === 'CANCELLED' && (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-[#ffb4ab] bg-[#ffdad6] px-2 py-0.5 text-[10px] font-bold text-[#ba1a1a]">
-                          <span className="h-1.5 w-1.5 rounded-full bg-[#ba1a1a]"></span>
+                        <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700">
+                          <span className="h-1.5 w-1.5 rounded-full bg-rose-600"></span>
                           CANCELLED
                         </span>
                       )}
                     </td>
-                    <td className="px-2.5 py-2.5 text-right">
-                      <button
-                        type="button"
-                        className="rounded-lg p-1 text-[#737686] transition-colors hover:bg-[#e5eeff] hover:text-[#0b1c30]"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">
-                          more_horiz
-                        </span>
-                      </button>
+                    <td className="px-3 py-2.5 text-right">
+                      <span className="inline-flex items-center text-slate-400 group-hover:text-[#004ac6] transition-colors">
+                        <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                      </span>
                     </td>
                   </tr>
                 ))

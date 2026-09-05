@@ -133,25 +133,28 @@ export const UsersView: React.FC<UsersViewProps> = ({ users: initialUsers, onRef
   };
 
   return (
-    <div className="flex flex-col w-full animate-in fade-in duration-200">
+    <div className="flex flex-col w-full animate-in fade-in duration-200 space-y-3.5">
       {/* Header */}
-      <div className="mb-3 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs">
         <div>
-          <h1 className="text-[18px] font-bold text-[#0b1c30] tracking-tight">
-            Quản Lý Tài Khoản Người Dùng
-          </h1>
-          <p className="mt-0.5 text-[12px] text-[#64748b]">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#004ac6] text-[20px]">manage_accounts</span>
+            <h1 className="text-[20px] font-bold text-[#0b1c30] tracking-tight">
+              Quản Lý Tài Khoản Người Dùng
+            </h1>
+          </div>
+          <p className="mt-0.5 text-xs text-slate-500">
             Quản lý danh sách tài khoản, phân quyền vai trò và trạng thái hoạt động trong hệ thống.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setIsAddModalOpen(true)}
-            className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#004ac6] px-3 py-1.5 text-[11.5px] font-semibold text-white shadow-xs transition-all hover:bg-[#003ea8]"
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition-all hover:bg-[#003ea8]"
           >
-            <span className="material-symbols-outlined text-[15px]">person_add</span>
+            <span className="material-symbols-outlined text-[16px]">person_add</span>
             <span>Thêm tài khoản</span>
           </button>
         </div>

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Mentor } from '../types';
 import { mentorService } from '../api/services';
 import { mapMentorFromDTO } from '../api/mappers';
@@ -33,52 +33,57 @@ export const MentorsView: React.FC<MentorsViewProps> = () => {
   );
 
   return (
-    <div className="flex w-full flex-col animate-in fade-in duration-200">
-      <div className="mb-4 flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
+    <div className="flex w-full flex-col animate-in fade-in duration-200 space-y-3.5">
+      {/* Header */}
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs">
         <div>
-          <h1 className="text-[22px] font-semibold tracking-tight text-[#0b1c30]">
-            Faculty & Mentors Pool
-          </h1>
-          <p className="mt-0.5 text-[12.5px] text-[#64748b]">
-            Supervising professors, faculty advisors, active mentoring capacities, and student allocations.
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#004ac6] text-[20px]">supervisor_account</span>
+            <h1 className="text-[20px] font-bold tracking-tight text-[#0b1c30]">
+              Đội Ngũ Giảng Viên Hướng Dẫn
+            </h1>
+          </div>
+          <p className="mt-0.5 text-xs text-slate-500">
+            Giảng viên cố vấn thực tập, hạn mức hướng dẫn và tỷ lệ phân công sinh viên.
           </p>
         </div>
-        <div className="self-start rounded-lg border border-[#dce9ff] bg-[#eff4ff] px-3 py-1.5 text-[12px] font-medium text-[#004ac6] lg:self-auto">
-          Total Faculty Pool: {mentors.length}
+        <div className="self-start rounded-lg border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-[#004ac6] sm:self-auto">
+          Tổng số giảng viên: {mentors.length}
         </div>
       </div>
 
-      <div className="mb-5 max-w-md rounded-2xl border border-[#dbe5f3] bg-white p-3 shadow-xs">
-        <div className="flex items-center gap-2 rounded-xl border border-[#dbe5f3] bg-[#f8f9ff] px-3 py-2">
-          <span className="material-symbols-outlined text-[18px] text-[#64748b]">
+      {/* Search Toolbar */}
+      <div className="max-w-md rounded-xl border border-slate-200/90 bg-white p-2.5 shadow-2xs">
+        <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-1.5">
+          <span className="material-symbols-outlined text-[17px] text-slate-400">
             search
           </span>
           <input
             type="text"
-            placeholder="Search mentor by name, department, specialization..."
+            placeholder="Tìm theo tên, khoa, chuyên ngành..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-transparent text-[13px] text-[#0b1c30] outline-none placeholder-[#94a3b8]"
+            className="w-full bg-transparent text-xs text-[#0b1c30] outline-none placeholder:text-slate-400"
           />
         </div>
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center p-12 text-indigo-600">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+        <div className="flex justify-center p-12 text-[#004ac6]">
+          <div className="h-7 w-7 animate-spin rounded-full border-3 border-[#004ac6] border-t-transparent"></div>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-2xl border border-[#e2e8f0] bg-white p-12 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
-            <span className="material-symbols-outlined text-[24px]">supervisor_account</span>
+        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-2xs">
+          <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-[#004ac6]">
+            <span className="material-symbols-outlined text-[22px]">supervisor_account</span>
           </div>
-          <h3 className="text-base font-semibold text-[#0b1c30]">Chưa có dữ liệu Mentor từ API</h3>
-          <p className="mt-1 text-xs text-[#64748b]">
+          <h3 className="text-sm font-semibold text-[#0b1c30]">Chưa có dữ liệu Giảng viên</h3>
+          <p className="mt-0.5 text-xs text-slate-500">
             Cơ sở dữ liệu backend hiện tại chưa ghi nhận danh sách giảng viên hướng dẫn.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 2xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-2 2xl:grid-cols-3">
           {filtered.map((mentor) => {
             const loadPercent = Math.round((mentor.activeStudents / mentor.maxCapacity) * 100);
             const isNearCapacity = loadPercent >= 90;
@@ -86,67 +91,67 @@ export const MentorsView: React.FC<MentorsViewProps> = () => {
             return (
               <div
                 key={mentor.id}
-                className="flex flex-col justify-between rounded-2xl border border-[#dbe5f3] bg-white p-4 shadow-xs transition-all hover:shadow-md"
+                className="flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-2xs transition-all hover:border-slate-300 hover:shadow-xs"
               >
                 <div>
-                  <div className="mb-3 flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
+                  <div className="mb-2.5 flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
                       <img
                         src={mentor.avatar}
                         alt={mentor.name}
-                        className="h-12 w-12 rounded-xl border border-[#e2e8f0] object-cover shadow-xs"
+                        className="h-10 w-10 rounded-lg border border-slate-200 object-cover shadow-2xs"
                       />
                       <div>
-                        <h3 className="text-[15px] font-semibold text-[#0b1c30]">
+                        <h3 className="text-xs font-bold text-[#0b1c30]">
                           {mentor.name}
                         </h3>
-                        <div className="text-[11.5px] font-medium text-[#004ac6]">
+                        <div className="text-[11px] font-semibold text-[#004ac6]">
                           {mentor.title}
                         </div>
-                        <div className="text-[11.5px] text-[#64748b]">
+                        <div className="text-[11px] text-slate-500">
                           {mentor.department}
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1 rounded-lg border border-[#fde68a] bg-[#fffbeb] px-2 py-1 text-[11px] font-semibold text-[#b45309]">
-                      <span className="material-symbols-outlined text-[14px] text-amber-500">
+                    <div className="flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10.5px] font-bold text-amber-800">
+                      <span className="material-symbols-outlined text-[13px] text-amber-500">
                         star
                       </span>
                       <span>{mentor.rating}</span>
                     </div>
                   </div>
 
-                  <div className="mb-3 rounded-lg border border-[#dce9ff]/60 bg-[#eff4ff]/60 p-2.5 text-[11.5px] text-[#434655]">
-                    <span className="font-semibold text-[#0b1c30]">Specialization: </span>
+                  <div className="mb-2.5 rounded-lg border border-blue-100 bg-blue-50/40 p-2 text-[11px] text-slate-700">
+                    <span className="font-semibold text-slate-900">Lĩnh vực: </span>
                     {mentor.specialization}
                   </div>
                 </div>
 
-                <div className="border-t border-[#f1f5f9] pt-3">
-                  <div className="mb-1.5 flex items-center justify-between text-[11.5px]">
-                    <span className="text-[#64748b]">Advising Quota & Load</span>
+                <div className="border-t border-slate-100 pt-2.5">
+                  <div className="mb-1 flex items-center justify-between text-[11px]">
+                    <span className="text-slate-500">Chỉ tiêu & Tải trọng</span>
                     <span className={`font-semibold ${isNearCapacity ? 'text-amber-600' : 'text-[#004ac6]'}`}>
                       {mentor.activeStudents} / {mentor.maxCapacity} ({loadPercent}%)
                     </span>
                   </div>
-                  <div className="mb-2.5 h-2 overflow-hidden rounded-full bg-[#e5eeff]">
+                  <div className="mb-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
                     <div
-                      className={`h-full rounded-full transition-all ${isNearCapacity ? 'bg-amber-500' : 'bg-[#2563eb]'}`}
+                      className={`h-full rounded-full transition-all ${isNearCapacity ? 'bg-amber-500' : 'bg-[#004ac6]'}`}
                       style={{ width: `${loadPercent}%` }}
                     ></div>
                   </div>
 
-                  <div className="flex items-center justify-between text-[11.5px]">
-                    <span className="max-w-[180px] truncate text-[#64748b]">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="max-w-[180px] truncate text-slate-400">
                       {mentor.email}
                     </span>
                     <a
                       href={`mailto:${mentor.email}`}
-                      className="inline-flex items-center gap-1 text-[11.5px] font-medium text-[#004ac6] hover:underline"
+                      className="inline-flex items-center gap-1 text-[11px] font-medium text-[#004ac6] hover:underline"
                     >
                       <span className="material-symbols-outlined text-[13px]">mail</span>
-                      <span>Contact</span>
+                      <span>Liên hệ</span>
                     </a>
                   </div>
                 </div>

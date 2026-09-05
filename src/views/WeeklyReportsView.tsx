@@ -155,56 +155,59 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3.5 animate-in fade-in duration-200">
       {/* Header Bar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#0b1c30]">Quản Lý Báo Cáo Tuần</h1>
-          <p className="text-sm text-slate-500 mt-1">Theo dõi tiến độ thực tập hàng tuần, nhận xét & phê duyệt báo cáo sinh viên</p>
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#004ac6] text-[20px]">calendar_today</span>
+            <h1 className="text-[20px] font-bold tracking-tight text-[#0b1c30]">Quản Lý Báo Cáo Tuần</h1>
+          </div>
+          <p className="text-xs text-slate-500 mt-0.5">Theo dõi tiến độ thực tập hàng tuần, nhận xét & phê duyệt báo cáo sinh viên.</p>
         </div>
         {currentRole === 'Student' && (
           <button
             type="button"
             onClick={() => setIsCreateOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#004ac6] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#003eb3] transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#003eb3] transition-colors cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[18px]">add</span>
+            <span className="material-symbols-outlined text-[16px]">add</span>
             <span>Tạo Báo Cáo Tuần</span>
           </button>
         )}
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs">
-          <div className="text-xs font-medium text-slate-500 uppercase tracking-wider">Tổng Số Báo Cáo</div>
-          <div className="mt-2 text-2xl font-bold text-slate-900">{reports.length}</div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-2xs hover:border-slate-300 transition-all">
+          <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Tổng Số Báo Cáo</div>
+          <div className="mt-1.5 text-[22px] font-bold text-slate-900">{reports.length}</div>
         </div>
-        <div className="rounded-2xl border border-blue-200/80 bg-blue-50/50 p-4 shadow-xs">
-          <div className="text-xs font-medium text-blue-700 uppercase tracking-wider">Chờ Duyệt</div>
-          <div className="mt-2 text-2xl font-bold text-blue-800">{reports.filter(r => r.status === 'SUBMITTED').length}</div>
+        <div className="rounded-xl border border-blue-200/80 bg-blue-50/30 p-3.5 shadow-2xs hover:border-blue-300 transition-all">
+          <div className="text-[11px] font-semibold text-blue-800 uppercase tracking-wider">Chờ Duyệt</div>
+          <div className="mt-1.5 text-[22px] font-bold text-blue-900">{reports.filter(r => r.status === 'SUBMITTED').length}</div>
         </div>
-        <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/50 p-4 shadow-xs">
-          <div className="text-xs font-medium text-emerald-700 uppercase tracking-wider">Đã Duyệt</div>
-          <div className="mt-2 text-2xl font-bold text-emerald-800">{reports.filter(r => r.status === 'REVIEWED').length}</div>
+        <div className="rounded-xl border border-emerald-200/80 bg-emerald-50/30 p-3.5 shadow-2xs hover:border-emerald-300 transition-all">
+          <div className="text-[11px] font-semibold text-emerald-800 uppercase tracking-wider">Đã Duyệt</div>
+          <div className="mt-1.5 text-[22px] font-bold text-emerald-900">{reports.filter(r => r.status === 'REVIEWED').length}</div>
         </div>
-        <div className="rounded-2xl border border-amber-200/80 bg-amber-50/50 p-4 shadow-xs">
-          <div className="text-xs font-medium text-amber-700 uppercase tracking-wider">Cần Chỉnh Sửa</div>
-          <div className="mt-2 text-2xl font-bold text-amber-800">{reports.filter(r => r.status === 'NEEDS_REVISION').length}</div>
+        <div className="rounded-xl border border-amber-200/80 bg-amber-50/30 p-3.5 shadow-2xs hover:border-amber-300 transition-all">
+          <div className="text-[11px] font-semibold text-amber-800 uppercase tracking-wider">Cần Chỉnh Sửa</div>
+          <div className="mt-1.5 text-[22px] font-bold text-amber-900">{reports.filter(r => r.status === 'NEEDS_REVISION').length}</div>
         </div>
       </div>
 
       {/* Filters & View Toggle */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-xs">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200/90 bg-white p-2.5 shadow-2xs">
+        <div className="flex flex-wrap items-center gap-1.5">
           {['ALL', 'SUBMITTED', 'REVIEWED', 'NEEDS_REVISION', 'DRAFT'].map((st) => (
             <button
               key={st}
               type="button"
               onClick={() => setSelectedStatus(st)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+              className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors cursor-pointer ${
                 selectedStatus === st
-                  ? 'bg-[#004ac6] text-white shadow-xs'
+                  ? 'bg-[#004ac6] text-white shadow-2xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -214,12 +217,12 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
         </div>
 
         {/* View Mode Toggle */}
-        <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1 border border-slate-200">
+        <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-0.5 border border-slate-200">
           <button
             type="button"
             onClick={() => setViewMode('table')}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-semibold transition-all ${
-              viewMode === 'table' ? 'bg-white text-[#004ac6] shadow-xs' : 'text-slate-500 hover:text-slate-900'
+            className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
+              viewMode === 'table' ? 'bg-white text-[#004ac6] shadow-2xs' : 'text-slate-500 hover:text-slate-900'
             }`}
           >
             📋 Bảng
@@ -227,8 +230,8 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
           <button
             type="button"
             onClick={() => setViewMode('timeline')}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-semibold transition-all ${
-              viewMode === 'timeline' ? 'bg-white text-[#004ac6] shadow-xs' : 'text-slate-500 hover:text-slate-900'
+            className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
+              viewMode === 'timeline' ? 'bg-white text-[#004ac6] shadow-2xs' : 'text-slate-500 hover:text-slate-900'
             }`}
           >
             ⏳ Timeline
@@ -237,42 +240,42 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
       </div>
 
       {/* Main Content Layout (List & Preview) */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-12">
         {/* Reports List */}
-        <div className={`${selectedReport ? 'lg:col-span-6' : 'lg:col-span-12'} space-y-4`}>
+        <div className={`${selectedReport ? 'lg:col-span-6' : 'lg:col-span-12'} space-y-2.5`}>
           {loading ? (
-            <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-500">Đang tải báo cáo...</div>
+            <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-xs text-slate-500">Đang tải báo cáo...</div>
           ) : filteredReports.length === 0 ? (
-            <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-500">Không tìm thấy báo cáo tuần nào</div>
+            <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-xs text-slate-500">Không tìm thấy báo cáo tuần nào</div>
           ) : (
             filteredReports.map((report) => (
               <div
                 key={report.reportId}
                 onClick={() => setSelectedReport(report)}
-                className={`group cursor-pointer rounded-2xl border p-4 transition-all ${
+                className={`group cursor-pointer rounded-xl border p-3 transition-all ${
                   selectedReport?.reportId === report.reportId
-                    ? 'border-[#004ac6] bg-blue-50/30 shadow-sm'
-                    : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-xs'
+                    ? 'border-[#004ac6] bg-blue-50/30 shadow-2xs'
+                    : 'border-slate-200/90 bg-white hover:border-slate-300 hover:shadow-2xs'
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
+                  <div className="space-y-0.5">
                     <div className="flex items-center gap-2">
-                      <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700">Tuần {report.weekNumber}</span>
-                      <h3 className="font-semibold text-slate-900 text-base">{report.reportTitle || `Báo cáo Tuần ${report.weekNumber}`}</h3>
+                      <span className="rounded bg-slate-100 px-1.5 py-0.2 text-[10px] font-bold text-slate-700">Tuần {report.weekNumber}</span>
+                      <h3 className="font-semibold text-slate-900 text-xs">{report.reportTitle || `Báo cáo Tuần ${report.weekNumber}`}</h3>
                     </div>
-                    <p className="text-xs text-slate-500">Sinh viên: <span className="font-medium text-slate-700">{report.studentName || report.studentCode}</span> | Mentor: <span className="font-medium text-slate-700">{report.mentorName || 'Chưa phân công'}</span></p>
+                    <p className="text-[11px] text-slate-500">Sinh viên: <span className="font-medium text-slate-700">{report.studentName || report.studentCode}</span> | Mentor: <span className="font-medium text-slate-700">{report.mentorName || 'Chưa phân công'}</span></p>
                   </div>
                   <div>{getStatusBadge(report.status)}</div>
                 </div>
 
-                <div className="mt-3 line-clamp-2 text-xs text-slate-600 leading-relaxed bg-slate-50 rounded-xl p-2.5">
-                  <strong>Công việc đã hoàn thành:</strong> {report.completedTasks}
+                <div className="mt-2 line-clamp-2 text-[11px] text-slate-600 leading-relaxed bg-slate-50 rounded-lg p-2">
+                  <strong>Đã làm:</strong> {report.completedTasks}
                 </div>
 
-                <div className="mt-3 flex items-center justify-between text-xs text-slate-400 border-t border-slate-100 pt-2.5">
+                <div className="mt-2 flex items-center justify-between text-[10.5px] text-slate-400 border-t border-slate-100 pt-1.5">
                   <span>Giờ làm: <strong>{report.workingHours || 0}h</strong></span>
-                  <span>{report.submittedAt ? `Nộp ngày: ${new Date(report.submittedAt).toLocaleDateString('vi-VN')}` : 'Chưa nộp'}</span>
+                  <span>{report.submittedAt ? `Nộp: ${new Date(report.submittedAt).toLocaleDateString('vi-VN')}` : 'Chưa nộp'}</span>
                 </div>
               </div>
             ))
@@ -281,8 +284,8 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
 
         {/* Selected Report Detail Panel */}
         {selectedReport && (
-          <div className="lg:col-span-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-xs space-y-6">
-            <div className="flex items-start justify-between border-b border-slate-100 pb-4">
+          <div className="lg:col-span-6 rounded-xl border border-slate-200/90 bg-white p-4 shadow-2xs space-y-4">
+            <div className="flex items-start justify-between border-b border-slate-100 pb-3">
               <div>
                 <span className="rounded-md bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">Tuần {selectedReport.weekNumber}</span>
                 <h2 className="text-lg font-bold text-slate-900 mt-2">{selectedReport.reportTitle}</h2>

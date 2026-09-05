@@ -146,6 +146,52 @@ export interface StudentSubmission {
   submittedAt: string;
 }
 
+export type JoinMethod = 'MANUAL' | 'CODE';
+export type MemberStatus = 'ACTIVE' | 'REMOVED';
+
+export interface MentorGroup {
+  id: string;
+  groupId: number;
+  mentorId: number;
+  mentorName: string;
+  mentorEmail?: string;
+  phaseId: number;
+  phaseName: string;
+  groupName: string;
+  groupCode: string;
+  description?: string;
+  maxStudents: number;
+  isActive: boolean;
+  allowSelfJoin: boolean;
+  memberCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MentorGroupMember {
+  memberId: number;
+  studentId: number;
+  studentCode: string;
+  studentName: string;
+  studentEmail: string;
+  studentMajor?: string;
+  joinMethod: JoinMethod;
+  status: MemberStatus;
+  joinedAt: string;
+  removedAt?: string;
+}
+
+export interface MentorGroupSearchItem {
+  groupId: number;
+  groupName: string;
+  groupCode: string;
+  mentorName: string;
+  phaseName: string;
+  memberCount: number;
+  maxStudents: number;
+  allowSelfJoin: boolean;
+}
+
 export type NavPage =
   | 'dashboard'
   | 'companies'
@@ -155,6 +201,7 @@ export type NavPage =
   | 'users'
   | 'students'
   | 'mentors'
+  | 'mentor-groups'
   | 'internship-phases'
   | 'assignments'
   | 'evaluation-criteria'
@@ -163,4 +210,5 @@ export type NavPage =
   | 'my-profile'
   | 'login'
   | 'landing';
+
 

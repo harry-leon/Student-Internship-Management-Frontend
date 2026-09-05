@@ -30,6 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'users' as NavPage, label: 'Users', icon: 'group' },
         { id: 'students' as NavPage, label: 'Students', icon: 'school' },
         { id: 'mentors' as NavPage, label: 'Mentors', icon: 'supervisor_account' },
+        { id: 'mentor-groups' as NavPage, label: 'Mentor Groups', icon: 'groups' },
       ],
     },
     {

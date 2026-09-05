@@ -20,6 +20,7 @@ const PAGE_TITLES: Record<NavPage, { parent: string; current: string }> = {
   users: { parent: 'People', current: 'Users' },
   students: { parent: 'People', current: 'Students' },
   mentors: { parent: 'People', current: 'Mentors' },
+  'mentor-groups': { parent: 'People', current: 'Mentor Groups' },
   'internship-phases': { parent: 'Internship', current: 'Internship Phases' },
   assignments: { parent: 'Internship', current: 'Assignments' },
   'evaluation-criteria': { parent: 'Evaluation', current: 'Evaluation Criteria' },

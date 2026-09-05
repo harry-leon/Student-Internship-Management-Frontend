@@ -207,3 +207,116 @@ export const resultService = {
   create: (data: Partial<AssessmentResultDTO>) => api.post<AssessmentResultDTO>('/api/assessment_results', data),
   update: (id: number, data: Partial<AssessmentResultDTO>) => api.put<AssessmentResultDTO>(`/api/assessment_results/${id}`, data),
 };
+
+// ==================== MENTOR GROUP SERVICE ====================
+export interface MentorGroupDTO {
+  groupId: number;
+  mentorId: number;
+  mentorName: string;
+  mentorEmail?: string;
+  phaseId: number;
+  phaseName: string;
+  groupName: string;
+  groupCode: string;
+  description?: string;
+  maxStudents: number;
+  isActive: boolean;
+  allowSelfJoin: boolean;
+  memberCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MentorGroupDetailDTO extends MentorGroupDTO {
+  members: GroupMemberDTO[];
+}
+
+export interface GroupMemberDTO {
+  memberId: number;
+  studentId: number;
+  studentCode: string;
+  studentName: string;
+  studentEmail: string;
+  studentMajor?: string;
+  joinMethod: 'MANUAL' | 'CODE';
+  status: 'ACTIVE' | 'REMOVED';
+  joinedAt: string;
+  removedAt?: string;
+}
+
+export interface MentorGroupSearchDTO {
+  groupId: number;
+  groupName: string;
+  groupCode: string;
+  mentorName: string;
+  phaseName: string;
+  memberCount: number;
+  maxStudents: number;
+  allowSelfJoin: boolean;
+}
+
+export const mentorGroupService = {
+  create: (data: {
+    groupName: string;
+    groupCode?: string;
+    phaseId: number;
+    mentorId?: number;
+    joinPassword?: string;
+    description?: string;
+    maxStudents?: number;
+    allowSelfJoin?: boolean;
+  }) => api.post<MentorGroupDTO>('/api/mentor-groups', data),
+
+  getMyGroups: () => api.get<MentorGroupDTO[]>('/api/mentor-groups/my'),
+
+  getAll: (params?: { mentorName?: string; phaseId?: number; active?: boolean; page?: number; size?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.mentorName) query.append('mentorName', params.mentorName);
+    if (params?.phaseId !== undefined) query.append('phaseId', String(params.phaseId));
+    if (params?.active !== undefined) query.append('active', String(params.active));
+    if (params?.page !== undefined) query.append('page', String(params.page));
+    if (params?.size !== undefined) query.append('size', String(params.size));
+    const queryString = query.toString();
+    return api.get<any>(`/api/mentor-groups${queryString ? `?${queryString}` : ''}`);
+  },
+
+  getDetail: (groupId: number) => api.get<MentorGroupDetailDTO>(`/api/mentor-groups/${groupId}`),
+
+  update: (groupId: number, data: {
+    groupName: string;
+    description?: string;
+    maxStudents?: number;
+    isActive?: boolean;
+    allowSelfJoin?: boolean;
+  }) => api.put<MentorGroupDTO>(`/api/mentor-groups/${groupId}`, data),
+
+  updateStatus: (groupId: number, isActive: boolean) =>
+    api.patch<void>(`/api/mentor-groups/${groupId}/status`, { isActive }),
+
+  updatePassword: (groupId: number, joinPassword: string) =>
+    api.patch<void>(`/api/mentor-groups/${groupId}/join-password`, { joinPassword }),
+
+  addMember: (groupId: number, identifier: string) =>
+    api.post<GroupMemberDTO>(`/api/mentor-groups/${groupId}/members`, { identifier }),
+
+  getMembers: (groupId: number) =>
+    api.get<GroupMemberDTO[]>(`/api/mentor-groups/${groupId}/members`),
+
+  removeMember: (groupId: number, studentId: number) =>
+    api.delete<void>(`/api/mentor-groups/${groupId}/members/${studentId}`),
+
+  search: (params?: { mentorName?: string; groupCode?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.mentorName) query.append('mentorName', params.mentorName);
+    if (params?.groupCode) query.append('groupCode', params.groupCode);
+    const queryString = query.toString();
+    return api.get<MentorGroupSearchDTO[]>(`/api/mentor-groups/search${queryString ? `?${queryString}` : ''}`);
+  },
+
+  joinByCode: (data: { groupCode: string; joinPassword: string }) =>
+    api.post<MentorGroupDTO>('/api/mentor-groups/join', data),
+
+  getMyStudentGroups: () =>
+    api.get<MentorGroupDTO[]>('/api/mentor-groups/me'),
+};
+

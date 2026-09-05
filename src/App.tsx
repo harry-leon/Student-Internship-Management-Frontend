@@ -20,6 +20,7 @@ import { DashboardView } from './views/DashboardView';
 import { AssignmentsView } from './views/AssignmentsView';
 import { StudentsView } from './views/StudentsView';
 import { MentorsView } from './views/MentorsView';
+import { MentorGroupsView } from './views/MentorGroupsView';
 import { PhasesView } from './views/PhasesView';
 import { EvaluationCriteriaView } from './views/EvaluationCriteriaView';
 import { AssessmentRoundsView } from './views/AssessmentRoundsView';
@@ -288,6 +289,7 @@ function AppRoutes() {
                   />
                 } />
                 <Route path="/admin/mentors" element={<MentorsView currentRole={activeRole} />} />
+                <Route path="/admin/mentor-groups" element={<MentorGroupsView currentRole={activeRole} />} />
                 <Route path="/admin/internship-phases" element={
                   <PhasesView
                     phases={phases}

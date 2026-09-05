@@ -184,6 +184,13 @@ export const api = {
       body: body ? (body instanceof FormData ? body : JSON.stringify(body)) : undefined,
     }),
 
+  patch: <T>(url: string, body?: any, options?: RequestInit) =>
+    apiFetch<T>(url, {
+      ...options,
+      method: 'PATCH',
+      body: body ? (body instanceof FormData ? body : JSON.stringify(body)) : undefined,
+    }),
+
   delete: <T>(url: string, options?: RequestInit) =>
     apiFetch<T>(url, { ...options, method: 'DELETE' }),
 };

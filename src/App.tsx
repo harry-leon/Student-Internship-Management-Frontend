@@ -50,7 +50,7 @@ import {
 import { ROLE_PAGES, canAccessPage, canManageSystemData, canUpdateAssignmentStatus } from './auth/roleAccess';
 
 function AppRoutes() {
-  const { isAuthenticated, user, can } = useAuth();
+  const { isAuthenticated, user, can, hasFeature } = useAuth();
   const [currentRole, setCurrentRole] = useState<Role>('Admin');
   const location = useLocation();
   const navigate = useNavigate();
@@ -77,7 +77,7 @@ function AppRoutes() {
   const currentPage = (currentPagePath as NavPage) || 'dashboard';
   const activeRole = user?.role ? (user.role as Role) : currentRole;
   const allowedPages = ROLE_PAGES[activeRole] || ROLE_PAGES.Admin;
-  const isCurrentPageAllowed = canAccessPage(activeRole, currentPage, can);
+  const isCurrentPageAllowed = canAccessPage(activeRole, currentPage, can, hasFeature);
   const canManage = canManageSystemData(activeRole);
 
   const activePhase = phases[0] || {
@@ -308,7 +308,7 @@ function AppRoutes() {
                   />
                 } />
                 <Route path="/admin/assessment-rounds" element={<AssessmentRoundsView rounds={rounds} />} />
-                <Route path="/admin/assessment-results" element={<AssessmentResultsView students={[]} />} />
+                <Route path="/admin/assessment-results" element={<AssessmentResultsView students={[]} currentRole={activeRole} />} />
                 <Route path="/admin/users" element={<UsersView users={[]} onRefreshData={() => {}} />} />
                 <Route path="/admin/role-permissions" element={<RolePermissionsView currentRole={activeRole} />} />
                 <Route path="/admin/my-profile" element={<ProfileView currentRole={activeRole} onRoleChange={setCurrentRole} />} />

@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Role, Student } from '../types';
 import { GradingFormModal } from '../components/GradingFormModal';
 import { assignmentService } from '../api/services';
+import { assessmentGradingService, AssessmentGradingForm } from '../api/assessmentGradingService';
+import { useAuth } from '../context/AuthContext';
+import { canGrade } from '../auth/roleAccess';
 
 interface AssessmentResultsViewProps {
   students: Student[];
@@ -12,13 +15,36 @@ export const AssessmentResultsView: React.FC<AssessmentResultsViewProps> = ({
   students,
   currentRole = 'Admin',
 }) => {
+  const { can, hasFeature } = useAuth();
   const [isGradingOpen, setIsGradingOpen] = useState(false);
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<number>(1);
   const [selectedRoundId, setSelectedRoundId] = useState<number>(1);
   const [displayList, setDisplayList] = useState<Student[]>(students);
+  const [loading, setLoading] = useState(false);
+
+  // Student-specific state
+  const [myResults, setMyResults] = useState<AssessmentGradingForm[]>([]);
+  const [studentLoading, setStudentLoading] = useState(false);
+
+  const isStudent = currentRole === 'Student';
+  const isMentor = currentRole === 'Mentor';
+  const isAdmin = currentRole === 'Admin';
+  const userCanGrade = canGrade((currentRole as Role) || 'Admin', can, hasFeature);
 
   useEffect(() => {
-    if (students.length === 0) {
+    if (isStudent) {
+      setStudentLoading(true);
+      assessmentGradingService.getResults()
+        .then((res) => {
+          setMyResults(Array.isArray(res) ? res : []);
+        })
+        .catch((err) => {
+          console.warn('Error fetching student assessment results:', err);
+          setMyResults([]);
+        })
+        .finally(() => setStudentLoading(false));
+    } else {
+      setLoading(true);
       assignmentService.getAll()
         .then((res) => {
           let arr = [];
@@ -44,13 +70,174 @@ export const AssessmentResultsView: React.FC<AssessmentResultsViewProps> = ({
             setDisplayList(mapped);
           }
         })
-        .catch((err) => console.warn('Error fetching assignments for grading:', err));
-    } else {
-      setDisplayList(students);
+        .catch((err) => console.warn('Error fetching assignments for grading:', err))
+        .finally(() => setLoading(false));
     }
-  }, [students]);
+  }, [currentRole, isStudent]);
 
-  const mockDisplayStudents = displayList.length > 0 ? displayList : [
+  const handleOpenGrading = (assignmentIdNum: number, roundIdNum: number) => {
+    if (!userCanGrade) return;
+    setSelectedAssignmentId(assignmentIdNum);
+    setSelectedRoundId(roundIdNum);
+    setIsGradingOpen(true);
+  };
+
+  // =========================================================================
+  // STUDENT VIEW: Dedicated Personal Evaluation Scorecard (Zero Grading Tools)
+  // =========================================================================
+  if (isStudent) {
+    return (
+      <div className="flex flex-col w-full animate-in fade-in duration-200 space-y-4">
+        {/* Title */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#004ac6] text-[20px]">workspace_premium</span>
+              <h1 className="text-[20px] font-bold text-[#0b1c30] tracking-tight">
+                Kết Quả Đánh Giá Thực Tập
+              </h1>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Bảng điểm chi tiết theo tiêu chí Rubric và nhận xét đánh giá từ Giảng viên hướng dẫn.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 flex items-center gap-1">
+              <span className="material-symbols-outlined text-[14px]">verified_user</span>
+              Cổng Sinh Viên
+            </span>
+          </div>
+        </div>
+
+        {studentLoading ? (
+          <div className="bg-white p-12 rounded-xl border border-slate-200 text-center text-xs text-slate-500">
+            Đang tải kết quả đánh giá của bạn...
+          </div>
+        ) : myResults.length === 0 ? (
+          <div className="bg-white p-10 rounded-2xl border border-slate-200 text-center max-w-lg mx-auto my-6 shadow-2xs">
+            <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center mx-auto mb-3">
+              <span className="material-symbols-outlined text-[28px]">pending_actions</span>
+            </div>
+            <h3 className="text-base font-bold text-slate-900">Chưa Có Kết Quả Đánh Giá Công Bố</h3>
+            <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+              Kết quả đánh giá đợt thực tập của bạn hiện đang trong quá trình chấm điểm hoặc chưa được Quản trị viên công bố chính thức. Vui lòng quay lại kiểm tra sau.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {myResults.map((res, index) => {
+              const totalScore = res.totalScore ?? 0;
+              const weightedScore = res.weightedScore ?? totalScore;
+              const isHonors = (weightedScore || totalScore) >= 9.0;
+              const isGood = (weightedScore || totalScore) >= 8.0;
+
+              return (
+                <div key={res.submissionId || index} className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
+                  {/* Score Header Summary */}
+                  <div className="p-4 sm:p-5 border-b border-slate-100 bg-gradient-to-r from-blue-50/50 via-slate-50/30 to-transparent">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">
+                            {res.roundName || 'Đợt đánh giá thực tập'}
+                          </span>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            ✓ ĐÃ CÔNG BỐ
+                          </span>
+                        </div>
+                        <h2 className="text-base font-bold text-[#0b1c30] mt-1">
+                          Phiếu Đánh Giá Sinh Viên
+                        </h2>
+                        <div className="text-xs text-slate-500 mt-0.5">
+                          Giảng viên chấm: <strong className="text-slate-700">{res.evaluatedByName || 'Giảng viên hướng dẫn'}</strong>
+                          {res.publishedAt && (
+                            <span className="ml-2 text-slate-400">
+                              (Công bố: {new Date(res.publishedAt).toLocaleDateString('vi-VN')})
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Overall Scores */}
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <div className="text-[10.5px] uppercase font-semibold text-slate-400">Điểm Trọng Số</div>
+                          <div className="text-[26px] font-bold text-[#004ac6] leading-none mt-0.5 font-mono">
+                            {weightedScore.toFixed(2)}
+                            <span className="text-xs font-normal text-slate-400 ml-1">/ 10</span>
+                          </div>
+                        </div>
+                        <div className="h-10 w-px bg-slate-200 hidden sm:block"></div>
+                        <div>
+                          {isHonors ? (
+                            <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                              XUẤT SẮC
+                            </span>
+                          ) : isGood ? (
+                            <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                              GIỎI
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              ĐẠT
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Criteria Breakdown Table */}
+                  <div className="overflow-x-auto no-scrollbar">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="bg-slate-50/80 text-[11px] font-semibold uppercase text-slate-600 tracking-wider border-b border-slate-200">
+                          <th className="py-2.5 px-4 w-12 text-center">STT</th>
+                          <th className="py-2.5 px-4">Tiêu Chí Đánh Giá Rubric</th>
+                          <th className="py-2.5 px-3 text-center w-28">Trọng Số</th>
+                          <th className="py-2.5 px-3 text-center w-28">Điểm Tối Đa</th>
+                          <th className="py-2.5 px-3 text-center w-28">Điểm Đạt Được</th>
+                          <th className="py-2.5 px-4">Nhận Xét Của Giảng Viên</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-slate-800">
+                        {(res.criteria || []).map((c, cIdx) => (
+                          <tr key={c.criterionId || cIdx} className="hover:bg-blue-50/30 transition-colors">
+                            <td className="py-3 px-4 text-center font-mono text-slate-400">{cIdx + 1}</td>
+                            <td className="py-3 px-4">
+                              <div className="font-semibold text-slate-900">{c.criterionName}</div>
+                              {c.description && <div className="text-[11px] text-slate-500 mt-0.5">{c.description}</div>}
+                            </td>
+                            <td className="py-3 px-3 text-center font-mono font-medium text-slate-700">
+                              {c.weight}%
+                            </td>
+                            <td className="py-3 px-3 text-center font-mono text-slate-500">
+                              {c.maxScore}
+                            </td>
+                            <td className="py-3 px-3 text-center font-mono font-bold text-[#004ac6] text-sm">
+                              {c.score != null ? c.score.toFixed(1) : '--'}
+                            </td>
+                            <td className="py-3 px-4 text-slate-600 italic">
+                              {c.comments || 'Không có nhận xét thêm.'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // ADMIN & MENTOR VIEW: Grading Management & Rubric Assessment
+  // =========================================================================
+  const displayStudents = displayList.length > 0 ? displayList : [
     {
       id: '1',
       name: 'Nguyen Van A',
@@ -81,12 +268,6 @@ export const AssessmentResultsView: React.FC<AssessmentResultsViewProps> = ({
     },
   ];
 
-  const handleOpenGrading = (assignmentIdNum: number, roundIdNum: number) => {
-    setSelectedAssignmentId(assignmentIdNum);
-    setSelectedRoundId(roundIdNum);
-    setIsGradingOpen(true);
-  };
-
   return (
     <div className="flex flex-col w-full animate-in fade-in duration-200 space-y-3.5">
       {/* Title */}
@@ -99,11 +280,13 @@ export const AssessmentResultsView: React.FC<AssessmentResultsViewProps> = ({
             </h1>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Quản lý bảng điểm thực tập, chấm điểm theo Rubric & công bố kết quả đánh giá.
+            {isMentor
+              ? 'Quản lý bảng điểm thực tập & chấm điểm theo Rubric cho sinh viên hướng dẫn.'
+              : 'Quản lý bảng điểm thực tập, chấm điểm theo Rubric & công bố kết quả đánh giá.'}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {currentRole !== 'Student' && (
+          {userCanGrade && (
             <button
               type="button"
               onClick={() => handleOpenGrading(1, 1)}
@@ -164,10 +347,13 @@ export const AssessmentResultsView: React.FC<AssessmentResultsViewProps> = ({
 
       {/* Student Scorecards Table */}
       <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
-        <div className="px-3.5 py-2.5 border-b border-slate-100">
+        <div className="px-3.5 py-2.5 border-b border-slate-100 flex items-center justify-between">
           <h3 className="text-xs font-bold text-[#0b1c30]">
             Bảng Tổng Hợp Điểm Đánh Giá Sinh Viên
           </h3>
+          <span className="text-[11px] text-slate-500">
+            {displayStudents.length} sinh viên trong danh sách
+          </span>
         </div>
 
         <div className="overflow-x-auto no-scrollbar">
@@ -185,7 +371,7 @@ export const AssessmentResultsView: React.FC<AssessmentResultsViewProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-800">
-              {mockDisplayStudents.map((s, idx) => {
+              {displayStudents.map((s, idx) => {
                 const score = s.score || 8.5;
                 const isHonors = score >= 9.0;
                 const assignmentIdNum = Number(s.id) || (idx + 1);
@@ -228,13 +414,17 @@ export const AssessmentResultsView: React.FC<AssessmentResultsViewProps> = ({
                       )}
                     </td>
                     <td className="py-2.5 px-3.5 text-right">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenGrading(assignmentIdNum, 1)}
-                        className="rounded-md bg-blue-50 px-2 py-1 text-[11px] font-semibold text-[#004ac6] hover:bg-blue-100 transition-colors cursor-pointer"
-                      >
-                        {currentRole === 'Student' ? 'Xem Rubric' : 'Chấm / Sửa'}
-                      </button>
+                      {userCanGrade ? (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenGrading(assignmentIdNum, 1)}
+                          className="rounded-md bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-[#004ac6] hover:bg-blue-100 transition-colors cursor-pointer"
+                        >
+                          Chấm / Sửa
+                        </button>
+                      ) : (
+                        <span className="text-[11px] text-slate-400 italic">Chỉ xem</span>
+                      )}
                     </td>
                   </tr>
                 );
@@ -244,13 +434,15 @@ export const AssessmentResultsView: React.FC<AssessmentResultsViewProps> = ({
         </div>
       </div>
 
-      <GradingFormModal
-        isOpen={isGradingOpen}
-        onClose={() => setIsGradingOpen(false)}
-        assignmentId={selectedAssignmentId}
-        roundId={selectedRoundId}
-        currentRole={currentRole}
-      />
+      {userCanGrade && (
+        <GradingFormModal
+          isOpen={isGradingOpen}
+          onClose={() => setIsGradingOpen(false)}
+          assignmentId={selectedAssignmentId}
+          roundId={selectedRoundId}
+          currentRole={currentRole}
+        />
+      )}
     </div>
   );
 };

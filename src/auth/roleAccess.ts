@@ -63,10 +63,18 @@ export const PAGE_PERMISSIONS: Partial<Record<NavPage, string>> = {
 export const canAccessPage = (
   role: Role,
   page: NavPage,
-  hasPermission?: (perm: string) => boolean
+  hasPermission?: (perm: string) => boolean,
+  hasFeature?: (feature: string) => boolean
 ): boolean => {
   const allowed = ROLE_PAGES[role]?.includes(page) ?? false;
   if (!allowed) return false;
+
+  // Student can only access assessment-results if STUDENT_VIEW_SCORE_ENABLED is on
+  if (role === 'Student' && page === 'assessment-results') {
+    if (hasFeature && !hasFeature('STUDENT_VIEW_SCORE_ENABLED')) {
+      return false;
+    }
+  }
 
   const requiredPermission = PAGE_PERMISSIONS[page];
   if (requiredPermission && hasPermission) {
@@ -78,3 +86,41 @@ export const canAccessPage = (
 export const canManageSystemData = (role: Role): boolean => role === 'Admin';
 
 export const canUpdateAssignmentStatus = (role: Role): boolean => role === 'Admin';
+
+// Action permission checkers
+export const canCreate = (role: Role, module: string, can?: (perm: string) => boolean): boolean => {
+  if (role === 'Admin') return true;
+  return can ? can(`${module}_CREATE`) : false;
+};
+
+export const canEdit = (role: Role, module: string, can?: (perm: string) => boolean): boolean => {
+  if (role === 'Admin') return true;
+  return can ? can(`${module}_UPDATE`) : false;
+};
+
+export const canDelete = (role: Role, module: string, can?: (perm: string) => boolean): boolean => {
+  if (role === 'Admin') return true;
+  return can ? can(`${module}_DELETE`) : false;
+};
+
+export const canDownload = (role: Role, module: string, can?: (perm: string) => boolean): boolean => {
+  if (role === 'Admin') return true;
+  return can ? can(`${module}_DOWNLOAD`) : false;
+};
+
+export const canGrade = (role: Role, can?: (perm: string) => boolean, hasFeature?: (feature: string) => boolean): boolean => {
+  if (role === 'Student') return false; // Students can NEVER grade
+  if (role === 'Admin') return true;
+  const hasPerm = can ? can('ASSESSMENT_SCORE') : true;
+  const isEnabled = hasFeature ? hasFeature('MENTOR_SCORING_ENABLED') : true;
+  return hasPerm && isEnabled;
+};
+
+export const canPublish = (role: Role, can?: (perm: string) => boolean): boolean => {
+  if (role !== 'Admin') return false; // Only Admin can publish
+  return can ? can('ASSESSMENT_PUBLISH') : true;
+};
+
+export const canExport = (role: Role): boolean => {
+  return role === 'Admin';
+};

@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { authService, UserResponse, LoginRequest } from '../api/authService';
 import { capabilityService, UserCapabilityResponse } from '../api/capabilityService';
 import { getStoredToken } from '../api/apiClient';
+import { canAccessPage as checkPageAccess } from '../auth/roleAccess';
+import { NavPage, Role } from '../types';
 
 interface AuthContextType {
   user: UserResponse | null;
@@ -12,6 +14,8 @@ interface AuthContextType {
   capabilities: UserCapabilityResponse | null;
   can: (permissionCode: string) => boolean;
   isFeatureEnabled: (featureCode: string) => boolean;
+  hasFeature: (featureCode: string) => boolean;
+  canAccessPage: (pageId: any) => boolean;
   login: (credentials: LoginRequest) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
@@ -146,6 +150,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return capabilities.features.includes(featureCode);
   }, [capabilities]);
 
+  const hasFeature = isFeatureEnabled;
+
+  const canAccessPageHelper = useCallback((pageId: NavPage): boolean => {
+    if (!user?.role) return false;
+    return checkPageAccess(user.role as Role, pageId, can, isFeatureEnabled);
+  }, [user, can, isFeatureEnabled]);
+
   return (
     <AuthContext.Provider
       value={{
@@ -157,6 +168,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         capabilities,
         can,
         isFeatureEnabled,
+        hasFeature,
+        canAccessPage: canAccessPageHelper,
         login,
         logout,
         checkAuth,

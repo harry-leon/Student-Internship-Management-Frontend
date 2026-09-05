@@ -17,7 +17,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { can } = useAuth();
+  const { can, hasFeature } = useAuth();
 
   const navSections = [
     {
@@ -65,7 +65,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const filteredSections = navSections
     .map((section) => ({
       ...section,
-      items: section.items.filter((item) => canAccessPage(currentRole, item.id, can)),
+      items: section.items.filter((item) => canAccessPage(currentRole, item.id, can, hasFeature)),
     }))
     .filter((section) => section.items.length > 0);
 

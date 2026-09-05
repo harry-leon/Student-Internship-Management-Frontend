@@ -26,6 +26,8 @@ export const UsersView: React.FC<UsersViewProps> = ({ users: initialUsers, onRef
 
   // Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserAccount | null>(null);
+  const [deletingUser, setDeletingUser] = useState<UserAccount | null>(null);
 
   // Form State
   const [username, setUsername] = useState('');
@@ -34,6 +36,12 @@ export const UsersView: React.FC<UsersViewProps> = ({ users: initialUsers, onRef
   const [role, setRole] = useState<Role>('Student');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Edit Form State
+  const [editFullName, setEditFullName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editRole, setEditRole] = useState<Role>('Student');
+  const [editIsActive, setEditIsActive] = useState<boolean>(true);
 
   // Fetch Users directly using Spring Boot GET /api/users endpoint
   const fetchUsersFromApi = useCallback(async () => {
@@ -127,6 +135,68 @@ export const UsersView: React.FC<UsersViewProps> = ({ users: initialUsers, onRef
       if (onRefreshData) onRefreshData();
     } catch (err: any) {
       setFormError(err.message || 'Không thể tạo tài khoản người dùng');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleOpenEdit = (u: UserAccount) => {
+    setEditingUser(u);
+    setEditFullName(u.name);
+    setEditEmail(u.email);
+    setEditRole(u.role);
+    setEditIsActive(u.status === 'Active');
+    setFormError(null);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    if (!editFullName.trim()) {
+      setFormError('Họ tên không được để trống');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setFormError(null);
+    try {
+      await userService.update(Number(editingUser.id), {
+        fullName: editFullName,
+        email: editEmail,
+        role: editRole,
+        isActive: editIsActive,
+      });
+      setEditingUser(null);
+      fetchUsersFromApi();
+      if (onRefreshData) onRefreshData();
+    } catch (err: any) {
+      setFormError(err.message || 'Không thể cập nhật người dùng');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleToggleStatus = async (u: UserAccount) => {
+    try {
+      const nextStatus = u.status !== 'Active';
+      await userService.updateStatus(Number(u.id), nextStatus);
+      fetchUsersFromApi();
+      if (onRefreshData) onRefreshData();
+    } catch (err: any) {
+      alert(err.message || 'Không thể đổi trạng thái tài khoản');
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingUser) return;
+    setIsSubmitting(true);
+    try {
+      await userService.delete(Number(deletingUser.id));
+      setDeletingUser(null);
+      fetchUsersFromApi();
+      if (onRefreshData) onRefreshData();
+    } catch (err: any) {
+      alert(err.message || 'Không thể xóa tài khoản');
     } finally {
       setIsSubmitting(false);
     }
@@ -327,14 +397,36 @@ export const UsersView: React.FC<UsersViewProps> = ({ users: initialUsers, onRef
                           {u.status || 'Active'}
                         </span>
                       </td>
-                      <td className="px-2.5 py-2 text-right">
+                      <td className="px-2.5 py-2 text-right space-x-1 whitespace-nowrap">
                         <button
                           type="button"
-                          className="rounded-md p-1 text-[#737686] transition-colors hover:bg-[#e5eeff] hover:text-[#0b1c30]"
+                          onClick={() => handleOpenEdit(u)}
+                          className="rounded-md p-1 text-[#004ac6] transition-colors hover:bg-[#dce9ff]"
+                          title="Chỉnh sửa tài khoản"
                         >
-                          <span className="material-symbols-outlined text-[18px]">
-                            more_horiz
+                          <span className="material-symbols-outlined text-[16px]">edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleStatus(u)}
+                          className={`rounded-md p-1 transition-colors ${
+                            u.status !== 'Inactive'
+                              ? 'text-emerald-600 hover:bg-emerald-50 hover:text-red-600'
+                              : 'text-slate-400 hover:bg-slate-100 hover:text-emerald-600'
+                          }`}
+                          title={u.status !== 'Inactive' ? 'Vô hiệu hóa tài khoản' : 'Kích hoạt tài khoản'}
+                        >
+                          <span className="material-symbols-outlined text-[16px]">
+                            {u.status !== 'Inactive' ? 'check_circle' : 'block'}
                           </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeletingUser(u)}
+                          className="rounded-md p-1 text-rose-600 transition-colors hover:bg-rose-50"
+                          title="Xóa tài khoản"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">delete</span>
                         </button>
                       </td>
                     </tr>
@@ -493,6 +585,157 @@ export const UsersView: React.FC<UsersViewProps> = ({ users: initialUsers, onRef
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Edit User Modal */}
+      {editingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-[#e2e8f0] px-5 py-3.5 bg-slate-50/50">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#004ac6] text-[18px]">edit</span>
+                <h3 className="text-sm font-bold text-[#0b1c30]">
+                  Chỉnh Sửa Tài Khoản #{editingUser.id}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingUser(null)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} className="space-y-3.5 p-5">
+              {formError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700">
+                  {formError}
+                </div>
+              )}
+
+              <div>
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                  Tên tài khoản (Read-only)
+                </label>
+                <input
+                  type="text"
+                  disabled
+                  value={editingUser.username || ''}
+                  className="w-full rounded-lg border border-[#e2e8f0] bg-slate-50 px-3 py-1.5 text-xs text-slate-500 cursor-not-allowed"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                  Họ và Tên *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editFullName}
+                  onChange={(e) => setEditFullName(e.target.value)}
+                  className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                  Vai Trò (Role)
+                </label>
+                <select
+                  value={editRole}
+                  onChange={(e) => setEditRole(e.target.value as Role)}
+                  className="w-full rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                >
+                  <option value="Admin">Admin (Quản trị viên)</option>
+                  <option value="Mentor">Mentor (Giảng viên hướng dẫn)</option>
+                  <option value="Student">Student (Sinh viên thực tập)</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="editIsActive"
+                  checked={editIsActive}
+                  onChange={(e) => setEditIsActive(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-[#004ac6] focus:ring-[#004ac6]"
+                />
+                <label htmlFor="editIsActive" className="text-xs font-medium text-[#0b1c30]">
+                  Kích hoạt trạng thái hoạt động (Active)
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-2 border-t border-[#f1f5f9] pt-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingUser(null)}
+                  className="rounded-lg bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#64748b] hover:bg-[#e2e8f0]"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#003ea8]"
+                >
+                  {isSubmitting ? 'Đang lưu...' : 'Lưu Thay Đổi'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deletingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-xl p-5 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+                <span className="material-symbols-outlined text-[22px]">warning</span>
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-[#0b1c30]">Xác Nhận Xóa Tài Khoản</h3>
+                <p className="text-xs text-slate-500">Hành động này không thể hoàn tác.</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-[#434655]">
+              Bạn có chắc chắn muốn xóa tài khoản <strong>{deletingUser.name}</strong> ({deletingUser.email}) khỏi hệ thống?
+            </p>
+
+            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+              <button
+                type="button"
+                onClick={() => setDeletingUser(null)}
+                className="rounded-lg bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#64748b] hover:bg-[#e2e8f0]"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={handleConfirmDelete}
+                className="rounded-lg bg-rose-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-rose-700"
+              >
+                {isSubmitting ? 'Đang xóa...' : 'Xóa Tài Khoản'}
+              </button>
+            </div>
           </div>
         </div>
       )}

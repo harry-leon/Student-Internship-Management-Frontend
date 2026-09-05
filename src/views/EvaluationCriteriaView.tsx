@@ -1,231 +1,445 @@
-import React, { useState } from 'react';
-import { EvaluationCriterion, Role } from '../types';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Role } from '../types';
+import { criterionService, EvaluationCriterionDTO } from '../api/services';
 import { canManageSystemData } from '../auth/roleAccess';
 
 interface EvaluationCriteriaViewProps {
-  criteria: EvaluationCriterion[];
-  currentRole: Role;
-  onAddCriterion: (crit: EvaluationCriterion) => void;
+  criteria?: any[];
+  currentRole?: Role;
+  onAddCriterion?: (crit: any) => void;
 }
 
 export const EvaluationCriteriaView: React.FC<EvaluationCriteriaViewProps> = ({
-  criteria,
-  currentRole,
-  onAddCriterion,
+  currentRole = 'Admin',
 }) => {
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState('Engineering & Craft');
-  const [weight, setWeight] = useState(25);
-  const [description, setDescription] = useState('');
-  const canManage = canManageSystemData(currentRole);
+  const [criteriaList, setCriteriaList] = useState<EvaluationCriterionDTO[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const canManage = canManageSystemData(currentRole as Role);
 
-  const totalWeight = criteria.reduce((sum, c) => sum + c.weight, 0);
+  // Modal State
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingCriterion, setEditingCriterion] = useState<EvaluationCriterionDTO | null>(null);
+  const [deletingCriterion, setDeletingCriterion] = useState<EvaluationCriterionDTO | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const handleSave = (e: React.FormEvent) => {
+  // Form fields
+  const [formName, setFormName] = useState('');
+  const [formDescription, setFormDescription] = useState('');
+  const [formMaxScore, setFormMaxScore] = useState<number>(10);
+
+  const fetchCriteria = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await criterionService.getAll();
+      setCriteriaList(Array.isArray(res) ? res : []);
+    } catch (err) {
+      console.error('Error fetching evaluation criteria:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCriteria();
+  }, [fetchCriteria]);
+
+  const handleOpenCreate = () => {
+    setFormName('');
+    setFormDescription('');
+    setFormMaxScore(10);
+    setFormError(null);
+    setIsCreateModalOpen(true);
+  };
+
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!formName.trim()) {
+      setFormError('Tên tiêu chí đánh giá không được để trống');
+      return;
+    }
+    setIsSubmitting(true);
+    setFormError(null);
+    try {
+      await criterionService.create({
+        criterionName: formName,
+        description: formDescription,
+        maxScore: Number(formMaxScore) || 10,
+      });
+      setIsCreateModalOpen(false);
+      fetchCriteria();
+    } catch (err: any) {
+      setFormError(err.message || 'Không thể tạo tiêu chí đánh giá');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-    onAddCriterion({
-      id: `crit-${Date.now()}`,
-      name,
-      category,
-      weight: Number(weight),
-      maxScore: 10,
-      description: description || 'Evaluation criteria defined by university internship committee.',
-    });
+  const handleOpenEdit = (crit: EvaluationCriterionDTO) => {
+    setEditingCriterion(crit);
+    setFormName(crit.criterionName);
+    setFormDescription(crit.description || '');
+    setFormMaxScore(crit.maxScore || 10);
+    setFormError(null);
+  };
 
-    setName('');
-    setDescription('');
-    setShowAddModal(false);
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCriterion) return;
+    if (!formName.trim()) {
+      setFormError('Tên tiêu chí không được để trống');
+      return;
+    }
+    setIsSubmitting(true);
+    setFormError(null);
+    try {
+      await criterionService.update(editingCriterion.criterionId, {
+        criterionName: formName,
+        description: formDescription,
+        maxScore: Number(formMaxScore) || 10,
+      });
+      setEditingCriterion(null);
+      fetchCriteria();
+    } catch (err: any) {
+      setFormError(err.message || 'Không thể cập nhật tiêu chí');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingCriterion) return;
+    setIsSubmitting(true);
+    try {
+      await criterionService.delete(deletingCriterion.criterionId);
+      setDeletingCriterion(null);
+      fetchCriteria();
+    } catch (err: any) {
+      alert(err.message || 'Không thể xóa tiêu chí đánh giá');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className="flex flex-col w-full animate-in fade-in duration-200">
+    <div className="flex flex-col w-full animate-in fade-in duration-200 space-y-3.5">
       {/* Title */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs">
         <div>
-          <h1 className="text-[24px] font-semibold text-[#0b1c30] tracking-tight">
-            Evaluation Criteria & Rubrics
-          </h1>
-          <p className="text-[13px] text-[#64748b] mt-0.5">
-            Institutional rubrics, grading criteria weights, and academic performance indicators.
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#004ac6] text-[20px]">grading</span>
+            <h1 className="text-[20px] font-bold text-[#0b1c30] tracking-tight">
+              Tiêu Chí & Thang Điểm Đánh Giá (Evaluation Rubrics)
+            </h1>
+          </div>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Quản lý các tiêu chuẩn chấm điểm, mô tả chỉ số đánh giá và thang điểm tối đa cho sinh viên.
           </p>
         </div>
         {canManage && (
           <button
             type="button"
-            onClick={() => setShowAddModal(true)}
-            className="h-9 px-4 rounded-xl bg-[#004ac6] text-white text-[13px] font-medium shadow-xs hover:bg-[#003ea8] transition-all flex items-center gap-2 self-start sm:self-auto cursor-pointer"
+            onClick={handleOpenCreate}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#003ea8] transition-colors cursor-pointer self-start sm:self-auto"
           >
-            <span className="material-symbols-outlined text-[18px]">add</span>
-            <span>Add Grading Rubric</span>
+            <span className="material-symbols-outlined text-[16px]">add</span>
+            <span>Thêm Tiêu Chí Mới</span>
           </button>
         )}
       </div>
 
-      {/* Weight Summary Banner */}
-      <div className="bg-white p-5 rounded-xl border border-[#e2e8f0] shadow-xs mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div>
-          <div className="text-[14px] font-semibold text-[#0b1c30]">
-            Grading Weight Distribution
-          </div>
-          <div className="text-[12px] text-[#64748b]">
-            Total weighted score across all assessment modules must sum to exactly 100%.
-          </div>
+      {isLoading ? (
+        <div className="flex justify-center p-12 text-[#004ac6]">
+          <div className="h-7 w-7 animate-spin rounded-full border-3 border-[#004ac6] border-t-transparent"></div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <span className="text-[11px] text-[#64748b] uppercase tracking-wider block">
-              Cumulative Weight
-            </span>
-            <span
-              className={`text-[20px] font-bold ${
-                totalWeight === 100 ? 'text-emerald-600' : 'text-amber-600'
-              }`}
+      ) : criteriaList.length === 0 ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-2xs">
+          <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-[#004ac6]">
+            <span className="material-symbols-outlined text-[22px]">grading</span>
+          </div>
+          <h3 className="text-sm font-semibold text-[#0b1c30]">Chưa có tiêu chí đánh giá nào</h3>
+          <p className="mt-0.5 text-xs text-slate-500">
+            Tạo mới tiêu chuẩn đánh giá để áp dụng vào các vòng chấm điểm thực tập.
+          </p>
+          {canManage && (
+            <button
+              onClick={handleOpenCreate}
+              className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-[#003896] transition-colors"
             >
-              {totalWeight}% / 100%
-            </span>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-[#eff4ff] flex items-center justify-center text-[#004ac6]">
-            <span className="material-symbols-outlined text-[20px]">balance</span>
-          </div>
+              + Thêm Tiêu Chí Mới
+            </button>
+          )}
         </div>
-      </div>
+      ) : (
+        /* Criteria Cards Grid */
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {criteriaList.map((crit) => (
+            <div
+              key={crit.criterionId}
+              className="rounded-xl bg-white p-4 border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-all flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-start justify-between gap-3 mb-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10.5px] font-mono font-bold text-[#004ac6] bg-[#eff4ff] px-2 py-0.5 rounded border border-[#dce9ff]">
+                      #{crit.criterionId}
+                    </span>
+                    <h3 className="text-sm font-bold text-[#0b1c30]">
+                      {crit.criterionName}
+                    </h3>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm font-bold text-[#004ac6]">
+                      {crit.maxScore} điểm
+                    </span>
+                  </div>
+                </div>
 
-      {/* Criteria Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {criteria.map((crit) => (
-          <div
-            key={crit.id}
-            className="rounded-xl bg-white p-6 border border-[#e2e8f0] shadow-xs hover:border-[#cbd5e1] transition-all flex flex-col justify-between"
-          >
-            <div>
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div>
-                  <span className="text-[11px] font-semibold text-[#004ac6] uppercase tracking-wider bg-[#eff4ff] px-2 py-0.5 rounded border border-[#dce9ff]">
-                    {crit.category}
-                  </span>
-                  <h3 className="text-[16px] font-semibold text-[#0b1c30] mt-2">
-                    {crit.name}
-                  </h3>
-                </div>
-                <div className="flex flex-col items-end">
-                  <span className="text-[20px] font-bold text-[#004ac6]">
-                    {crit.weight}%
-                  </span>
-                  <span className="text-[11px] text-[#64748b]">weight</span>
-                </div>
+                <p className="text-xs text-slate-600 leading-relaxed mb-3">
+                  {crit.description || 'Tiêu chí đánh giá chất lượng thực tập theo quy định của nhà trường.'}
+                </p>
               </div>
 
-              <p className="text-[13px] text-[#434655] leading-relaxed mb-4">
-                {crit.description}
-              </p>
-            </div>
+              <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
+                <span className="text-slate-400 font-medium">
+                  Thang điểm chuẩn hóa: 0 – {crit.maxScore}
+                </span>
 
-            <div className="pt-3 border-t border-[#f1f5f9] flex items-center justify-between text-[12px]">
-              <span className="text-[#64748b]">
-                Scale: <strong className="text-[#0b1c30]">0 – {crit.maxScore} pts</strong>
-              </span>
-              <span className="text-[12px] font-medium text-[#004ac6]">
-                Standardized Rubric
-              </span>
+                {canManage && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEdit(crit)}
+                      className="p-1 rounded text-[#004ac6] hover:bg-blue-50 transition-colors"
+                      title="Sửa tiêu chí"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">edit</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeletingCriterion(crit)}
+                      className="p-1 rounded text-rose-600 hover:bg-rose-50 transition-colors"
+                      title="Xóa tiêu chí"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">delete</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Add Criterion Modal */}
-      {canManage && showAddModal && (
+      {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
           <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-[#e2e8f0] overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#e2e8f0]">
-              <h3 className="text-[16px] font-semibold text-[#0b1c30]">
-                Add Evaluation Criterion
-              </h3>
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#e2e8f0] bg-slate-50/50">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#004ac6] text-[18px]">add_circle</span>
+                <h3 className="text-sm font-bold text-[#0b1c30]">
+                  Thêm Tiêu Chí Đánh Giá Mới
+                </h3>
+              </div>
               <button
                 type="button"
-                onClick={() => setShowAddModal(false)}
+                onClick={() => setIsCreateModalOpen(false)}
                 className="text-slate-400 hover:text-slate-600"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
             </div>
-            <form onSubmit={handleSave} className="p-6 space-y-4">
+            <form onSubmit={handleCreate} className="p-5 space-y-3.5">
+              {formError && (
+                <div className="p-2 rounded-lg bg-red-50 text-red-700 text-xs border border-red-200">
+                  {formError}
+                </div>
+              )}
+
               <div>
-                <label className="block text-[12px] font-medium text-[#434655] mb-1">
-                  Criterion Name *
+                <label className="block text-xs font-semibold text-[#434655] mb-1">
+                  Tên Tiêu Chí Đánh Giá *
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Industry Mentor Review"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 text-[13px] rounded-lg border border-[#e2e8f0] outline-none"
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  placeholder="VD: Kỹ năng kỹ thuật, Thái độ làm việc..."
+                  className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
                 />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[12px] font-medium text-[#434655] mb-1">
-                    Category
-                  </label>
-                  <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="w-full px-3 py-2 text-[13px] rounded-lg border border-[#e2e8f0] outline-none bg-white"
-                  >
-                    <option value="Engineering & Craft">Engineering & Craft</option>
-                    <option value="Work Ethics">Work Ethics</option>
-                    <option value="Project Outcome">Project Outcome</option>
-                    <option value="Academic Defense">Academic Defense</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[12px] font-medium text-[#434655] mb-1">
-                    Weight Percentage (%)
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="100"
-                    value={weight}
-                    onChange={(e) => setWeight(Number(e.target.value))}
-                    className="w-full px-3 py-2 text-[13px] rounded-lg border border-[#e2e8f0] outline-none"
-                  />
-                </div>
               </div>
 
               <div>
-                <label className="block text-[12px] font-medium text-[#434655] mb-1">
-                  Description & Rubric Guidelines
+                <label className="block text-xs font-semibold text-[#434655] mb-1">
+                  Điểm Tối Đa (Max Score)
                 </label>
-                <textarea
-                  rows={3}
-                  placeholder="Explain assessment expectations and grading benchmarks..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3 py-2 text-[13px] rounded-lg border border-[#e2e8f0] outline-none resize-none"
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={formMaxScore}
+                  onChange={(e) => setFormMaxScore(Number(e.target.value))}
+                  className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
                 />
               </div>
 
-              <div className="pt-2 flex items-center justify-end gap-2.5">
+              <div>
+                <label className="block text-xs font-semibold text-[#434655] mb-1">
+                  Mô Tả & Hướng Dẫn Chấm Điểm
+                </label>
+                <textarea
+                  rows={3}
+                  value={formDescription}
+                  onChange={(e) => setFormDescription(e.target.value)}
+                  placeholder="Tiêu chí đánh giá sự chủ động, tiến độ giao nộp..."
+                  className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 border-t border-[#f1f5f9] pt-3">
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 text-[13px] text-[#64748b] hover:bg-slate-100 rounded-xl"
+                  onClick={() => setIsCreateModalOpen(false)}
+                  className="rounded-lg bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#64748b] hover:bg-[#e2e8f0]"
                 >
-                  Cancel
+                  Hủy
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-[13px] font-medium bg-[#2563eb] text-white rounded-xl shadow-xs"
+                  disabled={isSubmitting}
+                  className="rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#003ea8]"
                 >
-                  Save Criterion
+                  {isSubmitting ? 'Đang lưu...' : 'Thêm Tiêu Chí'}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Criterion Modal */}
+      {editingCriterion && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-[#e2e8f0] overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#e2e8f0] bg-slate-50/50">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#004ac6] text-[18px]">edit</span>
+                <h3 className="text-sm font-bold text-[#0b1c30]">
+                  Cập Nhật Tiêu Chí #{editingCriterion.criterionId}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingCriterion(null)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+            <form onSubmit={handleSaveEdit} className="p-5 space-y-3.5">
+              {formError && (
+                <div className="p-2 rounded-lg bg-red-50 text-red-700 text-xs border border-red-200">
+                  {formError}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold text-[#434655] mb-1">
+                  Tên Tiêu Chí Đánh Giá *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#434655] mb-1">
+                  Điểm Tối Đa (Max Score)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={formMaxScore}
+                  onChange={(e) => setFormMaxScore(Number(e.target.value))}
+                  className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#434655] mb-1">
+                  Mô Tả & Hướng Dẫn Chấm Điểm
+                </label>
+                <textarea
+                  rows={3}
+                  value={formDescription}
+                  onChange={(e) => setFormDescription(e.target.value)}
+                  className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 border-t border-[#f1f5f9] pt-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingCriterion(null)}
+                  className="rounded-lg bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#64748b] hover:bg-[#e2e8f0]"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#003ea8]"
+                >
+                  {isSubmitting ? 'Đang lưu...' : 'Lưu Thay Đổi'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deletingCriterion && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-xl p-5 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+                <span className="material-symbols-outlined text-[22px]">warning</span>
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-[#0b1c30]">Xóa Tiêu Chí Đánh Giá</h3>
+                <p className="text-xs text-slate-500">Xác nhận gỡ bỏ tiêu chí</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-[#434655]">
+              Bạn có chắc chắn muốn xóa tiêu chí <strong>{deletingCriterion.criterionName}</strong>?
+            </p>
+
+            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+              <button
+                type="button"
+                onClick={() => setDeletingCriterion(null)}
+                className="rounded-lg bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#64748b] hover:bg-[#e2e8f0]"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={handleConfirmDelete}
+                className="rounded-lg bg-rose-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-rose-700"
+              >
+                {isSubmitting ? 'Đang xóa...' : 'Xóa Tiêu Chí'}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Role, Student } from '../types';
 import { GradingFormModal } from '../components/GradingFormModal';
+import { assignmentService } from '../api/services';
 
 interface AssessmentResultsViewProps {
   students: Student[];
@@ -14,8 +15,42 @@ export const AssessmentResultsView: React.FC<AssessmentResultsViewProps> = ({
   const [isGradingOpen, setIsGradingOpen] = useState(false);
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<number>(1);
   const [selectedRoundId, setSelectedRoundId] = useState<number>(1);
+  const [displayList, setDisplayList] = useState<Student[]>(students);
 
-  const mockDisplayStudents = students.length > 0 ? students : [
+  useEffect(() => {
+    if (students.length === 0) {
+      assignmentService.getAll()
+        .then((res) => {
+          let arr = [];
+          if (Array.isArray(res)) arr = res;
+          else if (typeof res === 'object' && Array.isArray((res as any).content)) arr = (res as any).content;
+          else if (typeof res === 'object' && Array.isArray((res as any).data)) arr = (res as any).data;
+
+          if (arr.length > 0) {
+            const mapped: Student[] = arr.map((a: any) => ({
+              id: String(a.assignmentId || a.id),
+              name: a.studentName || 'Sinh viên',
+              code: a.studentCode || 'N/A',
+              email: a.studentEmail || 'N/A',
+              department: a.studentMajor || 'Software Engineering',
+              avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+              phase: a.phaseName || 'Spring 2026',
+              mentor: a.mentorName || 'Chưa phân công',
+              company: a.companyName || 'Doanh nghiệp',
+              status: 'IN PROGRESS',
+              progress: 85,
+              score: 8.5,
+            }));
+            setDisplayList(mapped);
+          }
+        })
+        .catch((err) => console.warn('Error fetching assignments for grading:', err));
+    } else {
+      setDisplayList(students);
+    }
+  }, [students]);
+
+  const mockDisplayStudents = displayList.length > 0 ? displayList : [
     {
       id: '1',
       name: 'Nguyen Van A',

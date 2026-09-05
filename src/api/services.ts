@@ -73,6 +73,7 @@ export const studentService = {
   getDetail: (id: number) => api.get<StudentDetailDTO>(`/api/students/${id}/detail`),
   create: (data: Partial<StudentDTO>) => api.post<StudentDTO>('/api/students', data),
   update: (id: number, data: Partial<StudentDTO>) => api.put<StudentDTO>(`/api/students/${id}`, data),
+  delete: (id: number) => api.delete<void>(`/api/students/${id}`),
 };
 
 
@@ -90,6 +91,7 @@ export const mentorService = {
   getById: (id: number) => api.get<MentorDTO>(`/api/mentors/${id}`),
   create: (data: Partial<MentorDTO>) => api.post<MentorDTO>('/api/mentors', data),
   update: (id: number, data: Partial<MentorDTO>) => api.put<MentorDTO>(`/api/mentors/${id}`, data),
+  delete: (id: number) => api.delete<void>(`/api/mentors/${id}`),
 };
 
 // ==================== INTERNSHIP PHASE SERVICE ====================
@@ -136,7 +138,9 @@ export const assignmentService = {
   getById: (id: number) => api.get<InternshipAssignmentDTO>(`/api/internship_assignments/${id}`),
   create: (data: Partial<InternshipAssignmentDTO>) => api.post<InternshipAssignmentDTO>('/api/internship_assignments', data),
   updateStatus: (id: number, status: AssignmentStatus) => api.put<InternshipAssignmentDTO>(`/api/internship_assignments/${id}/status`, { status }),
+  delete: (id: number) => api.delete<void>(`/api/internship_assignments/${id}`),
 };
+
 
 // ==================== ASSESSMENT ROUND SERVICE ====================
 export interface AssessmentRoundCriterionDTO {

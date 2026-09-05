@@ -159,6 +159,19 @@ function AppRoutes() {
     }
   };
 
+  const handleDeleteAssignment = async (id: string) => {
+    if (isAuthenticated && canManage && !isNaN(Number(id))) {
+      try {
+        await assignmentService.delete(Number(id));
+      } catch (err) {
+        console.warn('API error deleting assignment:', err);
+      }
+    }
+    if (selectedAssignment && selectedAssignment.id === id) {
+      setSelectedAssignment(null);
+    }
+  };
+
   const handleAddCriterion = async (newCrit: EvaluationCriterion) => {
     if (isAuthenticated && canManage) {
       try {
@@ -274,7 +287,7 @@ function AppRoutes() {
                     onOpenAddStudent={() => canManage && setIsQuickActionOpen(true)}
                   />
                 } />
-                <Route path="/admin/mentors" element={<MentorsView />} />
+                <Route path="/admin/mentors" element={<MentorsView currentRole={activeRole} />} />
                 <Route path="/admin/internship-phases" element={
                   <PhasesView
                     phases={phases}
@@ -349,6 +362,7 @@ function AppRoutes() {
         assignment={selectedAssignment}
         currentRole={activeRole}
         onUpdateStatus={handleUpdateAssignmentStatus}
+        onDeleteAssignment={handleDeleteAssignment}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Role, Student } from '../types';
 import { studentService } from '../api/services';
 import { mapStudentFromDTO } from '../api/mappers';
@@ -7,12 +7,11 @@ import { StudentDetailModal } from '../components/StudentDetailModal';
 
 interface StudentsViewProps {
   currentRole: Role;
-  onOpenAddStudent: () => void;
+  onOpenAddStudent?: () => void;
 }
 
 export const StudentsView: React.FC<StudentsViewProps> = ({
   currentRole,
-  onOpenAddStudent,
 }) => {
   const [students, setStudents] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -21,20 +20,47 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
   const canManage = canManageSystemData(currentRole);
 
-  useEffect(() => {
-    setIsLoading(true);
-    studentService.getAll()
-      .then(res => {
-        let arr = [];
-        if (Array.isArray(res)) arr = res;
-        else if (typeof res === 'object' && Array.isArray((res as any).content)) arr = (res as any).content;
-        else if (typeof res === 'object' && Array.isArray((res as any).data)) arr = (res as any).data;
+  // CRUD Modals State
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [deletingStudent, setDeletingStudent] = useState<Student | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-        setStudents(arr.map(mapStudentFromDTO));
-      })
-      .catch(err => console.error('Error fetching students:', err))
-      .finally(() => setIsLoading(false));
+  // Create Form
+  const [createCode, setCreateCode] = useState('');
+  const [createName, setCreateName] = useState('');
+  const [createEmail, setCreateEmail] = useState('');
+  const [createPhone, setCreatePhone] = useState('');
+  const [createMajor, setCreateMajor] = useState('Software Engineering');
+  const [createClass, setCreateClass] = useState('');
+
+  // Edit Form
+  const [editName, setEditName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editMajor, setEditMajor] = useState('');
+  const [editClass, setEditClass] = useState('');
+
+  const fetchStudents = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await studentService.getAll();
+      let arr = [];
+      if (Array.isArray(res)) arr = res;
+      else if (typeof res === 'object' && Array.isArray((res as any).content)) arr = (res as any).content;
+      else if (typeof res === 'object' && Array.isArray((res as any).data)) arr = (res as any).data;
+
+      setStudents(arr.map(mapStudentFromDTO));
+    } catch (err) {
+      console.error('Error fetching students:', err);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchStudents();
+  }, [fetchStudents]);
 
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
@@ -45,6 +71,85 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
     const matchDept = deptFilter === 'ALL' || s.department === deptFilter;
     return matchSearch && matchDept;
   });
+
+  const handleCreateStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!createCode.trim() || !createName.trim()) {
+      setFormError('Mã số sinh viên và Họ tên không được để trống');
+      return;
+    }
+    setIsSubmitting(true);
+    setFormError(null);
+    try {
+      await studentService.create({
+        studentCode: createCode,
+        fullName: createName,
+        email: createEmail || `${createCode.toLowerCase()}@fpt.edu.vn`,
+        phoneNumber: createPhone,
+        major: createMajor,
+        className: createClass,
+      });
+      setIsCreateModalOpen(false);
+      setCreateCode('');
+      setCreateName('');
+      setCreateEmail('');
+      setCreatePhone('');
+      setCreateClass('');
+      fetchStudents();
+    } catch (err: any) {
+      setFormError(err.message || 'Không thể thêm sinh viên');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleOpenEdit = (s: Student) => {
+    setEditingStudent(s);
+    setEditName(s.name);
+    setEditMajor(s.department || 'Software Engineering');
+    setEditPhone('');
+    setEditClass('');
+    setFormError(null);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingStudent) return;
+    if (!editName.trim()) {
+      setFormError('Họ tên không được để trống');
+      return;
+    }
+    setIsSubmitting(true);
+    setFormError(null);
+    try {
+      await studentService.update(Number(editingStudent.id), {
+        fullName: editName,
+        major: editMajor,
+        className: editClass || undefined,
+        phoneNumber: editPhone || undefined,
+      });
+      setEditingStudent(null);
+      fetchStudents();
+    } catch (err: any) {
+      setFormError(err.message || 'Không thể cập nhật thông tin sinh viên');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingStudent) return;
+    setIsSubmitting(true);
+    try {
+      await studentService.delete(Number(deletingStudent.id));
+      setDeletingStudent(null);
+      fetchStudents();
+    } catch (err: any) {
+      alert(err.message || 'Không thể xóa hồ sơ sinh viên');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="flex w-full flex-col animate-in fade-in duration-200 space-y-3.5">
@@ -65,7 +170,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
           {canManage && (
             <button
               type="button"
-              onClick={onOpenAddStudent}
+              onClick={() => setIsCreateModalOpen(true)}
               className="inline-flex items-center gap-1.5 rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#003ea8] transition-colors cursor-pointer"
             >
               <span className="material-symbols-outlined text-[16px]">person_add</span>
@@ -142,7 +247,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
           <p className="mt-1 text-xs text-slate-500">Hãy thêm sinh viên vào hệ thống để bắt đầu theo dõi tiến độ thực tập.</p>
           {canManage && (
             <button
-              onClick={onOpenAddStudent}
+              onClick={() => setIsCreateModalOpen(true)}
               className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-[#003896] transition-colors"
             >
               + Thêm Sinh Viên Mới
@@ -210,16 +315,38 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                         {s.status}
                       </span>
                     </td>
-                    <td className="px-3.5 py-2.5 text-center">
+                    <td className="px-3.5 py-2.5 text-center whitespace-nowrap space-x-1">
                       <button
                         type="button"
                         onClick={() => setSelectedStudentId(Number(s.id))}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 hover:text-[#004ac6] transition-colors shadow-2xs"
+                        className="inline-flex items-center gap-0.5 px-2 py-1 text-[11px] font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 hover:text-[#004ac6] transition-colors shadow-2xs"
                         title="Xem chi tiết"
                       >
                         <span className="material-symbols-outlined text-[13px]">visibility</span>
                         Chi tiết
                       </button>
+                      {canManage && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEdit(s)}
+                            className="inline-flex items-center gap-0.5 px-2 py-1 text-[11px] font-medium text-[#004ac6] bg-blue-50/70 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors shadow-2xs"
+                            title="Sửa thông tin"
+                          >
+                            <span className="material-symbols-outlined text-[13px]">edit</span>
+                            Sửa
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeletingStudent(s)}
+                            className="inline-flex items-center gap-0.5 px-2 py-1 text-[11px] font-medium text-rose-600 bg-rose-50/70 border border-rose-200 rounded-md hover:bg-rose-100 transition-colors shadow-2xs"
+                            title="Xóa sinh viên"
+                          >
+                            <span className="material-symbols-outlined text-[13px]">delete</span>
+                            Xóa
+                          </button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -276,7 +403,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                   </div>
                   <div className="mb-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
                     <div
-                      className="h-full rounded-full bg-[#004ac6] transition-all"
+                      className="h-full rounded-full bg-[#004ac6]"
                       style={{ width: `${student.progress}%` }}
                     ></div>
                   </div>
@@ -292,23 +419,322 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                 </div>
               </div>
 
-              <div className="mt-2.5 pt-2 border-t border-slate-100">
+              <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center gap-1">
                 <button
                   type="button"
                   onClick={() => setSelectedStudentId(Number(student.id))}
-                  className="w-full inline-flex items-center justify-center gap-1 px-2 py-1 text-[11px] font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-md hover:bg-slate-100 hover:text-[#004ac6] transition-colors"
+                  className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1 text-[11px] font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-md hover:bg-slate-100 hover:text-[#004ac6] transition-colors"
                 >
                   <span className="material-symbols-outlined text-[13px]">visibility</span>
-                  Xem chi tiết
+                  Chi tiết
                 </button>
+                {canManage && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEdit(student)}
+                      className="p-1 text-[#004ac6] bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors"
+                      title="Sửa thông tin"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">edit</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeletingStudent(student)}
+                      className="p-1 text-rose-600 bg-rose-50 border border-rose-200 rounded-md hover:bg-rose-100 transition-colors"
+                      title="Xóa sinh viên"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">delete</span>
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           ))}
         </div>
       )}
+
+      {/* Create Student Modal */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-[#e2e8f0] px-5 py-3.5 bg-slate-50/50">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#004ac6] text-[18px]">person_add</span>
+                <h3 className="text-sm font-bold text-[#0b1c30]">Thêm Sinh Viên Thực Tập Mới</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCreateModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateStudent} className="space-y-3.5 p-5">
+              {formError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700">
+                  {formError}
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                    Mã Sinh Viên (MSSV) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={createCode}
+                    onChange={(e) => setCreateCode(e.target.value.toUpperCase())}
+                    placeholder="VD: SE190099"
+                    className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                    Lớp Sinh Hoạt
+                  </label>
+                  <input
+                    type="text"
+                    value={createClass}
+                    onChange={(e) => setCreateClass(e.target.value)}
+                    placeholder="VD: SE1911"
+                    className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                  Họ và Tên Sinh Viên *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={createName}
+                  onChange={(e) => setCreateName(e.target.value)}
+                  placeholder="Nguyễn Văn A..."
+                  className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={createEmail}
+                    onChange={(e) => setCreateEmail(e.target.value)}
+                    placeholder="sv@fpt.edu.vn"
+                    className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                    Số Điện Thoại
+                  </label>
+                  <input
+                    type="tel"
+                    value={createPhone}
+                    onChange={(e) => setCreatePhone(e.target.value)}
+                    placeholder="0912345678"
+                    className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                  Chuyên Ngành
+                </label>
+                <select
+                  value={createMajor}
+                  onChange={(e) => setCreateMajor(e.target.value)}
+                  className="w-full rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                >
+                  <option value="Software Engineering">Software Engineering</option>
+                  <option value="Artificial Intelligence">Artificial Intelligence</option>
+                  <option value="Information Systems">Information Systems</option>
+                  <option value="Computer Science">Computer Science</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-2 border-t border-[#f1f5f9] pt-3">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateModalOpen(false)}
+                  className="rounded-lg bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#64748b] hover:bg-[#e2e8f0]"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#003ea8]"
+                >
+                  {isSubmitting ? 'Đang thêm...' : 'Thêm Sinh Viên'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Student Modal */}
+      {editingStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-[#e2e8f0] px-5 py-3.5 bg-slate-50/50">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#004ac6] text-[18px]">edit</span>
+                <h3 className="text-sm font-bold text-[#0b1c30]">
+                  Cập Nhật Hồ Sơ Sinh Viên ({editingStudent.code})
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingStudent(null)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} className="space-y-3.5 p-5">
+              {formError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700">
+                  {formError}
+                </div>
+              )}
+
+              <div>
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                  Họ và Tên Sinh Viên *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                    Lớp Sinh Hoạt
+                  </label>
+                  <input
+                    type="text"
+                    value={editClass}
+                    onChange={(e) => setEditClass(e.target.value)}
+                    placeholder="VD: SE1911"
+                    className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                    Số Điện Thoại
+                  </label>
+                  <input
+                    type="tel"
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value)}
+                    placeholder="0912345678"
+                    className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                  Chuyên Ngành
+                </label>
+                <select
+                  value={editMajor}
+                  onChange={(e) => setEditMajor(e.target.value)}
+                  className="w-full rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                >
+                  <option value="Software Engineering">Software Engineering</option>
+                  <option value="Artificial Intelligence">Artificial Intelligence</option>
+                  <option value="Information Systems">Information Systems</option>
+                  <option value="Computer Science">Computer Science</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-2 border-t border-[#f1f5f9] pt-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingStudent(null)}
+                  className="rounded-lg bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#64748b] hover:bg-[#e2e8f0]"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#003ea8]"
+                >
+                  {isSubmitting ? 'Đang lưu...' : 'Lưu Thay Đổi'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deletingStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-xl p-5 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+                <span className="material-symbols-outlined text-[22px]">warning</span>
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-[#0b1c30]">Xóa Hồ Sơ Sinh Viên</h3>
+                <p className="text-xs text-slate-500">Xác nhận gỡ bỏ sinh viên</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-[#434655]">
+              Bạn có chắc chắn muốn xóa sinh viên <strong>{deletingStudent.name}</strong> ({deletingStudent.code})?
+              Nếu sinh viên đã có lịch phân công, hệ thống sẽ bảo lưu an toàn dữ liệu và đánh dấu trạng thái tương ứng.
+            </p>
+
+            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+              <button
+                type="button"
+                onClick={() => setDeletingStudent(null)}
+                className="rounded-lg bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#64748b] hover:bg-[#e2e8f0]"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={handleConfirmDelete}
+                className="rounded-lg bg-rose-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-rose-700"
+              >
+                {isSubmitting ? 'Đang xóa...' : 'Xóa Sinh Viên'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Student Detail Modal */}
+      <StudentDetailModal
+        isOpen={selectedStudentId !== null}
+        onClose={() => setSelectedStudentId(null)}
+        studentId={selectedStudentId}
+      />
     </div>
   );
 };
-
-
-

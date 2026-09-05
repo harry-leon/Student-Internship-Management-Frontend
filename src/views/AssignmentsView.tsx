@@ -1,19 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Assignment, Role } from '../types';
-import { assignmentService } from '../api/services';
+import { assignmentService, studentService, mentorService, phaseService, StudentDTO, MentorDTO, InternshipPhaseDTO } from '../api/services';
 import { mapAssignmentFromDTO } from '../api/mappers';
 import { canManageSystemData } from '../auth/roleAccess';
 
 interface AssignmentsViewProps {
   currentRole: Role;
   onSelectAssignment: (assignment: Assignment) => void;
-  onOpenQuickAction: () => void;
+  onOpenQuickAction?: () => void;
 }
 
 export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
   currentRole,
   onSelectAssignment,
-  onOpenQuickAction,
 }) => {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,20 +21,97 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
   const [phaseFilter, setPhaseFilter] = useState<string>('ALL');
   const canManage = canManageSystemData(currentRole);
 
-  useEffect(() => {
-    setIsLoading(true);
-    assignmentService.getAll()
-      .then(res => {
-        let arr = [];
-        if (Array.isArray(res)) arr = res;
-        else if (typeof res === 'object' && Array.isArray((res as any).content)) arr = (res as any).content;
-        else if (typeof res === 'object' && Array.isArray((res as any).data)) arr = (res as any).data;
+  // Create Modal State
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [availableStudents, setAvailableStudents] = useState<StudentDTO[]>([]);
+  const [availableMentors, setAvailableMentors] = useState<MentorDTO[]>([]);
+  const [availablePhases, setAvailablePhases] = useState<InternshipPhaseDTO[]>([]);
+  const [selectedStudentId, setSelectedStudentId] = useState<number>(0);
+  const [selectedMentorId, setSelectedMentorId] = useState<number>(0);
+  const [selectedPhaseId, setSelectedPhaseId] = useState<number>(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-        setAssignments(arr.map(mapAssignmentFromDTO));
-      })
-      .catch(err => console.error('Error fetching assignments:', err))
-      .finally(() => setIsLoading(false));
+  const fetchAssignments = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await assignmentService.getAll();
+      let arr = [];
+      if (Array.isArray(res)) arr = res;
+      else if (typeof res === 'object' && Array.isArray((res as any).content)) arr = (res as any).content;
+      else if (typeof res === 'object' && Array.isArray((res as any).data)) arr = (res as any).data;
+
+      setAssignments(arr.map(mapAssignmentFromDTO));
+    } catch (err) {
+      console.error('Error fetching assignments:', err);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchAssignments();
+  }, [fetchAssignments]);
+
+  const handleOpenCreate = async () => {
+    setFormError(null);
+    setIsCreateModalOpen(true);
+    try {
+      const [stdRes, mntRes, phRes] = await Promise.all([
+        studentService.getAll().catch(() => []),
+        mentorService.getAll().catch(() => []),
+        phaseService.getAll().catch(() => []),
+      ]);
+      const stdList = Array.isArray(stdRes) ? stdRes : [];
+      const mntList = Array.isArray(mntRes) ? mntRes : [];
+      const phList = Array.isArray(phRes) ? phRes : [];
+
+      setAvailableStudents(stdList);
+      setAvailableMentors(mntList);
+      setAvailablePhases(phList);
+
+      if (stdList.length > 0) setSelectedStudentId(stdList[0].studentId);
+      if (mntList.length > 0) setSelectedMentorId(mntList[0].mentorId);
+      if (phList.length > 0) setSelectedPhaseId(phList[0].phaseId);
+    } catch (err) {
+      console.error('Error loading options for assignment creation:', err);
+    }
+  };
+
+  const handleCreateAssignment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedStudentId || !selectedMentorId || !selectedPhaseId) {
+      setFormError('Vui lòng chọn đầy đủ Sinh viên, Giảng viên và Đợt thực tập');
+      return;
+    }
+    setIsSubmitting(true);
+    setFormError(null);
+    try {
+      await assignmentService.create({
+        studentId: selectedStudentId,
+        mentorId: selectedMentorId,
+        phaseId: selectedPhaseId,
+      });
+      setIsCreateModalOpen(false);
+      fetchAssignments();
+    } catch (err: any) {
+      setFormError(err.message || 'Không thể tạo phân công thực tập');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteAssignment = async (assignmentId: string, studentName: string) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa/hủy phân công của sinh viên "${studentName}"?`)) {
+      return;
+    }
+    try {
+      await assignmentService.delete(Number(assignmentId));
+      fetchAssignments();
+    } catch (err: any) {
+      alert(err.message || 'Không thể xóa phân công');
+    }
+  };
 
   const filtered = assignments.filter((asg) => {
     const matchSearch =
@@ -68,7 +144,7 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
         {canManage && (
           <button
             type="button"
-            onClick={onOpenQuickAction}
+            onClick={handleOpenCreate}
             className="inline-flex items-center gap-1.5 rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#003ea8] transition-colors cursor-pointer"
           >
             <span className="material-symbols-outlined text-[16px]">add</span>
@@ -100,61 +176,64 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
           )}
         </div>
 
-        <select
-          value={phaseFilter}
-          onChange={(e) => setPhaseFilter(e.target.value)}
-          className="h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-[#0b1c30] outline-none"
-        >
-          <option value="ALL">Tất cả đợt thực tập</option>
-          <option value="Fall 2026">Fall 2026</option>
-          <option value="Spring 2027">Spring 2027</option>
-          <option value="Summer 2026">Summer 2026</option>
-        </select>
-
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-[#0b1c30] outline-none"
-        >
-          <option value="ALL">Tất cả trạng thái</option>
-          <option value="IN PROGRESS">In Progress</option>
-          <option value="PENDING">Pending</option>
-          <option value="COMPLETED">Completed</option>
-          <option value="CANCELLED">Cancelled</option>
-        </select>
-      </div>
-
-      {/* Table */}
-      <div className="rounded-xl border border-slate-200/90 bg-white shadow-2xs overflow-hidden">
-        <div className="px-3.5 py-2.5 border-b border-slate-100 flex items-center justify-between text-xs text-slate-500">
-          <span>Tổng số phân công: <strong className="text-slate-800 font-semibold">{filtered.length}</strong></span>
+        <div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-[#0b1c30] outline-none focus:border-[#004ac6]"
+          >
+            <option value="ALL">Tất cả trạng thái</option>
+            <option value="IN PROGRESS">IN PROGRESS</option>
+            <option value="PENDING">PENDING</option>
+            <option value="COMPLETED">COMPLETED</option>
+            <option value="CANCELLED">CANCELLED</option>
+          </select>
         </div>
 
+        <div>
+          <select
+            value={phaseFilter}
+            onChange={(e) => setPhaseFilter(e.target.value)}
+            className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-[#0b1c30] outline-none focus:border-[#004ac6]"
+          >
+            <option value="ALL">Tất cả đợt thực tập</option>
+            <option value="Spring 2026">Spring 2026</option>
+            <option value="Summer 2026">Summer 2026</option>
+            <option value="Fall 2026">Fall 2026</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Main Table */}
+      <div className="rounded-xl border border-slate-200/90 bg-white shadow-2xs overflow-hidden">
         <div className="overflow-x-auto no-scrollbar">
           <table className="w-full border-collapse text-left text-xs">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
                 <th className="px-3.5 py-2.5">Sinh Viên</th>
                 <th className="px-3 py-2.5">Giảng Viên Hướng Dẫn</th>
-                <th className="px-3 py-2.5">Doanh Nghiệp Tiếp Nhận</th>
-                <th className="px-3 py-2.5">Đợt</th>
-                <th className="px-3 py-2.5">Ngày Phân</th>
+                <th className="px-3 py-2.5">Doanh Nghiệp Thực Tập</th>
+                <th className="px-3 py-2.5">Đợt Thực Tập</th>
+                <th className="px-3 py-2.5">Ngày Đăng Ký</th>
                 <th className="px-3 py-2.5 text-center">Bài Nộp</th>
                 <th className="px-3 py-2.5 text-center">Trạng Thái</th>
-                <th className="px-3 py-2.5 text-right">Chi Tiết</th>
+                <th className="px-3 py-2.5 text-right">Thao Tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-800">
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-[#004ac6]">
-                    <div className="mx-auto h-7 w-7 animate-spin rounded-full border-3 border-[#004ac6] border-t-transparent"></div>
+                  <td colSpan={8} className="py-10 text-center text-slate-500">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#004ac6] border-t-transparent"></div>
+                      <span>Đang tải danh sách phân công thực tập...</span>
+                    </div>
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-10 text-center text-slate-400">
-                    Không có phân công nào khớp với điều kiện tìm kiếm.
+                  <td colSpan={8} className="py-8 text-center text-slate-500">
+                    Không tìm thấy dữ liệu phân công thực tập.
                   </td>
                 </tr>
               ) : (
@@ -162,19 +241,19 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
                   <tr
                     key={row.id}
                     onClick={() => onSelectAssignment(row)}
-                    className="group cursor-pointer transition-colors hover:bg-blue-50/40"
+                    className="hover:bg-blue-50/40 transition-colors cursor-pointer group"
                   >
                     <td className="px-3.5 py-2.5">
                       <div className="flex items-center gap-2.5">
                         <img
-                          className="h-8 w-8 rounded-full border border-slate-200 object-cover shadow-2xs"
                           src={row.studentAvatar}
                           alt={row.studentName}
+                          className="h-8 w-8 rounded-full border border-slate-200 object-cover"
                         />
-                        <div className="flex flex-col">
-                          <span className="font-semibold text-slate-900 group-hover:text-[#004ac6] transition-colors">
+                        <div>
+                          <div className="font-semibold text-slate-900 group-hover:text-[#004ac6] transition-colors">
                             {row.studentName}
-                          </span>
+                          </div>
                           <span className="font-mono text-[10.5px] text-[#004ac6]">
                             {row.studentCode}
                           </span>
@@ -195,9 +274,6 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
                     <td className="px-3 py-2.5 text-center">
                       {row.latestSubmissionType ? (
                         <span className="inline-flex items-center gap-1 rounded bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-[#004ac6] border border-blue-200">
-                          <span className="material-symbols-outlined text-[12px]">
-                            {row.latestSubmissionType === 'GITHUB' ? 'code' : 'folder_zip'}
-                          </span>
                           {row.latestSubmissionType}
                         </span>
                       ) : (
@@ -230,10 +306,33 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
                         </span>
                       )}
                     </td>
-                    <td className="px-3 py-2.5 text-right">
-                      <span className="inline-flex items-center text-slate-400 group-hover:text-[#004ac6] transition-colors">
-                        <span className="material-symbols-outlined text-[18px]">chevron_right</span>
-                      </span>
+                    <td className="px-3 py-2.5 text-right whitespace-nowrap space-x-1">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelectAssignment(row);
+                        }}
+                        className="inline-flex items-center gap-0.5 px-2 py-1 text-[11px] font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 hover:text-[#004ac6] transition-colors"
+                        title="Xem chi tiết phân công"
+                      >
+                        <span className="material-symbols-outlined text-[13px]">visibility</span>
+                        Chi tiết
+                      </button>
+                      {canManage && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteAssignment(row.id, row.studentName);
+                          }}
+                          className="inline-flex items-center gap-0.5 px-2 py-1 text-[11px] font-medium text-rose-600 bg-rose-50 border border-rose-200 rounded-md hover:bg-rose-100 transition-colors"
+                          title="Xóa phân công"
+                        >
+                          <span className="material-symbols-outlined text-[13px]">delete</span>
+                          Xóa
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -242,6 +341,103 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
           </table>
         </div>
       </div>
+
+      {/* Create Assignment Modal */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-[#e2e8f0] px-5 py-3.5 bg-slate-50/50">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#004ac6] text-[18px]">assignment_ind</span>
+                <h3 className="text-sm font-bold text-[#0b1c30]">Tạo Phân Công Thực Tập Mới</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCreateModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateAssignment} className="space-y-3.5 p-5">
+              {formError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700">
+                  {formError}
+                </div>
+              )}
+
+              <div>
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                  Sinh Viên *
+                </label>
+                <select
+                  value={selectedStudentId}
+                  onChange={(e) => setSelectedStudentId(Number(e.target.value))}
+                  className="w-full rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                >
+                  {availableStudents.map((s) => (
+                    <option key={s.studentId} value={s.studentId}>
+                      {s.fullName} ({s.studentCode})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                  Giảng Viên Hướng Dẫn *
+                </label>
+                <select
+                  value={selectedMentorId}
+                  onChange={(e) => setSelectedMentorId(Number(e.target.value))}
+                  className="w-full rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                >
+                  {availableMentors.map((m) => (
+                    <option key={m.mentorId} value={m.mentorId}>
+                      {m.fullName} ({m.department})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                  Đợt Thực Tập *
+                </label>
+                <select
+                  value={selectedPhaseId}
+                  onChange={(e) => setSelectedPhaseId(Number(e.target.value))}
+                  className="w-full rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                >
+                  {availablePhases.map((p) => (
+                    <option key={p.phaseId} value={p.phaseId}>
+                      {p.phaseName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-2 border-t border-[#f1f5f9] pt-3">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateModalOpen(false)}
+                  className="rounded-lg bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#64748b] hover:bg-[#e2e8f0]"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#003ea8]"
+                >
+                  {isSubmitting ? 'Đang phân công...' : 'Tạo Phân Công'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

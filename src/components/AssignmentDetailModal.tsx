@@ -8,6 +8,7 @@ interface AssignmentDetailModalProps {
   assignment: Assignment | null;
   currentRole: Role;
   onUpdateStatus: (id: string, status: AssignmentStatus) => void;
+  onDeleteAssignment?: (id: string) => void;
 }
 
 export const AssignmentDetailModal: React.FC<AssignmentDetailModalProps> = ({
@@ -16,6 +17,7 @@ export const AssignmentDetailModal: React.FC<AssignmentDetailModalProps> = ({
   assignment,
   currentRole,
   onUpdateStatus,
+  onDeleteAssignment,
 }) => {
   if (!isOpen || !assignment) return null;
   const canUpdateStatus = canUpdateAssignmentStatus(currentRole);
@@ -181,11 +183,26 @@ export const AssignmentDetailModal: React.FC<AssignmentDetailModalProps> = ({
             </div>
           )}
 
-          <div className="pt-2 flex items-center justify-end">
+          <div className="pt-2 flex items-center justify-between border-t border-slate-100">
+            {currentRole === 'Admin' && onDeleteAssignment ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm(`Bạn có chắc chắn muốn xóa/hủy phân công của sinh viên ${assignment.studentName}?`)) {
+                    onDeleteAssignment(assignment.id);
+                    onClose();
+                  }
+                }}
+                className="px-3 py-1.5 text-[12px] font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[15px]">delete</span>
+                <span>Xóa phân công</span>
+              </button>
+            ) : <div />}
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-[13px] font-medium bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-xl shadow-sm transition-all"
+              className="px-4 py-2 text-[13px] font-medium bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-xl shadow-sm transition-all cursor-pointer"
             >
               Done
             </button>

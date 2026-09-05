@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Role } from '../types';
 import { companyService, Company, CompanyCreateDTO } from '../api/companyService';
-import { Building2, Plus, Search, Filter, Mail, Phone, Globe, Edit2, Power, CheckCircle, AlertCircle, X, ShieldAlert } from 'lucide-react';
+import { Building2, Plus, Search, Filter, Mail, Phone, Globe, Edit2, Power, CheckCircle, AlertCircle, X, ShieldAlert, Trash2 } from 'lucide-react';
 
 interface CompaniesViewProps {
   currentRole: Role;
@@ -14,9 +14,9 @@ export const CompaniesView: React.FC<CompaniesViewProps> = ({ currentRole }) => 
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<string>('all');
 
-  // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [deletingCompany, setDeletingCompany] = useState<Company | null>(null);
   const [formData, setFormData] = useState<CompanyCreateDTO>({
     companyName: '',
     taxCode: '',
@@ -115,6 +115,17 @@ export const CompaniesView: React.FC<CompaniesViewProps> = ({ currentRole }) => 
       fetchCompanies();
     } catch (err: any) {
       alert(err.message || 'Lỗi cập nhật trạng thái');
+    }
+  };
+
+  const handleConfirmDeleteCompany = async () => {
+    if (!deletingCompany) return;
+    try {
+      await companyService.deleteCompany(deletingCompany.companyId);
+      setDeletingCompany(null);
+      fetchCompanies();
+    } catch (err: any) {
+      alert(err.message || 'Lỗi khi xóa công ty');
     }
   };
 
@@ -279,7 +290,7 @@ export const CompaniesView: React.FC<CompaniesViewProps> = ({ currentRole }) => 
                       </span>
                     </td>
                     {currentRole === 'Admin' && (
-                      <td className="py-2.5 px-3.5 text-right space-x-1">
+                      <td className="py-2.5 px-3.5 text-right space-x-1 whitespace-nowrap">
                         <button
                           onClick={() => handleOpenEditModal(comp)}
                           className="p-1 hover:bg-slate-100 rounded-md text-slate-600 hover:text-[#004ac6] transition-colors cursor-pointer"
@@ -295,6 +306,13 @@ export const CompaniesView: React.FC<CompaniesViewProps> = ({ currentRole }) => 
                           title={comp.isActive ? 'Tắt hoạt động' : 'Bật hoạt động'}
                         >
                           <Power className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setDeletingCompany(comp)}
+                          className="p-1 hover:bg-rose-50 rounded-md text-rose-600 transition-colors cursor-pointer"
+                          title="Xóa công ty"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </td>
                     )}
@@ -451,6 +469,43 @@ export const CompaniesView: React.FC<CompaniesViewProps> = ({ currentRole }) => 
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Delete Confirmation Modal */}
+      {deletingCompany && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
+          <div className="bg-white w-full max-w-sm rounded-2xl border border-[#e2e8f0] shadow-xl p-5 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-[#0b1c30]">Xóa Công Ty Đối Tác</h3>
+                <p className="text-xs text-slate-500">Xác nhận gỡ bỏ doanh nghiệp</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-[#434655]">
+              Bạn có chắc chắn muốn xóa đối tác <strong>{deletingCompany.companyName}</strong>?
+            </p>
+
+            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+              <button
+                type="button"
+                onClick={() => setDeletingCompany(null)}
+                className="px-3 py-1.5 text-xs text-[#64748b] hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeleteCompany}
+                className="px-3.5 py-1.5 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded-lg shadow-xs transition-colors cursor-pointer"
+              >
+                Xóa Công Ty
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -113,6 +113,9 @@ export interface InternshipAssignmentDTO {
   phaseName: string;
   status: AssignmentStatus;
   assignedDate?: string;
+  latestSubmissionId?: number;
+  latestSubmissionType?: 'GITHUB' | 'ZIP';
+  latestSubmittedAt?: string;
   createdAt?: string;
   updatedAt?: string;
 }

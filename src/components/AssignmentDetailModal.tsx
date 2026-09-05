@@ -125,6 +125,35 @@ export const AssignmentDetailModal: React.FC<AssignmentDetailModalProps> = ({
             </div>
           </div>
 
+          <div className="p-3.5 rounded-xl border border-[#e2e8f0] bg-[#f8fafc]">
+            <div className="text-[11px] font-semibold text-[#94a3b8] uppercase tracking-wider mb-1">
+              Latest Submission Record
+            </div>
+            {assignment.latestSubmissionType ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-md bg-[#eff4ff] px-2 py-1 text-[11px] font-semibold text-[#004ac6]">
+                    <span className="material-symbols-outlined text-[14px]">
+                      {assignment.latestSubmissionType === 'GITHUB' ? 'code' : 'folder_zip'}
+                    </span>
+                    {assignment.latestSubmissionType}
+                  </span>
+                  <span className="text-[12px] text-[#64748b]">
+                    {assignment.latestSubmittedAt ? new Date(assignment.latestSubmittedAt).toLocaleString() : ''}
+                  </span>
+                </div>
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                  Active Submission
+                </span>
+              </div>
+            ) : (
+              <div className="text-[12px] text-[#94a3b8]">
+                Chưa có bài nộp nào cho phân công này.
+              </div>
+            )}
+          </div>
+
           {/* Quick Status Toggles */}
           {canUpdateStatus && (
             <div>

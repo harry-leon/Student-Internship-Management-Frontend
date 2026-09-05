@@ -94,6 +94,9 @@ export const mapAssignmentFromDTO = (dto: InternshipAssignmentDTO): Assignment =
     status: (dto.status as AssignmentStatus) || 'IN PROGRESS',
     companyName: 'Doanh nghiệp thực tập',
     projectTopic: 'Đề tài thực tập',
+    latestSubmissionId: dto.latestSubmissionId,
+    latestSubmissionType: dto.latestSubmissionType,
+    latestSubmittedAt: dto.latestSubmittedAt,
   };
 };
 

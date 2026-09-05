@@ -69,6 +69,9 @@ export interface Assignment {
   companyName?: string;
   projectTopic?: string;
   grade?: string;
+  latestSubmissionId?: number;
+  latestSubmissionType?: 'GITHUB' | 'ZIP';
+  latestSubmittedAt?: string;
 }
 
 export interface AssessmentRound {

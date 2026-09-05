@@ -16,6 +16,7 @@ const PAGE_TITLES: Record<NavPage, { parent: string; current: string }> = {
   companies: { parent: 'Internship', current: 'Companies' },
   applications: { parent: 'Internship', current: 'Applications' },
   'weekly-reports': { parent: 'Internship', current: 'Weekly Reports' },
+  submissions: { parent: 'Internship', current: 'Submissions' },
   users: { parent: 'People', current: 'Users' },
   students: { parent: 'People', current: 'Students' },
   mentors: { parent: 'People', current: 'Mentors' },

@@ -38,6 +38,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'companies' as NavPage, label: 'Companies', icon: 'domain' },
         { id: 'applications' as NavPage, label: 'Applications', icon: 'post_add' },
         { id: 'weekly-reports' as NavPage, label: 'Weekly Reports', icon: 'description' },
+        { id: 'submissions' as NavPage, label: 'Submissions', icon: 'upload_file' },
         { id: 'internship-phases' as NavPage, label: 'Internship Phases', icon: 'timeline' },
         { id: 'assignments' as NavPage, label: 'Assignments', icon: 'assignment' },
       ],

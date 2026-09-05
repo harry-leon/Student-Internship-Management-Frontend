@@ -1,4 +1,5 @@
 import { api } from './apiClient';
+import { StudentSubmission } from '../types';
 
 export type AssessmentSubmissionStatus = 'DRAFT' | 'SUBMITTED' | 'PUBLISHED' | 'RETURNED';
 
@@ -30,6 +31,7 @@ export interface AssessmentGradingForm {
   evaluatedByName?: string;
   submittedAt?: string;
   publishedAt?: string;
+  latestSubmission?: StudentSubmission;
 }
 
 export interface AssessmentGradingPayload {

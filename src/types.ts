@@ -121,11 +121,34 @@ export interface WeeklyReport {
   updatedAt?: string;
 }
 
+export type StudentSubmissionType = 'GITHUB' | 'ZIP';
+
+export interface StudentSubmission {
+  submissionId: number;
+  assignmentId: number;
+  roundId?: number;
+  roundName?: string;
+  studentId: number;
+  studentCode: string;
+  studentFullName: string;
+  mentorId?: number;
+  mentorFullName?: string;
+  submissionType: StudentSubmissionType;
+  githubUrl?: string;
+  originalFileName?: string;
+  fileSizeBytes?: number;
+  note?: string;
+  versionNo: number;
+  isLatest: boolean;
+  submittedAt: string;
+}
+
 export type NavPage =
   | 'dashboard'
   | 'companies'
   | 'applications'
   | 'weekly-reports'
+  | 'submissions'
   | 'users'
   | 'students'
   | 'mentors'
@@ -137,3 +160,4 @@ export type NavPage =
   | 'my-profile'
   | 'login'
   | 'landing';
+

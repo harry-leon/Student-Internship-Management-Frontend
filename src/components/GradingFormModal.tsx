@@ -5,6 +5,7 @@ import {
   AssessmentGradingPayload,
   assessmentGradingService,
 } from '../api/assessmentGradingService';
+import { studentSubmissionService } from '../api/studentSubmissionService';
 
 interface GradingFormModalProps {
   isOpen: boolean;
@@ -165,6 +166,65 @@ export const GradingFormModal: React.FC<GradingFormModalProps> = ({
           <div className="py-12 text-center text-xs text-slate-500">Đang tải biểu mẫu chấm điểm...</div>
         ) : (
           <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+            {/* Student Submission Banner */}
+            {form?.latestSubmission && (
+              <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-2xs">
+                <div className="space-y-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold text-blue-800 uppercase tracking-wider flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[16px]">task</span>
+                      Bài Nộp Của Sinh Viên (v{form.latestSubmission.versionNo})
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700">
+                      {form.latestSubmission.submissionType === 'GITHUB' ? 'GitHub' : 'ZIP File'}
+                    </span>
+                  </div>
+                  {form.latestSubmission.note && (
+                    <p className="text-xs text-slate-700 italic line-clamp-2">
+                      &ldquo;{form.latestSubmission.note}&rdquo;
+                    </p>
+                  )}
+                  {form.latestSubmission.originalFileName && (
+                    <p className="text-[11px] text-slate-500">
+                      Tệp đính kèm: <strong>{form.latestSubmission.originalFileName}</strong>
+                    </p>
+                  )}
+                </div>
+
+                <div className="shrink-0 flex items-center gap-2">
+                  {form.latestSubmission.submissionType === 'GITHUB' && form.latestSubmission.githubUrl && (
+                    <a
+                      href={form.latestSubmission.githubUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">open_in_new</span>
+                      <span>Mở GitHub</span>
+                    </a>
+                  )}
+
+                  {form.latestSubmission.submissionType === 'ZIP' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (form.latestSubmission?.submissionId) {
+                          studentSubmissionService.downloadZip(
+                            form.latestSubmission.submissionId,
+                            form.latestSubmission.originalFileName
+                          );
+                        }
+                      }}
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">download</span>
+                      <span>Tải ZIP</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Criteria List */}
             {form?.criteria.map((item, idx) => (
               <div key={item.criterionId} className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-2">

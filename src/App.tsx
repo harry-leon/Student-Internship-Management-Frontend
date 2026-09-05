@@ -28,6 +28,7 @@ import { UsersView } from './views/UsersView';
 import { CompaniesView } from './views/CompaniesView';
 import { InternshipApplicationsView } from './views/InternshipApplicationsView';
 import { WeeklyReportsView } from './views/WeeklyReportsView';
+import { SubmissionsView } from './views/SubmissionsView';
 import { ProfileView } from './views/ProfileView';
 import { LoginView } from './views/LoginView';
 import { PublicLandingView } from './views/PublicLandingView';
@@ -259,6 +260,7 @@ function AppRoutes() {
                 <Route path="/admin/companies" element={<CompaniesView currentRole={activeRole} />} />
                 <Route path="/admin/applications" element={<InternshipApplicationsView currentRole={activeRole} />} />
                 <Route path="/admin/weekly-reports" element={<WeeklyReportsView currentRole={activeRole} />} />
+                <Route path="/admin/submissions" element={<SubmissionsView currentRole={activeRole} />} />
                 <Route path="/admin/assignments" element={
                   <AssignmentsView
                     currentRole={activeRole}

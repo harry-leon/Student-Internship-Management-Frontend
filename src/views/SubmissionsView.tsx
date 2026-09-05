@@ -427,6 +427,15 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole })
 
                     <td className="py-2.5 px-3.5 text-right">
                       <div className="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setDetailSubmission(sub)}
+                          className="p-1 text-slate-500 hover:text-[#004ac6] hover:bg-blue-50 rounded-md transition-colors cursor-pointer"
+                          title="Xem chi tiết bài nộp"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">visibility</span>
+                        </button>
+
                         {sub.submissionType === 'GITHUB' ? (
                           <a
                             href={sub.githubUrl}
@@ -445,17 +454,6 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole })
                             title="Tải xuống tệp ZIP"
                           >
                             <span className="material-symbols-outlined text-[18px]">download</span>
-                          </button>
-                        )}
-
-                        {sub.note && (
-                          <button
-                            type="button"
-                            onClick={() => setDetailSubmission(sub)}
-                            className="p-1 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer"
-                            title="Xem ghi chú"
-                          >
-                            <span className="material-symbols-outlined text-[18px]">chat_bubble_outline</span>
                           </button>
                         )}
 
@@ -521,36 +519,108 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole })
         </div>
       </div>
 
-      {/* Note Detail Modal */}
+      {/* Submission Detail Modal */}
       {detailSubmission && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md p-5 animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-xl shadow-2xl border border-slate-200/90 w-full max-w-lg p-5 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-sm font-bold text-slate-900">Chi Tiết Ghi Chú Bài Nộp</h3>
+              <div className="flex items-center gap-2">
+                <span className={`px-2 py-0.5 rounded text-[11px] font-semibold uppercase ${
+                  detailSubmission.submissionType === 'GITHUB'
+                    ? 'bg-purple-100 text-purple-700'
+                    : 'bg-emerald-100 text-emerald-700'
+                }`}>
+                  {detailSubmission.submissionType}
+                </span>
+                <h3 className="text-sm font-bold text-slate-900">Chi Tiết Bài Nộp</h3>
+                <span className="font-mono text-xs px-1.5 py-0.2 bg-slate-100 text-slate-700 rounded font-semibold">
+                  v{detailSubmission.versionNo}
+                </span>
+              </div>
               <button
                 type="button"
                 onClick={() => setDetailSubmission(null)}
-                className="text-slate-400 hover:text-slate-600"
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100 transition-colors"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
             </div>
 
-            <div className="py-4 space-y-2">
-              <div className="flex items-center justify-between text-xs text-slate-500">
-                <span>Sinh viên: <strong className="text-slate-700">{detailSubmission.studentFullName}</strong></span>
-                <span>Phiên bản: <strong className="text-slate-700">v{detailSubmission.versionNo}</strong></span>
+            <div className="py-4 space-y-3 text-xs">
+              {/* Student info */}
+              <div className="grid grid-cols-2 gap-2 bg-slate-50/70 p-3 rounded-lg border border-slate-100">
+                <div>
+                  <span className="text-slate-500 block text-[11px]">Sinh viên:</span>
+                  <span className="font-semibold text-slate-800">{detailSubmission.studentFullName}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[11px]">Mã sinh viên:</span>
+                  <span className="font-mono font-medium text-slate-700">{detailSubmission.studentCode}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[11px]">Đợt đánh giá:</span>
+                  <span className="text-slate-700">{detailSubmission.roundName || 'Đợt chung'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[11px]">Thời gian nộp:</span>
+                  <span className="text-slate-700">{formatDate(detailSubmission.submittedAt)}</span>
+                </div>
               </div>
-              <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">
-                {detailSubmission.note || 'Không có ghi chú.'}
+
+              {/* Artifact link / download */}
+              <div className="p-3 bg-slate-50/70 rounded-lg border border-slate-100 space-y-2">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+                  Nội dung bài nộp
+                </span>
+                {detailSubmission.submissionType === 'GITHUB' ? (
+                  <div className="flex items-center justify-between gap-2 p-2 bg-white rounded border border-slate-200">
+                    <span className="font-mono text-blue-600 truncate">{detailSubmission.githubUrl}</span>
+                    <a
+                      href={detailSubmission.githubUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-2.5 py-1 bg-purple-600 text-white rounded text-xs font-medium hover:bg-purple-700 transition-colors shrink-0 flex items-center gap-1"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                      Mở GitHub
+                    </a>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between gap-2 p-2 bg-white rounded border border-slate-200">
+                    <div>
+                      <p className="font-medium text-slate-800">{detailSubmission.originalFileName || 'submission.zip'}</p>
+                      {detailSubmission.fileSizeBytes && (
+                        <p className="text-[10.5px] text-slate-400">{formatFileSize(detailSubmission.fileSizeBytes)}</p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadZip(detailSubmission)}
+                      className="px-2.5 py-1 bg-emerald-600 text-white rounded text-xs font-medium hover:bg-emerald-700 transition-colors shrink-0 flex items-center gap-1 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">download</span>
+                      Tải tệp ZIP
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Note */}
+              <div className="p-3 bg-slate-50/70 rounded-lg border border-slate-100 space-y-1">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+                  Ghi chú của sinh viên
+                </span>
+                <p className="text-slate-700 italic whitespace-pre-wrap leading-relaxed">
+                  {detailSubmission.note || 'Không có ghi chú nào.'}
+                </p>
               </div>
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex justify-end pt-2 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setDetailSubmission(null)}
-                className="px-4 py-1.5 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg cursor-pointer"
+                className="px-4 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
               >
                 Đóng
               </button>
@@ -558,6 +628,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole })
           </div>
         </div>
       )}
+
 
       {/* Student Submit Modal */}
       <StudentSubmissionModal

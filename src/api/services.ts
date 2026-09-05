@@ -1,5 +1,6 @@
 import { api } from './apiClient';
-import { Role, AssignmentStatus } from '../types';
+import { Role, AssignmentStatus, StudentSubmission, WeeklyReport } from '../types';
+import { AssessmentGradingForm } from './assessmentGradingService';
 
 // ==================== USER SERVICE ====================
 export interface UserDTO {
@@ -58,12 +59,22 @@ export interface StudentDTO {
   updatedAt?: string;
 }
 
+export interface StudentDetailDTO {
+  student: StudentDTO;
+  currentAssignment?: InternshipAssignmentDTO | null;
+  latestSubmission?: StudentSubmission | null;
+  recentReports?: WeeklyReport[];
+  gradingSummaries?: AssessmentGradingForm[];
+}
+
 export const studentService = {
   getAll: () => api.get<StudentDTO[]>('/api/students'),
   getById: (id: number) => api.get<StudentDTO>(`/api/students/${id}`),
+  getDetail: (id: number) => api.get<StudentDetailDTO>(`/api/students/${id}/detail`),
   create: (data: Partial<StudentDTO>) => api.post<StudentDTO>('/api/students', data),
   update: (id: number, data: Partial<StudentDTO>) => api.put<StudentDTO>(`/api/students/${id}`, data),
 };
+
 
 // ==================== MENTOR SERVICE ====================
 export interface MentorDTO {

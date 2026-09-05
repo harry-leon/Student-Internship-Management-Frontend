@@ -3,6 +3,7 @@ import { Role, Student } from '../types';
 import { studentService } from '../api/services';
 import { mapStudentFromDTO } from '../api/mappers';
 import { canManageSystemData } from '../auth/roleAccess';
+import { StudentDetailModal } from '../components/StudentDetailModal';
 
 interface StudentsViewProps {
   currentRole: Role;
@@ -17,6 +18,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [deptFilter, setDeptFilter] = useState('ALL');
+  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
   const canManage = canManageSystemData(currentRole);
 
   useEffect(() => {
@@ -39,8 +41,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
   const filtered = students.filter((s) => {
     const matchSearch =
       s.name.toLowerCase().includes(search.toLowerCase()) ||
-      s.code.toLowerCase().includes(search.toLowerCase()) ||
-      s.company.toLowerCase().includes(search.toLowerCase());
+      s.code.toLowerCase().includes(search.toLowerCase());
     const matchDept = deptFilter === 'ALL' || s.department === deptFilter;
     return matchSearch && matchDept;
   });
@@ -74,19 +75,19 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
         </div>
       </div>
 
-      {/* Toolbar: Search, Dept Filter, View Mode Toggle */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 rounded-xl border border-slate-200/90 bg-white p-2.5 shadow-2xs">
-        <div className="flex flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-1.5 w-full sm:w-auto">
-          <span className="material-symbols-outlined text-[17px] text-slate-400">
-            search
-          </span>
+      {/* Search & Filter & View Switcher Bar */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-slate-200/90 bg-white p-2.5 shadow-2xs">
+        <div className="relative flex-1 max-w-sm">
           <input
             type="text"
-            placeholder="Tìm theo tên sinh viên, mã số, công ty tiếp nhận..."
+            placeholder="Tìm theo tên hoặc mã sinh viên..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-transparent text-xs text-[#0b1c30] outline-none placeholder:text-slate-400"
+            className="w-full h-8 rounded-lg border border-slate-200 bg-slate-50/70 pl-8 pr-3 text-xs text-[#0b1c30] placeholder-slate-400 outline-none focus:border-[#004ac6] focus:bg-white transition-colors"
           />
+          <span className="material-symbols-outlined absolute left-2.5 top-2 text-[16px] text-slate-400">
+            search
+          </span>
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
@@ -138,14 +139,11 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
             <span className="material-symbols-outlined text-[22px]">school</span>
           </div>
           <h3 className="text-sm font-semibold text-[#0b1c30]">Chưa có dữ liệu sinh viên</h3>
-          <p className="mt-0.5 mb-3 text-xs text-slate-500">
-            Không tìm thấy sinh viên nào khớp với điều kiện tìm kiếm hiện tại.
-          </p>
+          <p className="mt-1 text-xs text-slate-500">Hãy thêm sinh viên vào hệ thống để bắt đầu theo dõi tiến độ thực tập.</p>
           {canManage && (
             <button
-              type="button"
               onClick={onOpenAddStudent}
-              className="rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white transition-all hover:bg-[#003ea8]"
+              className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-[#003896] transition-colors"
             >
               + Thêm Sinh Viên Mới
             </button>
@@ -168,6 +166,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                   <th className="px-3 py-2.5">Tiến Độ</th>
                   <th className="px-3 py-2.5 text-center">Điểm</th>
                   <th className="px-3.5 py-2.5 text-center">Trạng Thái</th>
+                  <th className="px-3.5 py-2.5 text-center">Thao Tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-800">
@@ -211,6 +210,17 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                         {s.status}
                       </span>
                     </td>
+                    <td className="px-3.5 py-2.5 text-center">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedStudentId(Number(s.id))}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 hover:text-[#004ac6] transition-colors shadow-2xs"
+                        title="Xem chi tiết"
+                      >
+                        <span className="material-symbols-outlined text-[13px]">visibility</span>
+                        Chi tiết
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -222,62 +232,75 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
           {filtered.map((student) => (
             <div
               key={student.id}
-              className="rounded-xl border border-slate-200/90 bg-white p-3 shadow-2xs transition-all hover:border-slate-300 hover:shadow-xs"
+              className="rounded-xl border border-slate-200/90 bg-white p-3 shadow-2xs transition-all hover:border-slate-300 hover:shadow-xs flex flex-col justify-between"
             >
-              <div className="flex items-start gap-2.5">
-                <img
-                  src={student.avatar}
-                  alt={student.name}
-                  className="h-9 w-9 rounded-lg border border-slate-200 object-cover"
-                />
-                <div className="min-w-0 flex-1">
-                  <h3 className="truncate text-xs font-semibold text-[#0b1c30]">
-                    {student.name}
-                  </h3>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-1">
-                    <span className="rounded border border-blue-100 bg-blue-50 px-1 py-0.2 font-mono text-[9.5px] font-medium text-[#004ac6]">
-                      {student.code}
+              <div>
+                <div className="flex items-start gap-2.5">
+                  <img
+                    src={student.avatar}
+                    alt={student.name}
+                    className="h-9 w-9 rounded-lg border border-slate-200 object-cover"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <h3 className="truncate text-xs font-semibold text-[#0b1c30]">
+                      {student.name}
+                    </h3>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-1">
+                      <span className="rounded border border-blue-100 bg-blue-50 px-1 py-0.2 font-mono text-[9.5px] font-medium text-[#004ac6]">
+                        {student.code}
+                      </span>
+                      <span className="truncate text-[10px] text-slate-500">{student.department}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-2 grid gap-0.5 rounded-lg border border-slate-100 bg-slate-50/60 p-2 text-[10.5px]">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-slate-500">Doanh nghiệp</span>
+                    <span className="max-w-[58%] truncate font-medium text-slate-800">{student.company}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-slate-500">Giảng viên</span>
+                    <span className="max-w-[58%] truncate font-medium text-slate-800">{student.mentor}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-slate-500">Đợt</span>
+                    <span className="max-w-[58%] truncate font-medium text-slate-800">{student.phase}</span>
+                  </div>
+                </div>
+
+                <div className="mt-2">
+                  <div className="mb-0.5 flex items-center justify-between text-[10px] text-slate-500">
+                    <span>Tiến độ</span>
+                    <span className="font-semibold text-[#004ac6]">{student.progress}%</span>
+                  </div>
+                  <div className="mb-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className="h-full rounded-full bg-[#004ac6] transition-all"
+                      style={{ width: `${student.progress}%` }}
+                    ></div>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 text-[10.5px]">
+                    <span className="text-slate-500">
+                      Điểm: <strong className="text-slate-900">{student.score ?? 0}/10</strong>
                     </span>
-                    <span className="truncate text-[10px] text-slate-500">{student.department}</span>
+                    <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-1.5 py-0.2 text-[9px] font-bold text-[#004ac6]">
+                      {student.status}
+                    </span>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-2 grid gap-0.5 rounded-lg border border-slate-100 bg-slate-50/60 p-2 text-[10.5px]">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-slate-500">Doanh nghiệp</span>
-                  <span className="max-w-[58%] truncate font-medium text-slate-800">{student.company}</span>
-                </div>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-slate-500">Giảng viên</span>
-                  <span className="max-w-[58%] truncate font-medium text-slate-800">{student.mentor}</span>
-                </div>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-slate-500">Đợt</span>
-                  <span className="max-w-[58%] truncate font-medium text-slate-800">{student.phase}</span>
-                </div>
-              </div>
-
-              <div className="mt-2">
-                <div className="mb-0.5 flex items-center justify-between text-[10px] text-slate-500">
-                  <span>Tiến độ</span>
-                  <span className="font-semibold text-[#004ac6]">{student.progress}%</span>
-                </div>
-                <div className="mb-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                  <div
-                    className="h-full rounded-full bg-[#004ac6] transition-all"
-                    style={{ width: `${student.progress}%` }}
-                  ></div>
-                </div>
-
-                <div className="flex items-center justify-between gap-2 text-[10.5px]">
-                  <span className="text-slate-500">
-                    Điểm: <strong className="text-slate-900">{student.score ?? 0}/10</strong>
-                  </span>
-                  <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-1.5 py-0.2 text-[9px] font-bold text-[#004ac6]">
-                    {student.status}
-                  </span>
-                </div>
+              <div className="mt-2.5 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setSelectedStudentId(Number(student.id))}
+                  className="w-full inline-flex items-center justify-center gap-1 px-2 py-1 text-[11px] font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-md hover:bg-slate-100 hover:text-[#004ac6] transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[13px]">visibility</span>
+                  Xem chi tiết
+                </button>
               </div>
             </div>
           ))}

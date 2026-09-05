@@ -4,12 +4,15 @@ import { studentSubmissionService } from '../api/studentSubmissionService';
 import { StudentSubmissionModal } from '../components/StudentSubmissionModal';
 import { phaseService, roundService, assignmentService } from '../api/services';
 import { mapPhaseFromDTO, mapRoundFromDTO, mapAssignmentFromDTO } from '../api/mappers';
+import { useAuth } from '../context/AuthContext';
+import { canDownload, canCreate, canDelete } from '../auth/roleAccess';
 
 interface SubmissionsViewProps {
   currentRole: Role;
 }
 
 export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole }) => {
+  const { can, hasFeature } = useAuth();
   const [submissions, setSubmissions] = useState<StudentSubmission[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -180,7 +183,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole })
           </p>
         </div>
 
-        {currentRole === 'Student' && (
+        {currentRole === 'Student' && canCreate(currentRole, can, hasFeature) && (
           <button
             type="button"
             onClick={() => setIsSubmitModalOpen(true)}
@@ -447,17 +450,19 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole })
                             <span className="material-symbols-outlined text-[18px]">open_in_new</span>
                           </a>
                         ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleDownloadZip(sub)}
-                            className="p-1 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors cursor-pointer"
-                            title="Tải xuống tệp ZIP"
-                          >
-                            <span className="material-symbols-outlined text-[18px]">download</span>
-                          </button>
+                          canDownload(currentRole, can, hasFeature) && (
+                            <button
+                              type="button"
+                              onClick={() => handleDownloadZip(sub)}
+                              className="p-1 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors cursor-pointer"
+                              title="Tải xuống tệp ZIP"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">download</span>
+                            </button>
+                          )
                         )}
 
-                        {(currentRole === 'Admin' || currentRole === 'Student') && (
+                        {(currentRole === 'Admin' || currentRole === 'Student') && canDelete(currentRole, can, hasFeature) && (
                           <button
                             type="button"
                             onClick={() => handleDelete(sub)}

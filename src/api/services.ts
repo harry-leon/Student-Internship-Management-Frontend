@@ -320,3 +320,73 @@ export const mentorGroupService = {
     api.get<MentorGroupDTO[]>('/api/mentor-groups/me'),
 };
 
+// ==================== FILE STORAGE SERVICE ====================
+export interface StoredFileDTO {
+  fileId: number;
+  ownerUserId: number;
+  linkedEntityType: string;
+  linkedEntityId?: number;
+  originalFileName: string;
+  contentType: string;
+  fileExtension: string;
+  fileSize: number;
+  checksumSha256?: string;
+  status: string;
+  downloadUrl: string;
+  createdAt: string;
+}
+
+export const fileService = {
+  uploadAvatar: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post<StoredFileDTO>('/api/files/avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  uploadGeneric: (file: File, linkedEntityType: string = 'GENERAL', linkedEntityId?: number) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('linkedEntityType', linkedEntityType);
+    if (linkedEntityId !== undefined) {
+      formData.append('linkedEntityId', String(linkedEntityId));
+    }
+    return api.post<StoredFileDTO>('/api/files/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  getMetadata: (fileId: number) => api.get<StoredFileDTO>(`/api/files/${fileId}`),
+
+  downloadFile: async (fileId: number, fallbackName?: string) => {
+    const token = localStorage.getItem('token') || '';
+    const response = await fetch(`/api/files/${fileId}/download`, {
+      headers: {
+        Authorization: token ? `Bearer ${token}` : '',
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`Download failed with status ${response.status}`);
+    }
+    const blob = await response.blob();
+    const disposition = response.headers.get('content-disposition');
+    let filename = fallbackName || `file_${fileId}`;
+    if (disposition && disposition.includes('filename=')) {
+      const match = disposition.match(/filename="?([^"]+)"?/);
+      if (match && match[1]) {
+        filename = match[1];
+      }
+    }
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  },
+};
+
+

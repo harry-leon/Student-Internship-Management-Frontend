@@ -10,6 +10,20 @@ interface SidebarProps {
   onCloseMobile: () => void;
 }
 
+interface NavItem {
+  id: NavPage;
+  path: string;
+  label: string;
+  icon: string;
+  requiredPermissions?: string[];
+  featureFlag?: string;
+}
+
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
+
 export const Sidebar: React.FC<SidebarProps> = ({
   currentRole,
   isMobileOpen,
@@ -19,55 +33,172 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const location = useLocation();
   const { can, hasFeature } = useAuth();
 
-  const navSections = [
+  const navSections: NavSection[] = [
     {
       title: 'OVERVIEW',
       items: [
-        { id: 'dashboard' as NavPage, path: '/dashboard', label: 'Dashboard', icon: 'home' },
+        {
+          id: 'dashboard' as NavPage,
+          path: '/dashboard',
+          label: 'Dashboard',
+          icon: 'home',
+          requiredPermissions: ['DASHBOARD_VIEW'],
+        },
       ],
     },
     {
       title: 'PEOPLE',
       items: [
-        { id: 'users' as NavPage, path: '/users', label: 'Users', icon: 'group' },
-        { id: 'students' as NavPage, path: '/students', label: 'Students', icon: 'school' },
-        { id: 'mentors' as NavPage, path: '/mentors', label: 'Mentors', icon: 'supervisor_account' },
-        { id: 'groups' as NavPage, path: '/groups', label: 'Groups', icon: 'groups' },
+        {
+          id: 'users' as NavPage,
+          path: '/users',
+          label: 'Users',
+          icon: 'group',
+          requiredPermissions: ['USER_VIEW'],
+        },
+        {
+          id: 'students' as NavPage,
+          path: '/students',
+          label: 'Students',
+          icon: 'school',
+          requiredPermissions: ['STUDENT_VIEW'],
+        },
+        {
+          id: 'mentors' as NavPage,
+          path: '/mentors',
+          label: 'Mentors',
+          icon: 'supervisor_account',
+          requiredPermissions: ['MENTOR_VIEW'],
+        },
+        {
+          id: 'groups' as NavPage,
+          path: '/groups',
+          label: 'Groups',
+          icon: 'groups',
+          requiredPermissions: ['GROUP_VIEW'],
+        },
       ],
     },
     {
       title: 'INTERNSHIP',
       items: [
-        { id: 'companies' as NavPage, path: '/companies', label: 'Companies', icon: 'domain' },
-        { id: 'tasks' as NavPage, path: '/tasks', label: currentRole === 'Student' ? 'My Tasks' : 'Group Tasks', icon: 'task' },
-        { id: 'submissions' as NavPage, path: '/submissions', label: 'Submissions', icon: 'assignment_turned_in' },
-        { id: 'weekly-reports' as NavPage, path: '/weekly-reports', label: 'Weekly Reports', icon: 'description' },
-        { id: 'applications' as NavPage, path: '/applications', label: 'Applications', icon: 'post_add' },
-        { id: 'internship-phases' as NavPage, path: '/internship-phases', label: 'Internship Phases', icon: 'timeline' },
-        { id: 'assignments' as NavPage, path: '/assignments', label: 'Assignments', icon: 'assignment' },
+        {
+          id: 'companies' as NavPage,
+          path: '/companies',
+          label: 'Companies',
+          icon: 'domain',
+          requiredPermissions: ['COMPANY_VIEW'],
+        },
+        {
+          id: 'tasks' as NavPage,
+          path: '/tasks',
+          label: currentRole === 'Student' ? 'My Tasks' : 'Group Tasks',
+          icon: 'task',
+          requiredPermissions: ['GROUP_TASK_VIEW', 'SUBMISSION_VIEW'],
+        },
+        {
+          id: 'submissions' as NavPage,
+          path: '/submissions',
+          label: 'Submissions',
+          icon: 'assignment_turned_in',
+          requiredPermissions: ['SUBMISSION_VIEW'],
+        },
+        {
+          id: 'weekly-reports' as NavPage,
+          path: '/weekly-reports',
+          label: 'Weekly Reports',
+          icon: 'description',
+          requiredPermissions: ['PHASE_VIEW'],
+          featureFlag: 'WEEKLY_REPORT_SUBMISSION_ENABLED',
+        },
+        {
+          id: 'applications' as NavPage,
+          path: '/applications',
+          label: 'Applications',
+          icon: 'post_add',
+          requiredPermissions: ['PHASE_VIEW'],
+          featureFlag: 'APPLICATION_REGISTRATION_ENABLED',
+        },
+        {
+          id: 'internship-phases' as NavPage,
+          path: '/internship-phases',
+          label: 'Internship Phases',
+          icon: 'timeline',
+          requiredPermissions: ['PHASE_VIEW'],
+        },
+        {
+          id: 'assignments' as NavPage,
+          path: '/assignments',
+          label: 'Assignments',
+          icon: 'assignment',
+          requiredPermissions: ['ASSIGNMENT_VIEW'],
+        },
       ],
     },
     {
       title: 'EVALUATION',
       items: [
-        { id: 'evaluation-criteria' as NavPage, path: '/evaluation-criteria', label: 'Evaluation Criteria', icon: 'rule' },
-        { id: 'assessment-rounds' as NavPage, path: '/assessment-rounds', label: 'Assessment Rounds', icon: 'event_repeat' },
-        { id: 'assessment-results' as NavPage, path: '/assessment-results', label: 'Assessment Results', icon: 'insights' },
+        {
+          id: 'evaluation-criteria' as NavPage,
+          path: '/evaluation-criteria',
+          label: 'Evaluation Criteria',
+          icon: 'rule',
+          requiredPermissions: ['ASSESSMENT_CREATE'],
+        },
+        {
+          id: 'assessment-rounds' as NavPage,
+          path: '/assessment-rounds',
+          label: 'Assessment Rounds',
+          icon: 'event_repeat',
+          requiredPermissions: ['ASSESSMENT_CREATE'],
+        },
+        {
+          id: 'assessment-results' as NavPage,
+          path: '/assessment-results',
+          label: 'Assessment Results',
+          icon: 'insights',
+          requiredPermissions: ['ASSESSMENT_VIEW'],
+          featureFlag: currentRole === 'Student' ? 'STUDENT_VIEW_SCORE_ENABLED' : undefined,
+        },
       ],
     },
     {
       title: 'SETTINGS',
       items: [
-        { id: 'settings-roles' as NavPage, path: '/settings/roles', label: 'Roles', icon: 'shield_person' },
-        { id: 'settings-permissions' as NavPage, path: '/settings/permissions', label: 'Permissions', icon: 'security' },
+        {
+          id: 'settings-roles' as NavPage,
+          path: '/settings/roles',
+          label: 'Roles',
+          icon: 'shield_person',
+          requiredPermissions: ['ROLE_VIEW', 'ROLE_PERMISSION_VIEW'],
+        },
+        {
+          id: 'settings-permissions' as NavPage,
+          path: '/settings/permissions',
+          label: 'Permissions',
+          icon: 'security',
+          requiredPermissions: ['PERMISSION_VIEW', 'ROLE_PERMISSION_VIEW'],
+        },
       ],
     },
   ];
 
+  const hasAccessToItem = (item: NavItem): boolean => {
+    // Feature flag check
+    if (item.featureFlag && !hasFeature(item.featureFlag)) {
+      return false;
+    }
+    // Permissions check: user must have at least one of requiredPermissions
+    if (item.requiredPermissions && item.requiredPermissions.length > 0) {
+      return item.requiredPermissions.some((perm) => can(perm));
+    }
+    return true;
+  };
+
   const filteredSections = navSections
     .map((section) => ({
       ...section,
-      items: section.items.filter((item) => canAccessPage(currentRole, item.id, can, hasFeature)),
+      items: section.items.filter(hasAccessToItem),
     }))
     .filter((section) => section.items.length > 0);
 

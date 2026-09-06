@@ -7,6 +7,9 @@ import { canAccessPage } from '../auth/roleAccess';
 interface PermissionGuardProps {
   page: NavPage;
   requiredPermission?: string;
+  requiredPermissions?: string[];
+  anyPermissions?: string[];
+  allPermissions?: string[];
   requiredRoles?: Role[];
   featureFlag?: string;
   children: React.ReactNode;
@@ -15,11 +18,14 @@ interface PermissionGuardProps {
 export const PermissionGuard: React.FC<PermissionGuardProps> = ({
   page,
   requiredPermission,
+  requiredPermissions,
+  anyPermissions,
+  allPermissions,
   requiredRoles,
   featureFlag,
   children,
 }) => {
-  const { user, can, hasFeature, isAuthenticated } = useAuth();
+  const { user, can, hasPermission, hasAnyPermission, hasAllPermissions, hasFeature } = useAuth();
   const navigate = useNavigate();
 
   const activeRole = (user?.role as Role) || 'Student';
@@ -34,14 +40,23 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
     return <ForbiddenState page={page} role={activeRole} onGoHome={() => navigate('/dashboard')} />;
   }
 
-  // Check explicit permission if specified
-  if (requiredPermission && can && !can(requiredPermission)) {
+  // Check single required permission
+  if (requiredPermission && !can(requiredPermission)) {
     return <ForbiddenState page={page} role={activeRole} onGoHome={() => navigate('/dashboard')} />;
   }
 
-  // Check page level access via roleAccess matrix
-  const isAllowed = canAccessPage(activeRole, page, can, hasFeature);
-  if (!isAllowed) {
+  // Check required permissions list (user must have at least one)
+  if (requiredPermissions && requiredPermissions.length > 0 && !hasAnyPermission(requiredPermissions)) {
+    return <ForbiddenState page={page} role={activeRole} onGoHome={() => navigate('/dashboard')} />;
+  }
+
+  // Check any permissions
+  if (anyPermissions && anyPermissions.length > 0 && !hasAnyPermission(anyPermissions)) {
+    return <ForbiddenState page={page} role={activeRole} onGoHome={() => navigate('/dashboard')} />;
+  }
+
+  // Check all permissions
+  if (allPermissions && allPermissions.length > 0 && !hasAllPermissions(allPermissions)) {
     return <ForbiddenState page={page} role={activeRole} onGoHome={() => navigate('/dashboard')} />;
   }
 

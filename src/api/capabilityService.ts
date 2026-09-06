@@ -6,6 +6,14 @@ export interface UserCapabilityResponse {
   features: string[];
 }
 
+export interface UserPermissionsDTO {
+  userId: number;
+  username: string;
+  roles: string[];
+  permissions: string[];
+  featureFlags: string[];
+}
+
 export interface RoleDTO {
   roleId: number;
   roleCode: string;
@@ -46,6 +54,10 @@ export interface RoleFeatureDTO {
 }
 
 export const capabilityService = {
+  fetchMyPermissions: async (): Promise<UserPermissionsDTO> => {
+    return api.get<UserPermissionsDTO>('/api/me/permissions');
+  },
+
   fetchMyCapabilities: async (): Promise<UserCapabilityResponse> => {
     return api.get<UserCapabilityResponse>('/api/auth/me/capabilities');
   },
@@ -64,6 +76,10 @@ export const capabilityService = {
 
   updateRolePermissions: async (roleCode: string, permissions: string[]): Promise<void> => {
     return api.put<void>(`/api/admin/roles/${roleCode}/permissions`, { permissions });
+  },
+
+  updateSettingsPermissions: async (roleCode: string, permissions: string[]): Promise<void> => {
+    return api.put<void>('/api/settings/permissions', { roleCode, permissions });
   },
 
   fetchFeatures: async (): Promise<SystemFeatureDTO[]> => {

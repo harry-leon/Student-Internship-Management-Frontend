@@ -7,6 +7,7 @@ import {
   GroupSubmissionItem,
 } from '../api/studentTaskService';
 import { mentorGroupService, MentorGroupDTO } from '../api/services';
+import { Can } from '../components/Can';
 
 interface SubmissionsViewProps {
   currentRole: Role;
@@ -998,14 +999,16 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
                           )}
                         </td>
                         <td className="py-2.5 px-3.5 text-right">
-                          <button
-                            type="button"
-                            onClick={() => handleOpenReviewModal(sub)}
-                            className="px-2.5 py-1 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-lg font-semibold text-[11px] transition cursor-pointer inline-flex items-center gap-1"
-                          >
-                            <span className="material-symbols-outlined text-[14px]">rate_review</span>
-                            <span>{rev ? 'Chấm lại' : 'Chấm điểm'}</span>
-                          </button>
+                          <Can permission="SUBMISSION_GRADE">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenReviewModal(sub)}
+                              className="px-2.5 py-1 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-lg font-semibold text-[11px] transition cursor-pointer inline-flex items-center gap-1"
+                            >
+                              <span className="material-symbols-outlined text-[14px]">rate_review</span>
+                              <span>{rev ? 'Chấm lại' : 'Chấm điểm'}</span>
+                            </button>
+                          </Can>
                         </td>
                       </tr>
                     );
@@ -1019,70 +1022,72 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
 
       {/* Review Modal (Admin / Mentor) */}
       {isReviewModalOpen && reviewingSubmission && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-5 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-base font-bold text-slate-900">Đánh Giá & Chấm Điểm Bài Nộp</h3>
-              <button
-                type="button"
-                onClick={() => setIsReviewModalOpen(false)}
-                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
-              >
-                <span className="material-symbols-outlined text-[20px]">close</span>
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveReview} className="py-4 space-y-4 text-xs">
-              <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                <p>Sinh viên: <strong className="text-slate-800">{reviewingSubmission.submittedByName}</strong></p>
-                <p>Nhiệm vụ: <strong className="text-slate-800">{reviewingSubmission.taskTitle || 'Chung'}</strong> (v{reviewingSubmission.versionNumber})</p>
-              </div>
-
-              <div>
-                <label className="font-semibold text-slate-700 block mb-1">Điểm số (Thang điểm 10) *</label>
-                <input
-                  type="number"
-                  min="0"
-                  max="10"
-                  step="0.1"
-                  required
-                  value={reviewScore}
-                  onChange={(e) => setReviewScore(Number(e.target.value))}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-1 focus:ring-purple-500 font-bold text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="font-semibold text-slate-700 block mb-1">Nhận xét chi tiết</label>
-                <textarea
-                  rows={3}
-                  value={reviewComment}
-                  onChange={(e) => setReviewComment(e.target.value)}
-                  placeholder="Góp ý về code chất lượng, logic xử lý, điểm cần hoàn thiện..."
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-1 focus:ring-purple-500"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+        <Can permission="SUBMISSION_GRADE">
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-5 animate-in fade-in zoom-in-95">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 className="text-base font-bold text-slate-900">Đánh Giá & Chấm Điểm Bài Nộp</h3>
                 <button
                   type="button"
                   onClick={() => setIsReviewModalOpen(false)}
-                  className="px-4 py-2 font-semibold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 cursor-pointer"
+                  className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
                 >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSavingReview}
-                  className="px-5 py-2 font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                >
-                  {isSavingReview && <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>}
-                  <span>{isSavingReview ? 'Đang lưu...' : 'Lưu đánh giá'}</span>
+                  <span className="material-symbols-outlined text-[20px]">close</span>
                 </button>
               </div>
-            </form>
+
+              <form onSubmit={handleSaveReview} className="py-4 space-y-4 text-xs">
+                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                  <p>Sinh viên: <strong className="text-slate-800">{reviewingSubmission.submittedByName}</strong></p>
+                  <p>Nhiệm vụ: <strong className="text-slate-800">{reviewingSubmission.taskTitle || 'Chung'}</strong> (v{reviewingSubmission.versionNumber})</p>
+                </div>
+
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">Điểm số (Thang điểm 10) *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="10"
+                    step="0.1"
+                    required
+                    value={reviewScore}
+                    onChange={(e) => setReviewScore(Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">Nhận xét chi tiết</label>
+                  <textarea
+                    rows={3}
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    placeholder="Góp ý cho bài nộp của sinh viên..."
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                  />
+                </div>
+
+                <div className="pt-2 flex justify-end gap-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setIsReviewModalOpen(false)}
+                    className="px-4 py-2 font-semibold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 cursor-pointer"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSavingReview}
+                    className="px-5 py-2 font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    {isSavingReview && <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>}
+                    <span>{isSavingReview ? 'Đang lưu...' : 'Lưu đánh giá'}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
+        </Can>
       )}
     </div>
   );

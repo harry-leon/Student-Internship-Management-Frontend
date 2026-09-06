@@ -8,11 +8,17 @@ import { NavPage, Role } from '../types';
 interface AuthContextType {
   user: UserResponse | null;
   token: string | null;
+  roles: string[];
+  permissions: string[];
+  featureFlags: string[];
   isAuthenticated: boolean;
   isLoading: boolean;
   isBackendConnected: boolean;
   capabilities: UserCapabilityResponse | null;
   can: (permissionCode: string) => boolean;
+  hasPermission: (permissionCode: string) => boolean;
+  hasAnyPermission: (permissionCodes: string[]) => boolean;
+  hasAllPermissions: (permissionCodes: string[]) => boolean;
   isFeatureEnabled: (featureCode: string) => boolean;
   hasFeature: (featureCode: string) => boolean;
   canAccessPage: (pageId: any) => boolean;
@@ -20,6 +26,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
   reloadCapabilities: () => Promise<void>;
+  reloadPermissions: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,9 +40,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchCapabilitiesSafely = async (): Promise<UserCapabilityResponse | null> => {
     try {
-      const caps = await capabilityService.fetchMyCapabilities();
-      setCapabilities(caps);
-      return caps;
+      try {
+        const permsDto = await capabilityService.fetchMyPermissions();
+        const roleName = permsDto.roles?.[0] || user?.role || 'STUDENT';
+        const caps: UserCapabilityResponse = {
+          role: roleName,
+          permissions: permsDto.permissions || [],
+          features: permsDto.featureFlags || [],
+        };
+        setCapabilities(caps);
+        return caps;
+      } catch {
+        const caps = await capabilityService.fetchMyCapabilities();
+        setCapabilities(caps);
+        return caps;
+      }
     } catch {
       return null;
     }
@@ -80,8 +99,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsBackendConnected(false);
     };
 
+    const handlePermissionsUpdated = () => {
+      fetchCapabilitiesSafely();
+    };
+
     window.addEventListener('auth:unauthorized', handleUnauthorized);
-    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+    window.addEventListener('permissions:updated', handlePermissionsUpdated);
+    return () => {
+      window.removeEventListener('auth:unauthorized', handleUnauthorized);
+      window.removeEventListener('permissions:updated', handlePermissionsUpdated);
+    };
   }, []);
 
   const login = async (credentials: LoginRequest) => {
@@ -143,6 +170,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return capabilities.permissions.includes(permissionCode);
   }, [user, capabilities]);
 
+  const hasPermission = useCallback((permissionCode: string): boolean => {
+    return can(permissionCode);
+  }, [can]);
+
+  const hasAnyPermission = useCallback((permissionCodes: string[]): boolean => {
+    if (!permissionCodes || permissionCodes.length === 0) return true;
+    return permissionCodes.some((code) => can(code));
+  }, [can]);
+
+  const hasAllPermissions = useCallback((permissionCodes: string[]): boolean => {
+    if (!permissionCodes || permissionCodes.length === 0) return true;
+    return permissionCodes.every((code) => can(code));
+  }, [can]);
+
+  const reloadPermissions = reloadCapabilities;
+
   const isFeatureEnabled = useCallback((featureCode: string): boolean => {
     if (!capabilities || !capabilities.features) {
       return true; // Default enabled
@@ -157,16 +200,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return checkPageAccess(user.role as Role, pageId, can, isFeatureEnabled);
   }, [user, can, isFeatureEnabled]);
 
+  const roles = user?.role ? [user.role.toUpperCase()] : (capabilities?.role ? [capabilities.role.toUpperCase()] : []);
+  const permissions = capabilities?.permissions || [];
+  const featureFlags = capabilities?.features || [];
+
   return (
     <AuthContext.Provider
       value={{
         user,
         token,
+        roles,
+        permissions,
+        featureFlags,
         isAuthenticated: !!token,
         isLoading,
         isBackendConnected,
         capabilities,
         can,
+        hasPermission,
+        hasAnyPermission,
+        hasAllPermissions,
         isFeatureEnabled,
         hasFeature,
         canAccessPage: canAccessPageHelper,
@@ -174,6 +227,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         checkAuth,
         reloadCapabilities,
+        reloadPermissions,
       }}
     >
       {children}
@@ -187,4 +241,33 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
+};
+
+export const usePermissions = () => {
+  const {
+    user,
+    roles,
+    permissions,
+    featureFlags,
+    hasPermission,
+    hasAnyPermission,
+    hasAllPermissions,
+    reloadPermissions,
+    isFeatureEnabled,
+    can,
+  } = useAuth();
+
+  return {
+    userId: user?.userId,
+    username: user?.username,
+    roles,
+    permissions,
+    featureFlags,
+    hasPermission,
+    hasAnyPermission,
+    hasAllPermissions,
+    reloadPermissions,
+    isFeatureEnabled,
+    can,
+  };
 };

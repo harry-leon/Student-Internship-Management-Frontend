@@ -300,7 +300,7 @@ function AppRoutes() {
               <Route
                 path="/companies"
                 element={
-                  <PermissionGuard page="companies" requiredPermission="COMPANY_VIEW" requiredRoles={['Admin', 'Mentor']}>
+                  <PermissionGuard page="companies" requiredPermission="COMPANY_VIEW">
                     <CompaniesView currentRole={activeRole} />
                   </PermissionGuard>
                 }
@@ -332,7 +332,7 @@ function AppRoutes() {
               <Route
                 path="/tasks"
                 element={
-                  <PermissionGuard page="tasks" requiredPermission="SUBMISSION_VIEW">
+                  <PermissionGuard page="tasks" requiredPermissions={['GROUP_TASK_VIEW', 'SUBMISSION_VIEW']}>
                     <SubmissionsView currentRole={activeRole} defaultTab="TASKS" />
                   </PermissionGuard>
                 }
@@ -356,7 +356,7 @@ function AppRoutes() {
               <Route
                 path="/settings/roles"
                 element={
-                  <PermissionGuard page="settings-roles" requiredPermission="ROLE_PERMISSION_VIEW">
+                  <PermissionGuard page="settings-roles" requiredPermissions={['ROLE_VIEW', 'ROLE_PERMISSION_VIEW']}>
                     <RolePermissionsView currentRole={activeRole} defaultTab="roles" />
                   </PermissionGuard>
                 }
@@ -364,7 +364,7 @@ function AppRoutes() {
               <Route
                 path="/settings/permissions"
                 element={
-                  <PermissionGuard page="settings-permissions" requiredPermission="ROLE_PERMISSION_VIEW">
+                  <PermissionGuard page="settings-permissions" requiredPermissions={['PERMISSION_VIEW', 'ROLE_PERMISSION_VIEW']}>
                     <RolePermissionsView currentRole={activeRole} defaultTab="permissions" />
                   </PermissionGuard>
                 }

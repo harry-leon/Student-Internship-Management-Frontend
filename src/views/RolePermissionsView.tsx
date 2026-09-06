@@ -94,8 +94,17 @@ export const RolePermissionsView: React.FC<RolePermissionsViewProps> = ({ curren
   }, []);
 
   const handleTogglePermission = (roleCode: string, permCode: string) => {
-    if (roleCode === 'ADMIN' && (permCode === 'ROLE_PERMISSION_VIEW' || permCode === 'ROLE_PERMISSION_UPDATE')) {
-      alert('Không thể tắt quyền quản trị phân quyền cốt lõi của vai trò ADMIN!');
+    const essentialAdmin = [
+      'ROLE_PERMISSION_VIEW',
+      'ROLE_PERMISSION_UPDATE',
+      'PERMISSION_VIEW',
+      'PERMISSION_UPDATE',
+      'ROLE_VIEW',
+      'ROLE_UPDATE',
+      'USER_VIEW',
+    ];
+    if (roleCode === 'ADMIN' && essentialAdmin.includes(permCode)) {
+      alert(`Không thể tắt quyền quản trị cốt lõi [${permCode}] của vai trò ADMIN!`);
       return;
     }
 
@@ -129,9 +138,10 @@ export const RolePermissionsView: React.FC<RolePermissionsViewProps> = ({ curren
         })
       );
       await reloadCapabilities();
+      window.dispatchEvent(new CustomEvent('permissions:updated'));
       setStatusMessage({
         type: 'success',
-        text: 'Cập nhật ma trận phân quyền vai trò (Role Permissions) thành công!',
+        text: 'Cập nhật ma trận phân quyền vai trò (Role Permissions) thành công! Giao diện đã đồng bộ tức thì.',
       });
     } catch (err: any) {
       setStatusMessage({
@@ -156,9 +166,10 @@ export const RolePermissionsView: React.FC<RolePermissionsViewProps> = ({ curren
         })
       );
       await reloadCapabilities();
+      window.dispatchEvent(new CustomEvent('permissions:updated'));
       setStatusMessage({
         type: 'success',
-        text: 'Cập nhật cờ tính năng (Feature Flags) thành công!',
+        text: 'Cập nhật cờ tính năng (Feature Flags) thành công! Toàn bộ tính năng đã được đồng bộ.',
       });
     } catch (err: any) {
       setStatusMessage({

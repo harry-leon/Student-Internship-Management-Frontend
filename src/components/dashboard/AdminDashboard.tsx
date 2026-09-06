@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { InternshipPhase, Assignment, AssessmentRound } from '../../types';
 import { DashboardCompanyDistribution, DashboardMentorWorkload, dashboardService } from '../../api/dashboardService';
+import { Button, Card, Badge, PageHeader } from '../ui';
+import { uiConfig } from '../../config/ui.config';
 
 interface AdminDashboardProps {
   phase: InternshipPhase;
@@ -52,70 +54,62 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
       {/* Admin Action Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="rounded bg-blue-50 px-2 py-0.5 text-[10.5px] font-bold text-blue-700 border border-blue-200 uppercase tracking-wider">
-              Operational Control
-            </span>
-            <span className="text-xs text-slate-500">
-              Đợt: <strong className="text-slate-800">{phase.name || 'Spring 2026 Batch A'}</strong> ({phase.term})
-            </span>
-          </div>
-          <h1 className="text-[20px] font-bold tracking-tight text-[#0b1c30] mt-1">
-            Tổng Quan Hệ Thống Quản Lý Thực Tập
-          </h1>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={onOpenConfigurePhase}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors"
-          >
-            ⚙️ Cấu Hình Phase
-          </button>
-          <button
-            type="button"
-            onClick={onOpenExportReport}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors"
-          >
-            📊 Xuất Báo Cáo
-          </button>
-          <button
-            type="button"
-            onClick={onOpenQuickAction}
-            className="rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#003eb3] transition-colors"
-          >
-            + Phân Công Mới
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Tổng Quan Hệ Thống Quản Lý Thực Tập"
+        description={`Đợt: ${phase.name || 'Spring 2026 Batch A'} (${phase.term}) • Tổng hợp dữ liệu đợt thực tập, phân công hướng dẫn và kết quả đánh giá.`}
+        badge={<Badge status="active">Operational Control</Badge>}
+        actions={
+          <>
+            <Button
+              variant="outline"
+              icon="tune"
+              onClick={onOpenConfigurePhase}
+            >
+              Cấu Hình Phase
+            </Button>
+            <Button
+              variant="outline"
+              icon="download"
+              onClick={onOpenExportReport}
+            >
+              Xuất Báo Cáo
+            </Button>
+            <Button
+              variant="primary"
+              icon="add"
+              onClick={onOpenQuickAction}
+            >
+              Phân Công Mới
+            </Button>
+          </>
+        }
+      />
 
       {/* System Overview KPIs */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-2xs hover:border-slate-300 transition-all">
+      <div className={uiConfig.grid.stats}>
+        <Card padding="compact">
           <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Tổng Sinh Viên</div>
-          <div className="mt-1.5 text-[22px] font-bold text-slate-900">{kpis.totalStudents ?? phase.totalStudents ?? 0}</div>
+          <div className="mt-1 text-[20px] font-bold text-slate-900 dark:text-white">{kpis.totalStudents ?? phase.totalStudents ?? 0}</div>
           <div className="mt-0.5 flex items-center gap-1 text-[10.5px] text-emerald-600 font-medium">
             <span>↑ 100%</span>
-            <span className="text-slate-400">Đã đăng ký hệ thống</span>
+            <span className="text-slate-400">Đã đăng ký</span>
           </div>
-        </div>
-        <div className="rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-2xs hover:border-slate-300 transition-all">
+        </Card>
+        <Card padding="compact">
           <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Giảng Viên Hướng Dẫn</div>
-          <div className="mt-1.5 text-[22px] font-bold text-[#004ac6]">{kpis.totalMentors ?? phase.totalMentors ?? 0}</div>
+          <div className="mt-1 text-[20px] font-bold text-[#004ac6] dark:text-blue-400">{kpis.totalMentors ?? phase.totalMentors ?? 0}</div>
           <div className="mt-0.5 text-[10.5px] text-slate-500">Giảng viên thuộc hệ thống</div>
-        </div>
-        <div className="rounded-xl border border-amber-200/80 bg-amber-50/30 p-3.5 shadow-2xs hover:border-amber-300 transition-all">
-          <div className="text-[11px] font-semibold text-amber-800 uppercase tracking-wider">Đơn Chờ Phê Duyệt</div>
-          <div className="mt-1.5 text-[22px] font-bold text-amber-900">{kpis.pendingApplications ?? 0}</div>
-          <div className="mt-0.5 text-[10.5px] text-amber-700 font-medium">Cần xử lý phê duyệt</div>
-        </div>
-        <div className="rounded-xl border border-emerald-200/80 bg-emerald-50/30 p-3.5 shadow-2xs hover:border-emerald-300 transition-all">
-          <div className="text-[11px] font-semibold text-emerald-800 uppercase tracking-wider">Phân Công Thực Hiện</div>
-          <div className="mt-1.5 text-[22px] font-bold text-emerald-900">{kpis.totalAssignments ?? 0}</div>
-          <div className="mt-0.5 text-[10.5px] text-emerald-700 font-medium">Đang trong tiến trình</div>
-        </div>
+        </Card>
+        <Card padding="compact">
+          <div className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Đơn Chờ Phê Duyệt</div>
+          <div className="mt-1 text-[20px] font-bold text-amber-800 dark:text-amber-300">{kpis.pendingApplications ?? 0}</div>
+          <div className="mt-0.5 text-[10.5px] text-amber-600 font-medium">Cần xử lý phê duyệt</div>
+        </Card>
+        <Card padding="compact">
+          <div className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Phân Công Thực Hiện</div>
+          <div className="mt-1 text-[20px] font-bold text-emerald-800 dark:text-emerald-300">{kpis.totalAssignments ?? 0}</div>
+          <div className="mt-0.5 text-[10.5px] text-emerald-600 font-medium">Đang trong tiến trình</div>
+        </Card>
       </div>
 
       {/* Admin Visual Analytics & Workloads */}

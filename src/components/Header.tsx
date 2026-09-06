@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { NotificationBell } from './NotificationBell';
 
 import { useTheme, ThemeMode } from '../context/ThemeContext';
+import { layoutConfig } from '../config/layout.config';
+import { uiConfig } from '../config/ui.config';
 
 interface HeaderProps {
   currentRole: Role;
@@ -108,7 +110,9 @@ export const Header: React.FC<HeaderProps> = ({
   const themeLabel = themeMode === 'system' ? 'Hệ thống' : isDark ? 'Giao diện Tối' : 'Giao diện Sáng';
 
   return (
-    <header className="fixed left-0 right-0 top-0 z-40 flex h-[56px] items-center justify-between border-b border-[#e2e8f0] dark:border-slate-800 bg-white/92 dark:bg-slate-900/92 px-3 shadow-[0_1px_8px_rgba(0,0,0,0.03)] backdrop-blur-xl sm:px-4 lg:left-[228px] lg:px-6 transition-colors">
+    <header
+      className={`fixed left-0 right-0 top-0 z-40 flex ${layoutConfig.header.heightClass} items-center justify-between border-b border-[#e2e8f0] dark:border-slate-800 bg-white/92 dark:bg-slate-900/92 shadow-[0_1px_8px_rgba(0,0,0,0.03)] backdrop-blur-xl ${layoutConfig.sidebar.headerOffsetClass} ${layoutConfig.header.padding} transition-colors`}
+    >
       <div className="flex items-center gap-2.5">
         <button
           type="button"
@@ -119,7 +123,10 @@ export const Header: React.FC<HeaderProps> = ({
           <span className="material-symbols-outlined text-[20px]">menu</span>
         </button>
 
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-[12.5px] sm:text-[13px]">
+        <nav
+          aria-label="Breadcrumb"
+          className={`flex items-center ${layoutConfig.header.navGap} ${layoutConfig.header.navTypography} ${layoutConfig.header.navOffset}`}
+        >
           <span className="font-medium text-[#0b1c30] dark:text-slate-200">{breadcrumb.parent}</span>
           <span className="material-symbols-outlined text-[14px] text-[#94a3b8] dark:text-slate-500">
             chevron_right

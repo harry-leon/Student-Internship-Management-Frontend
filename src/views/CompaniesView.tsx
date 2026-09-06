@@ -3,6 +3,9 @@ import { Role } from '../types';
 import { companyService, Company, CompanyCreateDTO } from '../api/companyService';
 import { Building2, Plus, Search, Filter, Mail, Phone, Globe, Edit2, Power, CheckCircle, AlertCircle, X, ShieldAlert, Trash2 } from 'lucide-react';
 import { Can } from '../components/Can';
+import { PageContainer, PageHeader, Card, Button, Badge } from '../components/ui';
+import { PermissionCode } from '../config/permissions.config';
+import { uiConfig } from '../config/ui.config';
 
 interface CompaniesViewProps {
   currentRole: Role;
@@ -134,46 +137,39 @@ export const CompaniesView: React.FC<CompaniesViewProps> = ({ currentRole }) => 
   const totalSlots = companies.reduce((acc, c) => acc + (c.maxInterns || 0), 0);
 
   return (
-    <div className="space-y-3.5 animate-in fade-in duration-200">
+    <PageContainer>
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs">
-        <div>
-          <div className="flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-[#004ac6]" />
-            <h1 className="text-[20px] font-bold text-[#0b1c30] tracking-tight">
-              Quản Lý Công Ty Đối Tác Thực Tập
-            </h1>
-          </div>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Danh sách doanh nghiệp nhận sinh viên thực tập, liên hệ và chỉ tiêu tiếp nhận.
-          </p>
-        </div>
-
-        <Can permission="COMPANY_CREATE">
-          <button
-            onClick={handleOpenCreateModal}
-            className="px-3.5 py-1.5 bg-[#004ac6] hover:bg-[#003ea8] text-white text-xs font-semibold rounded-lg shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Thêm Công Ty Mới</span>
-          </button>
-        </Can>
-      </div>
+      <PageHeader
+        title="Quản Lý Công Ty Đối Tác Thực Tập"
+        description="Danh sách doanh nghiệp nhận sinh viên thực tập, liên hệ và chỉ tiêu tiếp nhận."
+        icon="domain"
+        actions={
+          <Can permission={PermissionCode.COMPANY_CREATE}>
+            <Button
+              variant="primary"
+              icon="add"
+              onClick={handleOpenCreateModal}
+            >
+              Thêm Công Ty Mới
+            </Button>
+          </Can>
+        }
+      />
 
       {/* Stats Quick View */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs">
+      <div className={uiConfig.grid.cards3Col}>
+        <Card padding="compact">
           <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">Tổng Công Ty Đối Tác</div>
-          <div className="text-[22px] font-bold text-[#0b1c30] mt-1">{companies.length}</div>
-        </div>
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs">
+          <div className="text-[20px] font-bold text-[#0b1c30] dark:text-white mt-1">{companies.length}</div>
+        </Card>
+        <Card padding="compact">
           <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">Công Ty Đang Hoạt Động</div>
-          <div className="text-[22px] font-bold text-emerald-600 mt-1">{activeCount}</div>
-        </div>
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs">
+          <div className="text-[20px] font-bold text-emerald-600 mt-1">{activeCount}</div>
+        </Card>
+        <Card padding="compact">
           <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">Tổng Chỉ Tiêu Tiếp Nhận</div>
-          <div className="text-[22px] font-bold text-[#004ac6] mt-1">{totalSlots} SV</div>
-        </div>
+          <div className="text-[20px] font-bold text-[#004ac6] dark:text-blue-400 mt-1">{totalSlots} SV</div>
+        </Card>
       </div>
 
       {/* Filter and Search Bar */}
@@ -282,15 +278,9 @@ export const CompaniesView: React.FC<CompaniesViewProps> = ({ currentRole }) => 
                       </div>
                     </td>
                     <td className="py-2.5 px-3 text-center">
-                      <span
-                        className={`inline-flex items-center px-2 py-0.2 rounded-full text-[10px] font-bold ${
-                          comp.isActive
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : 'bg-slate-100 text-slate-600 border border-slate-200'
-                        }`}
-                      >
+                      <Badge status={comp.isActive ? 'active' : 'inactive'}>
                         {comp.isActive ? 'Hoạt động' : 'Tạm ngưng'}
-                      </span>
+                      </Badge>
                     </td>
                     <Can any={['COMPANY_UPDATE', 'COMPANY_DELETE']}>
                       <td className="py-2.5 px-3.5 text-right space-x-1 whitespace-nowrap">
@@ -516,6 +506,6 @@ export const CompaniesView: React.FC<CompaniesViewProps> = ({ currentRole }) => 
           </div>
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 };

@@ -61,26 +61,28 @@ export const ROLE_PAGES: Record<Role, NavPage[]> = {
   ],
 };
 
+import { PermissionCode } from '../config/permissions.config';
+
 export const PAGE_PERMISSIONS: Partial<Record<NavPage, string>> = {
-  'users': 'USER_VIEW',
-  'students': 'STUDENT_VIEW',
-  'mentors': 'MENTOR_VIEW',
-  'companies': 'COMPANY_VIEW',
-  'internship-phases': 'PHASE_VIEW',
-  'assignments': 'ASSIGNMENT_VIEW',
-  'submissions': 'SUBMISSION_VIEW',
-  'tasks': 'SUBMISSION_VIEW',
-  'evaluation-criteria': 'ASSESSMENT_VIEW',
-  'assessment-rounds': 'ASSESSMENT_VIEW',
-  'assessment-results': 'ASSESSMENT_VIEW',
-  'groups': 'GROUP_VIEW',
-  'mentor-groups': 'GROUP_VIEW',
-  'settings-roles': 'ROLE_PERMISSION_VIEW',
-  'settings-permissions': 'ROLE_PERMISSION_VIEW',
-  'role-permissions': 'ROLE_PERMISSION_VIEW',
-  'admin-group-rooms': 'ADMIN_GROUP_ROOM_VIEW_ALL',
-  'group-rooms': 'GROUP_ROOM_VIEW',
-  'group-room': 'GROUP_ROOM_VIEW',
+  'users': PermissionCode.USER_VIEW,
+  'students': PermissionCode.STUDENT_VIEW,
+  'mentors': PermissionCode.MENTOR_VIEW,
+  'companies': PermissionCode.COMPANY_VIEW,
+  'internship-phases': PermissionCode.PHASE_VIEW,
+  'assignments': PermissionCode.ASSIGNMENT_VIEW,
+  'submissions': PermissionCode.SUBMISSION_VIEW,
+  'tasks': PermissionCode.SUBMISSION_VIEW,
+  'evaluation-criteria': PermissionCode.ASSESSMENT_VIEW,
+  'assessment-rounds': PermissionCode.ASSESSMENT_VIEW,
+  'assessment-results': PermissionCode.ASSESSMENT_VIEW,
+  'groups': PermissionCode.GROUP_VIEW,
+  'mentor-groups': PermissionCode.GROUP_VIEW,
+  'settings-roles': PermissionCode.ROLE_PERMISSION_VIEW,
+  'settings-permissions': PermissionCode.ROLE_PERMISSION_VIEW,
+  'role-permissions': PermissionCode.ROLE_PERMISSION_VIEW,
+  'admin-group-rooms': PermissionCode.ADMIN_GROUP_ROOM_VIEW_ALL,
+  'group-rooms': PermissionCode.GROUP_ROOM_VIEW,
+  'group-room': PermissionCode.GROUP_ROOM_VIEW,
 };
 
 export const canAccessPage = (

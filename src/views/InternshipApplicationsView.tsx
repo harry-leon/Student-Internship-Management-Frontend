@@ -1,7 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Role } from '../types';
 import { applicationService, InternshipApplication, ApplicationStatus, ApplicationCreateDTO } from '../api/applicationService';
-import { FileText, Plus, CheckCircle2, XCircle, Clock, AlertCircle, FileCheck, Search, Filter, UserCheck, Building2, Send, X } from 'lucide-react';
+import { mentorService, phaseService, MentorDTO, InternshipPhaseDTO } from '../api/services';
+import { PageContainer, PageHeader, Card, Button, Badge, EmptyState } from '../components/ui';
+import {
+  FileCheck,
+  Plus,
+  Search,
+  Filter,
+  AlertCircle,
+  Building2,
+  Send,
+  X,
+  UserCheck,
+  CheckCircle2,
+  XCircle,
+} from 'lucide-react';
 
 interface InternshipApplicationsViewProps {
   currentRole: Role;
@@ -12,6 +26,11 @@ export const InternshipApplicationsView: React.FC<InternshipApplicationsViewProp
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Mentors and Phases for real options
+  const [availableMentors, setAvailableMentors] = useState<MentorDTO[]>([]);
+  const [availablePhases, setAvailablePhases] = useState<InternshipPhaseDTO[]>([]);
 
   // Student Create/Edit Modal State
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -31,11 +50,11 @@ export const InternshipApplicationsView: React.FC<InternshipApplicationsViewProp
   // Admin Review Modal State
   const [selectedApp, setSelectedApp] = useState<InternshipApplication | null>(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
-  const [selectedMentorId, setSelectedMentorId] = useState<number>(1);
+  const [selectedMentorId, setSelectedMentorId] = useState<number>(0);
   const [rejectionReason, setRejectionReason] = useState('');
   const [reviewing, setReviewing] = useState(false);
 
-  const fetchApplications = async () => {
+  const fetchApplications = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -47,18 +66,35 @@ export const InternshipApplicationsView: React.FC<InternshipApplicationsViewProp
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter]);
 
   useEffect(() => {
     fetchApplications();
-  }, [statusFilter]);
+  }, [fetchApplications]);
+
+  // Load mentors and phases once
+  useEffect(() => {
+    mentorService.getAll().then((res) => {
+      const list = Array.isArray(res) ? res : [];
+      setAvailableMentors(list);
+      if (list.length > 0) setSelectedMentorId(list[0].mentorId);
+    }).catch(() => {});
+
+    phaseService.getAll().then((res) => {
+      const list = Array.isArray(res) ? res : [];
+      setAvailablePhases(list);
+      if (list.length > 0) {
+        setFormData((prev) => ({ ...prev, phaseId: list[0].phaseId }));
+      }
+    }).catch(() => {});
+  }, []);
 
   const handleOpenCreateModal = () => {
     setEditingApp(null);
     setFormData({
-      phaseId: 1,
+      phaseId: availablePhases[0]?.phaseId || 1,
       proposedCompanyName: '',
-      positionTitle: 'Thực tập sinh Java Fullstack',
+      positionTitle: '',
       companyMentorName: '',
       companyMentorEmail: '',
       companyMentorPhone: '',
@@ -88,6 +124,7 @@ export const InternshipApplicationsView: React.FC<InternshipApplicationsViewProp
   };
 
   const handleSubmitApplication = async (appId: number) => {
+    if (!window.confirm('Bạn có chắc chắn muốn nộp đơn này đến Ban Quản Lý để xét duyệt?')) return;
     try {
       await applicationService.submit(appId);
       fetchApplications();
@@ -96,44 +133,8 @@ export const InternshipApplicationsView: React.FC<InternshipApplicationsViewProp
     }
   };
 
-  const handleApprove = async () => {
-    if (!selectedApp) return;
-    setReviewing(true);
-    try {
-      await applicationService.approve(selectedApp.applicationId, {
-        mentorId: selectedMentorId,
-      });
-      setIsReviewModalOpen(false);
-      setSelectedApp(null);
-      fetchApplications();
-    } catch (err: any) {
-      alert(err.message || 'Lỗi khi phê duyệt đơn');
-    } finally {
-      setReviewing(false);
-    }
-  };
-
-  const handleReject = async () => {
-    if (!selectedApp) return;
-    if (!rejectionReason.trim()) {
-      alert('Vui lòng nhập lý do từ chối');
-      return;
-    }
-    setReviewing(true);
-    try {
-      await applicationService.reject(selectedApp.applicationId, rejectionReason.trim());
-      setIsReviewModalOpen(false);
-      setSelectedApp(null);
-      fetchApplications();
-    } catch (err: any) {
-      alert(err.message || 'Lỗi khi từ chối đơn');
-    } finally {
-      setReviewing(false);
-    }
-  };
-
   const handleCancel = async (appId: number) => {
-    if (!confirm('Bạn có chắc chắn muốn hủy đơn đăng ký này?')) return;
+    if (!window.confirm('Bạn có chắc chắn muốn hủy đơn đăng ký này?')) return;
     try {
       await applicationService.cancel(appId);
       fetchApplications();
@@ -142,177 +143,249 @@ export const InternshipApplicationsView: React.FC<InternshipApplicationsViewProp
     }
   };
 
-  const getStatusBadge = (status: ApplicationStatus) => {
-    switch (status) {
-      case 'SUBMITTED':
-        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200"><Clock className="w-3 h-3" /> Chờ duyệt</span>;
-      case 'APPROVED':
-        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"><CheckCircle2 className="w-3 h-3" /> Đã duyệt</span>;
-      case 'REJECTED':
-        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200"><XCircle className="w-3 h-3" /> Từ chối</span>;
-      case 'CANCELLED':
-        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">Đã hủy</span>;
-      default:
-        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">Bản nháp</span>;
+  const handleOpenReviewModal = (app: InternshipApplication) => {
+    setSelectedApp(app);
+    setRejectionReason('');
+    if (availableMentors.length > 0) {
+      setSelectedMentorId(availableMentors[0].mentorId);
+    }
+    setIsReviewModalOpen(true);
+  };
+
+  const handleApprove = async () => {
+    if (!selectedApp) return;
+    if (!selectedMentorId) {
+      alert('Vui lòng chọn giảng viên hướng dẫn phụ trách!');
+      return;
+    }
+    setReviewing(true);
+    try {
+      await applicationService.approve(selectedApp.applicationId, { mentorId: selectedMentorId });
+      setIsReviewModalOpen(false);
+      fetchApplications();
+    } catch (err: any) {
+      alert(err.message || 'Không thể phê duyệt đơn');
+    } finally {
+      setReviewing(false);
     }
   };
 
+  const handleReject = async () => {
+    if (!selectedApp) return;
+    setReviewing(true);
+    try {
+      await applicationService.reject(selectedApp.applicationId, rejectionReason);
+      setIsReviewModalOpen(false);
+      fetchApplications();
+    } catch (err: any) {
+      alert(err.message || 'Không thể từ chối đơn');
+    } finally {
+      setReviewing(false);
+    }
+  };
+
+  const filteredApplications = applications.filter((app) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (app.studentName && app.studentName.toLowerCase().includes(q)) ||
+      (app.studentCode && app.studentCode.toLowerCase().includes(q)) ||
+      (app.proposedCompanyName && app.proposedCompanyName.toLowerCase().includes(q)) ||
+      (app.companyName && app.companyName.toLowerCase().includes(q)) ||
+      (app.positionTitle && app.positionTitle.toLowerCase().includes(q))
+    );
+  });
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[#0b1c30] tracking-tight flex items-center gap-2">
-            <FileCheck className="w-7 h-7 text-[#004ac6]" />
-            Đăng Ký & Phê Duyệt Thực Tập
-          </h1>
-          <p className="text-xs text-[#64748b] mt-1">
-            Quy trình sinh viên khai báo nguyện vọng thực tập và Ban Quản Lý phê duyệt phân công.
-          </p>
+    <PageContainer>
+      <PageHeader
+        title="Đăng Ký & Phê Duyệt Thực Tập"
+        description="Quy trình sinh viên khai báo nguyện vọng thực tập và Ban Quản Lý phê duyệt phân công."
+        icon={FileCheck}
+        actions={
+          currentRole === 'Student' ? (
+            <Button
+              variant="primary"
+              size="sm"
+              icon={Plus}
+              onClick={handleOpenCreateModal}
+            >
+              Tạo Đơn Đăng Ký
+            </Button>
+          ) : undefined
+        }
+      />
+
+      {/* 4-Step Progress Stepper Visualizer */}
+      <Card padding="compact">
+        <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2.5">
+          Quy Trình Duyệt Đơn Thực Tập (4 Bước)
         </div>
-
-        {currentRole === 'Student' && (
-          <button
-            onClick={handleOpenCreateModal}
-            className="px-4 py-2.5 bg-[#004ac6] hover:bg-[#003ea8] text-white text-xs font-semibold rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Tạo Đơn Đăng Ký Mới</span>
-          </button>
-        )}
-      </div>
-
-      {/* 4-Step Progress Stepper Visualizer for Student Workflow */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
-        <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Quy Trình Duyệt Đơn Thực Tập (4 Bước)</div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
           {[
-            { step: '1', title: 'Tạo Nháp', desc: 'Sinh viên điền thông tin', icon: '📝', color: 'border-blue-500 bg-blue-50/60 text-blue-900' },
-            { step: '2', title: 'Đã Nộp Đơn', desc: 'Chờ Admin xét duyệt', icon: '📤', color: 'border-amber-500 bg-amber-50/60 text-amber-900' },
-            { step: '3', title: 'Admin Phê Duyệt', desc: 'Đơn được chấp thuận', icon: '✅', color: 'border-emerald-500 bg-emerald-50/60 text-emerald-900' },
-            { step: '4', title: 'Phân Công Mentor', desc: 'Bắt đầu đợt thực tập', icon: '👨‍🏫', color: 'border-indigo-500 bg-indigo-50/60 text-indigo-900' },
+            { step: '1', title: 'Tạo Nháp', desc: 'Sinh viên điền thông tin', icon: '📝', color: 'border-blue-500 bg-blue-50/60 dark:bg-blue-950/30 text-blue-900 dark:text-blue-300' },
+            { step: '2', title: 'Đã Nộp Đơn', desc: 'Chờ Admin xét duyệt', icon: '📤', color: 'border-amber-500 bg-amber-50/60 dark:bg-amber-950/30 text-amber-900 dark:text-amber-300' },
+            { step: '3', title: 'Admin Phê Duyệt', desc: 'Đơn được chấp thuận', icon: '✅', color: 'border-emerald-500 bg-emerald-50/60 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-300' },
+            { step: '4', title: 'Phân Công Mentor', desc: 'Bắt đầu đợt thực tập', icon: '👨‍🏫', color: 'border-indigo-500 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-900 dark:text-indigo-300' },
           ].map((s) => (
-            <div key={s.step} className={`p-3 rounded-xl border-l-4 ${s.color} flex items-center gap-3`}>
-              <span className="text-xl">{s.icon}</span>
+            <div key={s.step} className={`p-2.5 rounded-xl border-l-3.5 ${s.color} flex items-center gap-2.5 transition-colors`}>
+              <span className="text-lg">{s.icon}</span>
               <div>
                 <div className="text-xs font-bold">{s.step}. {s.title}</div>
-                <div className="text-[11px] opacity-80">{s.desc}</div>
+                <div className="text-[10.5px] opacity-80">{s.desc}</div>
               </div>
             </div>
           ))}
         </div>
-      </div>
+      </Card>
 
-      {/* Filter Tabs */}
-      <div className="bg-white p-3 rounded-2xl border border-[#e2e8f0] shadow-xs flex flex-wrap items-center gap-2">
-        {['all', 'SUBMITTED', 'APPROVED', 'REJECTED', 'DRAFT'].map((st) => (
-          <button
-            key={st}
-            onClick={() => setStatusFilter(st)}
-            className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer ${
-              statusFilter === st
-                ? 'bg-[#004ac6] text-white shadow-xs'
-                : 'text-[#64748b] hover:bg-slate-100 hover:text-[#0b1c30]'
-            }`}
-          >
-            {st === 'all'
-              ? 'Tất cả'
-              : st === 'SUBMITTED'
-              ? 'Chờ duyệt'
-              : st === 'APPROVED'
-              ? 'Đã duyệt'
-              : st === 'REJECTED'
-              ? 'Từ chối'
-              : 'Bản nháp'}
-          </button>
-        ))}
-      </div>
+      {/* Toolbar Filters & Search */}
+      <Card padding="compact">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          {/* Status Tabs */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {[
+              { key: 'all', label: 'Tất cả' },
+              { key: 'SUBMITTED', label: 'Chờ duyệt' },
+              { key: 'APPROVED', label: 'Đã duyệt' },
+              { key: 'REJECTED', label: 'Từ chối' },
+              { key: 'DRAFT', label: 'Bản nháp' },
+            ].map((st) => (
+              <button
+                key={st.key}
+                onClick={() => setStatusFilter(st.key)}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                  statusFilter === st.key
+                    ? 'bg-[#004ac6] text-white shadow-2xs'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                {st.label}
+              </button>
+            ))}
+          </div>
 
-      {/* Content Table / Cards */}
+          {/* Search Box */}
+          <div className="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/60 px-3 py-1.5 sm:w-64">
+            <Search className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
+            <input
+              type="text"
+              placeholder="Tìm theo SV, công ty, vị trí..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-transparent text-xs text-slate-900 dark:text-slate-100 outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+      </Card>
+
+      {/* Content Table */}
       {loading ? (
-        <div className="bg-white p-12 rounded-2xl border border-[#e2e8f0] text-center text-xs text-[#64748b]">
-          Đang tải dữ liệu đơn đăng ký thực tập...
-        </div>
+        <Card padding="normal" className="text-center py-12 text-slate-500 dark:text-slate-400 text-xs">
+          <div className="flex items-center justify-center gap-2">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#004ac6] dark:border-blue-400 border-t-transparent"></div>
+            <span>Đang tải danh sách đơn đăng ký thực tập...</span>
+          </div>
+        </Card>
       ) : error ? (
-        <div className="bg-red-50 p-6 rounded-2xl border border-red-200 text-red-700 text-xs flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-red-500" />
+        <Card padding="normal" className="border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2.5">
+          <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
           <span>{error}</span>
-        </div>
-      ) : applications.length === 0 ? (
-        <div className="bg-white p-12 rounded-2xl border border-[#e2e8f0] text-center">
-          <FileText className="w-12 h-12 text-[#94a3b8] mx-auto mb-3" />
-          <h3 className="text-sm font-semibold text-[#0b1c30]">Chưa có đơn đăng ký nào</h3>
-          <p className="text-xs text-[#64748b] mt-1">Không có đơn đăng ký thực tập nào khớp với bộ lọc.</p>
-        </div>
+        </Card>
+      ) : filteredApplications.length === 0 ? (
+        <EmptyState
+          icon={FileCheck}
+          title="Chưa có đơn đăng ký nào"
+          description="Không tìm thấy đơn đăng ký thực tập nào phù hợp với bộ lọc hiện tại."
+          action={
+            currentRole === 'Student' ? (
+              <Button variant="primary" size="sm" icon={Plus} onClick={handleOpenCreateModal}>
+                Tạo Đơn Đăng Ký
+              </Button>
+            ) : undefined
+          }
+        />
       ) : (
-        <div className="bg-white rounded-2xl border border-[#e2e8f0] shadow-xs overflow-hidden">
-          <div className="overflow-x-auto">
+        <Card padding="compact" className="overflow-hidden">
+          <div className="overflow-x-auto no-scrollbar">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-[#f8fafc] border-b border-[#e2e8f0] text-[#64748b] font-semibold">
-                  <th className="py-3.5 px-4">Sinh Viên</th>
-                  <th className="py-3.5 px-4">Công Ty Khai Báo</th>
-                  <th className="py-3.5 px-4">Vị Trí & Đề Tài</th>
-                  <th className="py-3.5 px-4">Trạng Thái</th>
-                  <th className="py-3.5 px-4">Ngày Gửi</th>
-                  <th className="py-3.5 px-4 text-right">Thao Tác</th>
+                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-800/80 text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                  <th className="py-2.5 px-3.5">Sinh Viên</th>
+                  <th className="py-2.5 px-3.5">Công Ty Khai Báo</th>
+                  <th className="py-2.5 px-3.5">Vị Trí & Đề Tài</th>
+                  <th className="py-2.5 px-3.5">Trạng Thái</th>
+                  <th className="py-2.5 px-3.5">Ngày Gửi</th>
+                  <th className="py-2.5 px-3.5 text-right">Thao Tác</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#e2e8f0]">
-                {applications.map((app) => (
-                  <tr key={app.applicationId} className="hover:bg-[#f8fafc] transition-colors">
-                    <td className="py-3.5 px-4 font-semibold text-[#0b1c30]">
-                      <div>{app.studentName || `Sinh viên #${app.studentId}`}</div>
-                      <div className="text-[11px] text-[#94a3b8]">MSSV: {app.studentCode || 'N/A'}</div>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70 text-slate-800 dark:text-slate-200">
+                {filteredApplications.map((app) => (
+                  <tr key={app.applicationId} className="hover:bg-blue-50/40 dark:hover:bg-slate-800/50 transition-colors">
+                    <td className="py-2.5 px-3.5">
+                      <div className="font-semibold text-slate-900 dark:text-white">{app.studentName}</div>
+                      <div className="font-mono text-[10.5px] text-[#004ac6] dark:text-blue-400">{app.studentCode}</div>
                     </td>
-                    <td className="py-3.5 px-4 text-[#475569]">
-                      <div className="font-medium text-[#0b1c30]">{app.companyName || app.proposedCompanyName || 'Chưa chọn'}</div>
+                    <td className="py-2.5 px-3.5">
+                      <div className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-1">
+                        <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{app.proposedCompanyName || app.companyName || 'Campus Lab'}</span>
+                      </div>
                       {app.companyMentorName && (
-                        <div className="text-[11px] text-[#64748b]">Mentor DN: {app.companyMentorName}</div>
+                        <div className="text-[10.5px] text-slate-500 dark:text-slate-400">
+                          Mentor DN: {app.companyMentorName}
+                        </div>
                       )}
                     </td>
-                    <td className="py-3.5 px-4 text-[#475569]">
-                      <div className="font-medium">{app.positionTitle || 'Thực tập sinh'}</div>
-                      {app.projectTopic && <div className="text-[11px] text-[#64748b]">Đề tài: {app.projectTopic}</div>}
+                    <td className="py-2.5 px-3.5">
+                      <div className="font-medium text-slate-900 dark:text-slate-100">{app.positionTitle || 'Chưa cập nhật'}</div>
+                      <div className="text-[10.5px] text-slate-500 dark:text-slate-400 truncate max-w-xs">{app.projectTopic || 'Chưa có đề tài'}</div>
                     </td>
-                    <td className="py-3.5 px-4">
-                      {getStatusBadge(app.status)}
-                      {app.rejectionReason && (
-                        <div className="text-[11px] text-red-600 mt-1 max-w-xs">Lý do: {app.rejectionReason}</div>
-                      )}
+                    <td className="py-2.5 px-3.5">
+                      <Badge status={app.status} dot />
                     </td>
-                    <td className="py-3.5 px-4 text-[#64748b]">
-                      {app.submittedAt ? new Date(app.submittedAt).toLocaleDateString('vi-VN') : '—'}
+                    <td className="py-2.5 px-3.5 font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                      {app.createdAt ? new Date(app.createdAt).toLocaleDateString('vi-VN') : 'N/A'}
                     </td>
-                    <td className="py-3.5 px-4 text-right space-x-2">
+                    <td className="py-2.5 px-3.5 text-right whitespace-nowrap space-x-1.5">
                       {/* Admin Approve / Reject actions */}
                       {currentRole === 'Admin' && app.status === 'SUBMITTED' && (
-                        <button
-                          onClick={() => {
-                            setSelectedApp(app);
-                            setIsReviewModalOpen(true);
-                          }}
-                          className="px-3 py-1.5 bg-[#004ac6] hover:bg-[#003ea8] text-white text-[11px] font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          icon={UserCheck}
+                          onClick={() => handleOpenReviewModal(app)}
                         >
-                          Xem & Duyệt
-                        </button>
+                          Duyệt Đơn
+                        </Button>
                       )}
 
-                      {/* Student Submit / Edit / Cancel actions */}
+                      {/* Student Submit / Cancel actions */}
                       {currentRole === 'Student' && (app.status === 'DRAFT' || app.status === 'REJECTED') && (
                         <>
-                          <button
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            icon={Send}
                             onClick={() => handleSubmitApplication(app.applicationId)}
-                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold rounded-lg shadow-xs transition-colors cursor-pointer inline-flex items-center gap-1"
                           >
-                            <Send className="w-3 h-3" /> Nộp Đơn
-                          </button>
-                          <button
+                            Nộp Đơn
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleCancel(app.applicationId)}
-                            className="px-2.5 py-1.5 text-red-600 hover:bg-red-50 text-[11px] font-semibold rounded-lg transition-colors cursor-pointer"
                           >
                             Hủy
-                          </button>
+                          </Button>
                         </>
                       )}
                     </td>
@@ -321,108 +394,143 @@ export const InternshipApplicationsView: React.FC<InternshipApplicationsViewProp
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Student Create / Edit Modal */}
       {isFormModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
-          <div className="bg-white w-full max-w-lg rounded-2xl border border-[#e2e8f0] shadow-xl overflow-hidden">
-            <div className="p-5 bg-gradient-to-r from-[#eff4ff] to-[#f8f9ff] border-b border-[#e2e8f0] flex items-center justify-between">
-              <h3 className="text-base font-bold text-[#0b1c30]">Tạo Đơn Đăng Ký Thực Tập</h3>
-              <button onClick={() => setIsFormModalOpen(false)} className="p-1 text-[#64748b] hover:bg-slate-200/50 rounded-lg cursor-pointer">
-                <X className="w-5 h-5" />
+          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden">
+            <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Tạo Đơn Đăng Ký Thực Tập</h3>
+              <button
+                onClick={() => setIsFormModalOpen(false)}
+                className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg cursor-pointer"
+              >
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveDraft} className="p-5 space-y-4">
+            <form onSubmit={handleSaveDraft} className="p-5 space-y-3.5 text-xs">
               {formError && (
-                <div className="p-3 rounded-xl bg-red-50 text-red-700 text-xs border border-red-200">{formError}</div>
+                <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50">
+                  {formError}
+                </div>
               )}
 
               <div>
-                <label className="block text-xs font-medium text-[#434655] mb-1">Tên Công Ty Thực Tập</label>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Đợt Thực Tập *
+                </label>
+                <select
+                  value={formData.phaseId}
+                  onChange={(e) => setFormData({ ...formData, phaseId: Number(e.target.value) })}
+                  className="w-full px-3 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-500"
+                >
+                  {availablePhases.map((p) => (
+                    <option key={p.phaseId} value={p.phaseId}>
+                      {p.phaseName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Tên Công Ty Thực Tập *
+                </label>
                 <input
                   type="text"
                   required
                   value={formData.proposedCompanyName}
                   onChange={(e) => setFormData({ ...formData, proposedCompanyName: e.target.value })}
-                  placeholder="VD: Công ty Cổ phần FPT..."
-                  className="w-full px-3 py-2 text-xs border border-[#e2e8f0] rounded-xl focus:border-[#004ac6] outline-none"
+                  placeholder="VD: FPT Software, Viettel Telecom, v.v."
+                  className="w-full px-3 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-[#434655] mb-1">Vị Trí Thực Tập</label>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Vị Trí Thực Tập
+                  </label>
                   <input
                     type="text"
                     value={formData.positionTitle}
                     onChange={(e) => setFormData({ ...formData, positionTitle: e.target.value })}
-                    placeholder="Java Developer..."
-                    className="w-full px-3 py-2 text-xs border border-[#e2e8f0] rounded-xl focus:border-[#004ac6] outline-none"
+                    placeholder="Java Developer, Tester..."
+                    className="w-full px-3 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[#434655] mb-1">Đề Tài / Dự Án</label>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Đề Tài / Dự Án
+                  </label>
                   <input
                     type="text"
                     value={formData.projectTopic}
                     onChange={(e) => setFormData({ ...formData, projectTopic: e.target.value })}
-                    placeholder="Xây dựng API Backend..."
-                    className="w-full px-3 py-2 text-xs border border-[#e2e8f0] rounded-xl focus:border-[#004ac6] outline-none"
+                    placeholder="Hệ thống quản lý..."
+                    className="w-full px-3 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-500"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="block text-xs font-medium text-[#434655] mb-1">Mentor DN</label>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Mentor DN
+                  </label>
                   <input
                     type="text"
                     value={formData.companyMentorName}
                     onChange={(e) => setFormData({ ...formData, companyMentorName: e.target.value })}
                     placeholder="Họ tên..."
-                    className="w-full px-3 py-2 text-xs border border-[#e2e8f0] rounded-xl focus:border-[#004ac6] outline-none"
+                    className="w-full px-3 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[#434655] mb-1">Email Mentor DN</label>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Email Mentor
+                  </label>
                   <input
                     type="email"
                     value={formData.companyMentorEmail}
                     onChange={(e) => setFormData({ ...formData, companyMentorEmail: e.target.value })}
-                    placeholder="mentor@company.com"
-                    className="w-full px-3 py-2 text-xs border border-[#e2e8f0] rounded-xl focus:border-[#004ac6] outline-none"
+                    placeholder="mentor@dn.com"
+                    className="w-full px-3 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[#434655] mb-1">SĐT Mentor DN</label>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    SĐT Mentor
+                  </label>
                   <input
                     type="text"
                     value={formData.companyMentorPhone}
                     onChange={(e) => setFormData({ ...formData, companyMentorPhone: e.target.value })}
-                    placeholder="0901234567"
-                    className="w-full px-3 py-2 text-xs border border-[#e2e8f0] rounded-xl focus:border-[#004ac6] outline-none"
+                    placeholder="09..."
+                    className="w-full px-3 py-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-500"
                   />
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-[#f1f5f9] flex justify-end gap-2">
-                <button
-                  type="button"
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setIsFormModalOpen(false)}
-                  className="px-4 py-2 text-xs text-[#64748b] hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
                 >
                   Hủy
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
                   type="submit"
                   disabled={submittingForm}
-                  className="px-4 py-2 text-xs font-semibold bg-[#004ac6] hover:bg-[#003ea8] text-white rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
                 >
                   {submittingForm ? 'Đang Lưu...' : 'Lưu Nháp'}
-                </button>
+                </Button>
               </div>
             </form>
           </div>
@@ -432,67 +540,79 @@ export const InternshipApplicationsView: React.FC<InternshipApplicationsViewProp
       {/* Admin Review & Approve Modal */}
       {isReviewModalOpen && selectedApp && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
-          <div className="bg-white w-full max-w-lg rounded-2xl border border-[#e2e8f0] shadow-xl overflow-hidden">
-            <div className="p-5 bg-gradient-to-r from-[#eff4ff] to-[#f8f9ff] border-b border-[#e2e8f0] flex items-center justify-between">
-              <h3 className="text-base font-bold text-[#0b1c30]">Phê Duyệt Đơn Đăng Ký #{selectedApp.applicationId}</h3>
-              <button onClick={() => setIsReviewModalOpen(false)} className="p-1 text-[#64748b] hover:bg-slate-200/50 rounded-lg cursor-pointer">
-                <X className="w-5 h-5" />
+          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden">
+            <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                Phê Duyệt Đơn Đăng Ký #{selectedApp.applicationId}
+              </h3>
+              <button
+                onClick={() => setIsReviewModalOpen(false)}
+                className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg cursor-pointer"
+              >
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="p-5 space-y-4 text-xs">
-              <div className="bg-slate-50 p-4 rounded-xl space-y-1.5 border border-slate-200">
-                <div><strong className="text-[#0b1c30]">Sinh viên:</strong> {selectedApp.studentName} ({selectedApp.studentCode})</div>
-                <div><strong className="text-[#0b1c30]">Công ty đăng ký:</strong> {selectedApp.proposedCompanyName || selectedApp.companyName || 'N/A'}</div>
-                <div><strong className="text-[#0b1c30]">Vị trí:</strong> {selectedApp.positionTitle || 'N/A'}</div>
-                <div><strong className="text-[#0b1c30]">Đề tài:</strong> {selectedApp.projectTopic || 'N/A'}</div>
+            <div className="p-5 space-y-3.5 text-xs">
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-xl space-y-1.5 border border-slate-200 dark:border-slate-700">
+                <div><strong className="text-slate-900 dark:text-white">Sinh viên:</strong> {selectedApp.studentName} ({selectedApp.studentCode})</div>
+                <div><strong className="text-slate-900 dark:text-white">Công ty:</strong> {selectedApp.proposedCompanyName || selectedApp.companyName || 'N/A'}</div>
+                <div><strong className="text-slate-900 dark:text-white">Vị trí:</strong> {selectedApp.positionTitle || 'N/A'}</div>
+                <div><strong className="text-slate-900 dark:text-white">Đề tài:</strong> {selectedApp.projectTopic || 'N/A'}</div>
               </div>
 
               <div>
-                <label className="block font-semibold text-[#0b1c30] mb-1">Chọn Giảng Viên Hướng Dẫn (Mentor) Phụ Trách</label>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Chọn Giảng Viên Hướng Dẫn (Mentor) Phụ Trách *
+                </label>
                 <select
                   value={selectedMentorId}
                   onChange={(e) => setSelectedMentorId(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded-xl focus:border-[#004ac6] outline-none"
+                  className="w-full px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-500"
                 >
-                  <option value={1}>GV. Nguyễn Văn Thành (Khoa CNTT)</option>
-                  <option value={2}>GV. Tran Van B (Khoa CNTT)</option>
+                  {availableMentors.map((m) => (
+                    <option key={m.mentorId} value={m.mentorId}>
+                      {m.fullName} ({m.department})
+                    </option>
+                  ))}
                 </select>
               </div>
 
               <div>
-                <label className="block font-semibold text-[#0b1c30] mb-1">Lý do nếu Từ Chối (Optional cho Approve)</label>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Lý do nếu Từ Chối (Tùy chọn)
+                </label>
                 <textarea
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
                   placeholder="Nhập lý do nếu từ chối đơn..."
                   rows={3}
-                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded-xl focus:border-[#004ac6] outline-none"
+                  className="w-full px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-500"
                 />
               </div>
 
-              <div className="pt-3 border-t border-[#f1f5f9] flex justify-end gap-2">
-                <button
-                  type="button"
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
+                <Button
+                  variant="danger"
+                  size="sm"
                   onClick={handleReject}
                   disabled={reviewing}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition-colors cursor-pointer disabled:opacity-50"
                 >
                   Từ Chối
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
                   onClick={handleApprove}
                   disabled={reviewing}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
                 >
                   {reviewing ? 'Đang Xử Lý...' : 'Duyệt & Phân Công'}
-                </button>
+                </Button>
               </div>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 };

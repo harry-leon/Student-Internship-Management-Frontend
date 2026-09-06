@@ -1,10 +1,11 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
+import { PermissionCodeType } from '../config/permissions.config';
 
 export interface CanProps {
-  permission?: string;
-  any?: string[];
-  all?: string[];
+  permission?: PermissionCodeType | string;
+  any?: (PermissionCodeType | string)[];
+  all?: (PermissionCodeType | string)[];
   feature?: string;
   role?: string;
   fallback?: React.ReactNode;
@@ -38,12 +39,12 @@ export const Can: React.FC<CanProps> = ({
   }
 
   // Any permission check
-  if (any && any.length > 0 && !hasAnyPermission(any)) {
+  if (any && any.length > 0 && !hasAnyPermission(any as string[])) {
     return <>{fallback}</>;
   }
 
   // All permissions check
-  if (all && all.length > 0 && !hasAllPermissions(all)) {
+  if (all && all.length > 0 && !hasAllPermissions(all as string[])) {
     return <>{fallback}</>;
   }
 

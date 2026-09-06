@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Assignment, Role } from '../types';
 import { assignmentService, studentService, mentorService, phaseService, StudentDTO, MentorDTO, InternshipPhaseDTO } from '../api/services';
 import { mapAssignmentFromDTO } from '../api/mappers';
 import { Can } from '../components/Can';
+import { PageContainer, PageHeader, Card, Button, Badge, EmptyState } from '../components/ui';
+import { PermissionCode } from '../config/permissions.config';
+import { UserCheck, Plus, Search, X, Eye, Trash2 } from 'lucide-react';
 
 interface AssignmentsViewProps {
   currentRole: Role;
@@ -11,7 +14,7 @@ interface AssignmentsViewProps {
 }
 
 export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
-  currentRole,
+  currentRole: _currentRole,
   onSelectAssignment,
 }) => {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -112,6 +115,15 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
     }
   };
 
+  // Distinct phases from existing assignments for filter dropdown
+  const distinctPhases = useMemo(() => {
+    const set = new Set<string>();
+    assignments.forEach((a) => {
+      if (a.phase) set.add(a.phase);
+    });
+    return Array.from(set);
+  }, [assignments]);
+
   const filtered = assignments.filter((asg) => {
     const matchSearch =
       asg.studentName.toLowerCase().includes(search.toLowerCase()) ||
@@ -126,89 +138,84 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
   });
 
   return (
-    <div className="flex w-full flex-col animate-in fade-in duration-200 space-y-3.5">
-      {/* Header */}
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#004ac6] text-[20px]">assignment_ind</span>
-            <h1 className="text-[20px] font-bold tracking-tight text-[#0b1c30]">
-              Danh Mục Phân Công Thực Tập
-            </h1>
-          </div>
-          <p className="mt-0.5 text-xs text-slate-500">
-            Quản lý phân công sinh viên - giảng viên hướng dẫn, doanh nghiệp thực tập và trạng thái.
-          </p>
-        </div>
-        <Can permission="ASSIGNMENT_CREATE">
-          <button
-            type="button"
-            onClick={handleOpenCreate}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#003ea8] transition-colors cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[16px]">add</span>
-            <span>Phân Công Mới</span>
-          </button>
-        </Can>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Danh Mục Phân Công Thực Tập"
+        description="Quản lý phân công sinh viên - giảng viên hướng dẫn, doanh nghiệp thực tập và trạng thái."
+        icon={UserCheck}
+        actions={
+          <Can permission={PermissionCode.ASSIGNMENT_CREATE}>
+            <Button
+              variant="primary"
+              size="sm"
+              icon={Plus}
+              onClick={handleOpenCreate}
+            >
+              Phân Công Mới
+            </Button>
+          </Can>
+        }
+      />
 
       {/* Toolbar Filters */}
-      <div className="grid gap-2.5 rounded-xl border border-slate-200/90 bg-white p-2.5 shadow-2xs sm:grid-cols-[minmax(0,1fr)_160px_160px]">
-        <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-1.5">
-          <span className="material-symbols-outlined text-[17px] text-slate-400">
-            search
-          </span>
-          <input
-            type="text"
-            placeholder="Tìm theo tên SV, mã SV, giảng viên, công ty..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-transparent text-xs text-[#0b1c30] outline-none placeholder:text-slate-400"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch('')}
-              className="text-slate-400 hover:text-slate-700"
+      <Card padding="compact">
+        <div className="grid gap-2.5 sm:grid-cols-[minmax(0,1fr)_180px_180px]">
+          <div className="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/60 px-3 py-1.5">
+            <Search className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+            <input
+              type="text"
+              placeholder="Tìm theo tên SV, mã SV, giảng viên, công ty..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-transparent text-xs text-slate-900 dark:text-slate-100 outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          <div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-500"
             >
-              <span className="material-symbols-outlined text-[15px]">close</span>
-            </button>
-          )}
-        </div>
+              <option value="ALL">Tất cả trạng thái</option>
+              <option value="IN PROGRESS">IN PROGRESS</option>
+              <option value="PENDING">PENDING</option>
+              <option value="COMPLETED">COMPLETED</option>
+              <option value="CANCELLED">CANCELLED</option>
+            </select>
+          </div>
 
-        <div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-[#0b1c30] outline-none focus:border-[#004ac6]"
-          >
-            <option value="ALL">Tất cả trạng thái</option>
-            <option value="IN PROGRESS">IN PROGRESS</option>
-            <option value="PENDING">PENDING</option>
-            <option value="COMPLETED">COMPLETED</option>
-            <option value="CANCELLED">CANCELLED</option>
-          </select>
+          <div>
+            <select
+              value={phaseFilter}
+              onChange={(e) => setPhaseFilter(e.target.value)}
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-500"
+            >
+              <option value="ALL">Tất cả đợt thực tập</option>
+              {distinctPhases.map((phase) => (
+                <option key={phase} value={phase}>
+                  {phase}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-
-        <div>
-          <select
-            value={phaseFilter}
-            onChange={(e) => setPhaseFilter(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-[#0b1c30] outline-none focus:border-[#004ac6]"
-          >
-            <option value="ALL">Tất cả đợt thực tập</option>
-            <option value="Spring 2026">Spring 2026</option>
-            <option value="Summer 2026">Summer 2026</option>
-            <option value="Fall 2026">Fall 2026</option>
-          </select>
-        </div>
-      </div>
+      </Card>
 
       {/* Main Table */}
-      <div className="rounded-xl border border-slate-200/90 bg-white shadow-2xs overflow-hidden">
+      <Card padding="compact" className="overflow-hidden">
         <div className="overflow-x-auto no-scrollbar">
           <table className="w-full border-collapse text-left text-xs">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+              <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-800/80 text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
                 <th className="px-3.5 py-2.5">Sinh Viên</th>
                 <th className="px-3 py-2.5">Giảng Viên Hướng Dẫn</th>
                 <th className="px-3 py-2.5">Doanh Nghiệp Thực Tập</th>
@@ -219,20 +226,24 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
                 <th className="px-3 py-2.5 text-right">Thao Tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-800">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70 text-slate-800 dark:text-slate-200">
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="py-10 text-center text-slate-500">
+                  <td colSpan={8} className="py-12 text-center text-slate-500 dark:text-slate-400">
                     <div className="flex items-center justify-center gap-2">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#004ac6] border-t-transparent"></div>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#004ac6] dark:border-blue-400 border-t-transparent"></div>
                       <span>Đang tải danh sách phân công thực tập...</span>
                     </div>
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-slate-500">
-                    Không tìm thấy dữ liệu phân công thực tập.
+                  <td colSpan={8} className="p-4">
+                    <EmptyState
+                      icon={UserCheck}
+                      title="Không tìm thấy dữ liệu phân công"
+                      description="Chưa có phân công thực tập nào khớp với bộ lọc hiện tại."
+                    />
                   </td>
                 </tr>
               ) : (
@@ -240,97 +251,72 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
                   <tr
                     key={row.id}
                     onClick={() => onSelectAssignment(row)}
-                    className="hover:bg-blue-50/40 transition-colors cursor-pointer group"
+                    className="hover:bg-blue-50/40 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group"
                   >
                     <td className="px-3.5 py-2.5">
                       <div className="flex items-center gap-2.5">
-                        <img
-                          src={row.studentAvatar}
-                          alt={row.studentName}
-                          className="h-8 w-8 rounded-full border border-slate-200 object-cover"
-                        />
+                        <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-950/60 text-[#004ac6] dark:text-blue-300 font-bold flex items-center justify-center text-xs border border-slate-200 dark:border-slate-700 shrink-0">
+                          {row.studentName.charAt(0)}
+                        </div>
                         <div>
-                          <div className="font-semibold text-slate-900 group-hover:text-[#004ac6] transition-colors">
+                          <div className="font-semibold text-slate-900 dark:text-white group-hover:text-[#004ac6] dark:group-hover:text-blue-400 transition-colors">
                             {row.studentName}
                           </div>
-                          <span className="font-mono text-[10.5px] text-[#004ac6]">
+                          <span className="font-mono text-[10.5px] text-[#004ac6] dark:text-blue-400 font-medium">
                             {row.studentCode}
                           </span>
                         </div>
                       </div>
                     </td>
                     <td className="px-3 py-2.5">
-                      <div className="font-medium text-slate-900">{row.mentorName}</div>
-                      <div className="text-[10.5px] text-slate-500">{row.mentorDept}</div>
+                      <div className="font-medium text-slate-900 dark:text-slate-100">{row.mentorName}</div>
+                      <div className="text-[10.5px] text-slate-500 dark:text-slate-400">{row.mentorDept}</div>
                     </td>
                     <td className="px-3 py-2.5">
-                      <span className="font-medium text-slate-800">
+                      <span className="font-medium text-slate-800 dark:text-slate-200">
                         {row.companyName || 'Campus Lab'}
                       </span>
                     </td>
-                    <td className="px-3 py-2.5 text-slate-600">{row.phase}</td>
-                    <td className="px-3 py-2.5 font-mono text-[11px] text-slate-500">{row.date}</td>
+                    <td className="px-3 py-2.5 text-slate-600 dark:text-slate-300">{row.phase}</td>
+                    <td className="px-3 py-2.5 font-mono text-[11px] text-slate-500 dark:text-slate-400">{row.date}</td>
                     <td className="px-3 py-2.5 text-center">
                       {row.latestSubmissionType ? (
-                        <span className="inline-flex items-center gap-1 rounded bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-[#004ac6] border border-blue-200">
+                        <span className="inline-flex items-center gap-1 rounded bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 text-[10px] font-bold text-[#004ac6] dark:text-blue-300 border border-blue-200 dark:border-blue-800/60">
                           {row.latestSubmissionType}
                         </span>
                       ) : (
-                        <span className="text-[11px] text-slate-400">Chưa nộp</span>
+                        <span className="text-[11px] text-slate-400 dark:text-slate-500">Chưa nộp</span>
                       )}
                     </td>
                     <td className="px-3 py-2.5 text-center">
-                      {row.status === 'IN PROGRESS' && (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-[#004ac6]">
-                          <span className="h-1.5 w-1.5 rounded-full bg-[#004ac6]"></span>
-                          IN PROGRESS
-                        </span>
-                      )}
-                      {row.status === 'PENDING' && (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-purple-200 bg-purple-50 px-2 py-0.5 text-[10px] font-bold text-purple-700">
-                          <span className="h-1.5 w-1.5 rounded-full bg-purple-600"></span>
-                          PENDING
-                        </span>
-                      )}
-                      {row.status === 'COMPLETED' && (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
-                          COMPLETED
-                        </span>
-                      )}
-                      {row.status === 'CANCELLED' && (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700">
-                          <span className="h-1.5 w-1.5 rounded-full bg-rose-600"></span>
-                          CANCELLED
-                        </span>
-                      )}
+                      <Badge status={row.status} dot />
                     </td>
                     <td className="px-3 py-2.5 text-right whitespace-nowrap space-x-1">
-                      <button
-                        type="button"
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        icon={Eye}
                         onClick={(e) => {
                           e.stopPropagation();
                           onSelectAssignment(row);
                         }}
-                        className="inline-flex items-center gap-0.5 px-2 py-1 text-[11px] font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 hover:text-[#004ac6] transition-colors"
-                        title="Xem chi tiết phân công"
+                        title="Xem chi tiết"
                       >
-                        <span className="material-symbols-outlined text-[13px]">visibility</span>
                         Chi tiết
-                      </button>
-                      <Can permission="ASSIGNMENT_DELETE">
-                        <button
-                          type="button"
+                      </Button>
+                      <Can permission={PermissionCode.ASSIGNMENT_DELETE}>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          icon={Trash2}
                           onClick={(e) => {
                             e.stopPropagation();
                             handleDeleteAssignment(row.id, row.studentName);
                           }}
-                          className="inline-flex items-center gap-0.5 px-2 py-1 text-[11px] font-medium text-rose-600 bg-rose-50 border border-rose-200 rounded-md hover:bg-rose-100 transition-colors"
                           title="Xóa phân công"
                         >
-                          <span className="material-symbols-outlined text-[13px]">delete</span>
                           Xóa
-                        </button>
+                        </Button>
                       </Can>
                     </td>
                   </tr>
@@ -339,41 +325,41 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
 
       {/* Create Assignment Modal */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-[#e2e8f0] px-5 py-3.5 bg-slate-50/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 px-5 py-3.5 bg-slate-50/50 dark:bg-slate-800/50">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#004ac6] text-[18px]">assignment_ind</span>
-                <h3 className="text-sm font-bold text-[#0b1c30]">Tạo Phân Công Thực Tập Mới</h3>
+                <UserCheck className="w-4 h-4 text-[#004ac6] dark:text-blue-400" />
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Tạo Phân Công Thực Tập Mới</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
-                <span className="material-symbols-outlined text-[18px]">close</span>
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleCreateAssignment} className="space-y-3.5 p-5">
               {formError && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700">
+                <div className="rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/40 p-2.5 text-xs text-rose-700 dark:text-rose-300">
                   {formError}
                 </div>
               )}
 
               <div>
-                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                <label className="mb-1 block text-[11.5px] font-semibold text-slate-700 dark:text-slate-300">
                   Sinh Viên *
                 </label>
                 <select
                   value={selectedStudentId}
                   onChange={(e) => setSelectedStudentId(Number(e.target.value))}
-                  className="w-full rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-500"
                 >
                   {availableStudents.map((s) => (
                     <option key={s.studentId} value={s.studentId}>
@@ -384,13 +370,13 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
               </div>
 
               <div>
-                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                <label className="mb-1 block text-[11.5px] font-semibold text-slate-700 dark:text-slate-300">
                   Giảng Viên Hướng Dẫn *
                 </label>
                 <select
                   value={selectedMentorId}
                   onChange={(e) => setSelectedMentorId(Number(e.target.value))}
-                  className="w-full rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-500"
                 >
                   {availableMentors.map((m) => (
                     <option key={m.mentorId} value={m.mentorId}>
@@ -401,13 +387,13 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
               </div>
 
               <div>
-                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                <label className="mb-1 block text-[11.5px] font-semibold text-slate-700 dark:text-slate-300">
                   Đợt Thực Tập *
                 </label>
                 <select
                   value={selectedPhaseId}
                   onChange={(e) => setSelectedPhaseId(Number(e.target.value))}
-                  className="w-full rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-500"
                 >
                   {availablePhases.map((p) => (
                     <option key={p.phaseId} value={p.phaseId}>
@@ -417,26 +403,27 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
                 </select>
               </div>
 
-              <div className="flex justify-end gap-2 border-t border-[#f1f5f9] pt-3">
-                <button
-                  type="button"
+              <div className="flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800 pt-3">
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="rounded-lg bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#64748b] hover:bg-[#e2e8f0]"
                 >
                   Hủy
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
                   type="submit"
                   disabled={isSubmitting}
-                  className="rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#003ea8]"
                 >
                   {isSubmitting ? 'Đang phân công...' : 'Tạo Phân Công'}
-                </button>
+                </Button>
               </div>
             </form>
           </div>
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 };

@@ -325,13 +325,13 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
     return (
       <div className="space-y-4">
         {/* Header banner */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
           <div>
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-blue-600 text-[24px]">assignment_turned_in</span>
-              <h1 className="text-lg sm:text-xl font-bold text-slate-900">Nhiệm Vụ & Bài Nộp Thực Tập</h1>
+              <span className="material-symbols-outlined text-blue-600 dark:text-blue-400 text-[24px]">assignment_turned_in</span>
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">Nhiệm Vụ & Bài Nộp Thực Tập</h1>
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Theo dõi danh sách các nhiệm vụ được mentor phân công trong nhóm và nộp bài làm (GitHub URL hoặc tệp ZIP)
             </p>
           </div>
@@ -339,43 +339,43 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
 
         {/* Metrics Overview */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="bg-white p-3.5 rounded-xl border border-slate-200/70 shadow-2xs flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
+          <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200/70 dark:border-slate-800 shadow-2xs flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-100 dark:border-blue-900/50">
               <span className="material-symbols-outlined text-[20px]">task</span>
             </div>
             <div>
-              <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Tổng nhiệm vụ</p>
-              <p className="text-base font-bold text-slate-900">{totalTasks}</p>
+              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tổng nhiệm vụ</p>
+              <p className="text-base font-bold text-slate-900 dark:text-white">{totalTasks}</p>
             </div>
           </div>
 
-          <div className="bg-white p-3.5 rounded-xl border border-slate-200/70 shadow-2xs flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100">
+          <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200/70 dark:border-slate-800 shadow-2xs flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-100 dark:border-amber-900/50">
               <span className="material-symbols-outlined text-[20px]">pending_actions</span>
             </div>
             <div>
-              <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Chưa nộp bài</p>
-              <p className="text-base font-bold text-amber-600">{notSubmittedCount}</p>
+              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Chưa nộp bài</p>
+              <p className="text-base font-bold text-amber-600 dark:text-amber-400">{notSubmittedCount}</p>
             </div>
           </div>
 
-          <div className="bg-white p-3.5 rounded-xl border border-slate-200/70 shadow-2xs flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100">
+          <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200/70 dark:border-slate-800 shadow-2xs flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-100 dark:border-indigo-900/50">
               <span className="material-symbols-outlined text-[20px]">upload_file</span>
             </div>
             <div>
-              <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Đã nộp bài</p>
-              <p className="text-base font-bold text-indigo-600">{submittedCount}</p>
+              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Đã nộp bài</p>
+              <p className="text-base font-bold text-indigo-600 dark:text-indigo-400">{submittedCount}</p>
             </div>
           </div>
 
-          <div className="bg-white p-3.5 rounded-xl border border-slate-200/70 shadow-2xs flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
+          <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200/70 dark:border-slate-800 shadow-2xs flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-100 dark:border-emerald-900/50">
               <span className="material-symbols-outlined text-[20px]">verified</span>
             </div>
             <div>
-              <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Đã chấm điểm</p>
-              <p className="text-base font-bold text-emerald-600">{reviewedCount}</p>
+              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Đã chấm điểm</p>
+              <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">{reviewedCount}</p>
             </div>
           </div>
         </div>
@@ -397,11 +397,11 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
         )}
 
         {/* Filters Toolbar */}
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-wrap items-center gap-2.5">
+        <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-wrap items-center gap-2.5">
           <select
             value={taskStatusFilter}
             onChange={(e) => setTaskStatusFilter(e.target.value)}
-            className="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+            className="px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
           >
             <option value="">Tất cả trạng thái task</option>
             <option value="TODO">Cần làm (TODO)</option>
@@ -416,7 +416,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
               if (e.target.value === '') setOverdueFilter(undefined);
               else setOverdueFilter(e.target.value === 'true');
             }}
-            className="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+            className="px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
           >
             <option value="">Tất cả hạn chót</option>
             <option value="true">Đang quá hạn</option>
@@ -427,17 +427,17 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
         {/* Tasks List */}
         <div className="space-y-3">
           {loading ? (
-            <div className="bg-white py-16 rounded-xl border border-slate-200/80 text-center text-slate-400 flex flex-col items-center justify-center">
+            <div className="bg-white dark:bg-slate-900 py-16 rounded-xl border border-slate-200/80 dark:border-slate-800 text-center text-slate-400 dark:text-slate-500 flex flex-col items-center justify-center">
               <span className="material-symbols-outlined text-[32px] animate-spin mb-2">progress_activity</span>
               <p className="text-xs">Đang tải danh sách nhiệm vụ được giao...</p>
             </div>
           ) : studentTasks.length === 0 ? (
-            <div className="bg-white py-16 rounded-xl border border-slate-200/80 text-center text-slate-400 flex flex-col items-center justify-center">
-              <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 mb-3">
+            <div className="bg-white dark:bg-slate-900 py-16 rounded-xl border border-slate-200/80 dark:border-slate-800 text-center text-slate-400 dark:text-slate-500 flex flex-col items-center justify-center">
+              <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center text-slate-400 mb-3">
                 <span className="material-symbols-outlined text-[26px]">inbox</span>
               </div>
-              <p className="text-sm font-semibold text-slate-700">Chưa có nhiệm vụ nào</p>
-              <p className="text-xs text-slate-400 mt-1 max-w-sm">
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Chưa có nhiệm vụ nào</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-sm">
                 Hiện tại bạn chưa được mentor phân công nhiệm vụ nào trong nhóm thực tập.
               </p>
             </div>
@@ -445,18 +445,18 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
             studentTasks.map((task) => (
               <div
                 key={task.taskId}
-                className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-2xs hover:border-slate-300 transition"
+                className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-4 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 transition"
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                   <div className="space-y-1.5 flex-1">
                     {/* Tags row */}
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                      <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60">
                         {task.groupName} ({task.groupCode})
                       </span>
                       {getPriorityBadge(task.priority)}
                       {task.isOverdue && (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200 flex items-center gap-1">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 flex items-center gap-1">
                           <span className="material-symbols-outlined text-[12px]">alarm</span> Quá hạn
                         </span>
                       )}
@@ -464,23 +464,23 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
                     </div>
 
                     {/* Title & Desc */}
-                    <h3 className="text-base font-bold text-slate-900">{task.title}</h3>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white">{task.title}</h3>
                     {task.description && (
-                      <p className="text-xs text-slate-600 whitespace-pre-wrap">{task.description}</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{task.description}</p>
                     )}
 
                     {/* Metadata info */}
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 pt-1">
-                      <span>Mentor: <strong className="text-slate-700">{task.mentorName || 'N/A'}</strong> ({task.mentorEmail})</span>
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400 pt-1">
+                      <span>Mentor: <strong className="text-slate-700 dark:text-slate-200">{task.mentorName || 'N/A'}</strong> ({task.mentorEmail})</span>
                       <span>•</span>
-                      <span>Hạn chót: <strong className="text-slate-700">{formatDate(task.deadlineAt)}</strong></span>
+                      <span>Hạn chót: <strong className="text-slate-700 dark:text-slate-200">{formatDate(task.deadlineAt)}</strong></span>
                       <span>•</span>
                       <span>Được giao: <strong>{task.assigneeCount || 0}</strong> thành viên</span>
                     </div>
 
                     {/* Latest Submission summary */}
                     {task.latestSubmissionId && (
-                      <div className="mt-2.5 p-2.5 bg-slate-50 rounded-lg border border-slate-100 text-xs flex flex-wrap items-center justify-between gap-2">
+                      <div className="mt-2.5 p-2.5 bg-slate-50 dark:bg-slate-800/70 rounded-lg border border-slate-100 dark:border-slate-700 text-xs flex flex-wrap items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <span className="font-mono font-bold text-slate-700">v{task.latestSubmissionVersion}</span>
                           <span className="text-slate-400">•</span>
@@ -548,18 +548,18 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
         {/* Submit Modal (Student) */}
         {isSubmitModalOpen && selectedTaskForSubmit && (
           <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg p-5 animate-in fade-in zoom-in-95">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-lg p-5 animate-in fade-in zoom-in-95">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
                     {selectedTaskForSubmit.latestSubmissionId ? 'Nộp Lại Bài Làm' : 'Nộp Bài Cho Nhiệm Vụ'}
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">{selectedTaskForSubmit.title}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{selectedTaskForSubmit.title}</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsSubmitModalOpen(false)}
-                  className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+                  className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   <span className="material-symbols-outlined text-[20px]">close</span>
                 </button>
@@ -568,15 +568,15 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
               <form onSubmit={handleSubmitWork} className="py-4 space-y-4">
                 {/* Method selector */}
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1.5">Hình thức nộp bài *</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">Hình thức nộp bài *</label>
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
                       onClick={() => setSubmitMode('GITHUB')}
                       className={`py-2 px-3 rounded-xl text-xs font-semibold border flex items-center justify-center gap-1.5 transition cursor-pointer ${
                         submitMode === 'GITHUB'
-                          ? 'border-blue-600 bg-blue-50 text-blue-700'
-                          : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                          ? 'border-blue-600 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                       }`}
                     >
                       <span className="material-symbols-outlined text-[18px]">code</span>
@@ -588,8 +588,8 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
                       onClick={() => setSubmitMode('ZIP')}
                       className={`py-2 px-3 rounded-xl text-xs font-semibold border flex items-center justify-center gap-1.5 transition cursor-pointer ${
                         submitMode === 'ZIP'
-                          ? 'border-blue-600 bg-blue-50 text-blue-700'
-                          : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                          ? 'border-blue-600 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                       }`}
                     >
                       <span className="material-symbols-outlined text-[18px]">folder_zip</span>
@@ -601,7 +601,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
                 {/* Input depending on mode */}
                 {submitMode === 'GITHUB' ? (
                   <div>
-                    <label className="text-xs font-semibold text-slate-700 block mb-1">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                       GitHub Repository URL *
                     </label>
                     <input
@@ -610,12 +610,12 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
                       value={githubUrl}
                       onChange={(e) => setGithubUrl(e.target.value)}
                       placeholder="https://github.com/username/project-repo"
-                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-1 focus:ring-blue-500 font-mono"
+                      className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-blue-500 font-mono"
                     />
                   </div>
                 ) : (
                   <div>
-                    <label className="text-xs font-semibold text-slate-700 block mb-1">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                       Chọn file ZIP bài làm (Tối đa 50MB) *
                     </label>
                     <input
@@ -627,14 +627,14 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
                           setZipFile(e.target.files[0]);
                         }
                       }}
-                      className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                      className="w-full text-xs text-slate-500 dark:text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 dark:file:bg-blue-950/50 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 cursor-pointer"
                     />
                   </div>
                 )}
 
                 {/* Note */}
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                     Ghi chú nộp bài (tùy chọn)
                   </label>
                   <textarea
@@ -642,15 +642,15 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
                     value={submissionNote}
                     onChange={(e) => setSubmissionNote(e.target.value)}
                     placeholder="Mô tả tóm tắt những tính năng đã hoàn thiện, hướng dẫn chạy..."
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
 
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={() => setIsSubmitModalOpen(false)}
-                    className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 cursor-pointer"
+                    className="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer"
                   >
                     Hủy
                   </button>
@@ -671,16 +671,16 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
         {/* History Modal (Student) */}
         {isHistoryModalOpen && historyTask && (
           <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl p-5 animate-in fade-in zoom-in-95 max-h-[85vh] flex flex-col">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-xl p-5 animate-in fade-in zoom-in-95 max-h-[85vh] flex flex-col">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">Lịch Sử Nộp Bài</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">{historyTask.title}</p>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Lịch Sử Nộp Bài</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{historyTask.title}</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsHistoryModalOpen(false)}
-                  className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+                  className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   <span className="material-symbols-outlined text-[20px]">close</span>
                 </button>
@@ -698,13 +698,13 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
                   </div>
                 ) : (
                   taskSubmissions.map((sub) => (
-                    <div key={sub.submissionId} className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                    <div key={sub.submissionId} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2">
-                          <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-bold font-mono">
+                          <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 rounded font-bold font-mono">
                             Phiên bản v{sub.versionNumber}
                           </span>
-                          <span className="text-slate-500">{formatDate(sub.submittedAt)}</span>
+                          <span className="text-slate-500 dark:text-slate-400">{formatDate(sub.submittedAt)}</span>
                         </div>
                         {getSubmissionStatusBadge(sub.status)}
                       </div>
@@ -715,14 +715,14 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
                             href={sub.githubUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-blue-600 hover:underline font-mono flex items-center gap-1"
+                            className="text-blue-600 dark:text-blue-400 hover:underline font-mono flex items-center gap-1"
                           >
                             <span className="material-symbols-outlined text-[14px]">open_in_new</span>
                             {sub.githubUrl}
                           </a>
                         ) : (
                           <div className="flex items-center justify-between">
-                            <span className="font-medium text-slate-700">{sub.fileName} ({formatFileSize(sub.fileSize)})</span>
+                            <span className="font-medium text-slate-700 dark:text-slate-200">{sub.fileName} ({formatFileSize(sub.fileSize)})</span>
                             <button
                               type="button"
                               onClick={() => handleDownloadZip(sub)}
@@ -736,22 +736,22 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
                       </div>
 
                       {sub.note && (
-                        <p className="text-[11px] text-slate-600 italic bg-white p-2 rounded border border-slate-200">
+                        <p className="text-[11px] text-slate-600 dark:text-slate-300 italic bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-700">
                           &quot;{sub.note}&quot;
                         </p>
                       )}
 
                       {/* Mentor Review */}
                       {sub.reviews && sub.reviews.length > 0 && (
-                        <div className="p-2.5 bg-purple-50 rounded-lg border border-purple-200 text-xs space-y-1">
-                          <div className="flex items-center justify-between font-semibold text-purple-900">
+                        <div className="p-2.5 bg-purple-50 dark:bg-purple-950/40 rounded-lg border border-purple-200 dark:border-purple-800/60 text-xs space-y-1">
+                          <div className="flex items-center justify-between font-semibold text-purple-900 dark:text-purple-300">
                             <span>Đánh giá từ {sub.reviews[0].reviewerName}:</span>
-                            <span className="px-2 py-0.5 bg-purple-200 rounded text-purple-900 font-bold">
+                            <span className="px-2 py-0.5 bg-purple-200 dark:bg-purple-900/60 rounded text-purple-900 dark:text-purple-200 font-bold">
                               {sub.reviews[0].score} / 10 điểm
                             </span>
                           </div>
                           {sub.reviews[0].comment && (
-                            <p className="text-purple-800 italic">{sub.reviews[0].comment}</p>
+                            <p className="text-purple-800 dark:text-purple-300 italic">{sub.reviews[0].comment}</p>
                           )}
                         </div>
                       )}
@@ -760,11 +760,11 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
                 )}
               </div>
 
-              <div className="pt-2 border-t border-slate-100 flex justify-end">
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-end">
                 <button
                   type="button"
                   onClick={() => setIsHistoryModalOpen(false)}
-                  className="px-4 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 cursor-pointer"
+                  className="px-4 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer"
                 >
                   Đóng
                 </button>
@@ -782,26 +782,26 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
   return (
     <div className="space-y-4">
       {/* Header banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
         <div>
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-blue-600 text-[24px]">troubleshoot</span>
-            <h1 className="text-lg sm:text-xl font-bold text-slate-900">Giám Sát Nhiệm Vụ & Bài Nộp Nhóm</h1>
+            <span className="material-symbols-outlined text-blue-600 dark:text-blue-400 text-[24px]">troubleshoot</span>
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">Giám Sát Nhiệm Vụ & Bài Nộp Nhóm</h1>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Tổng quan tất cả các nhiệm vụ nhóm, tiến độ giao việc và bài nộp thực tập của sinh viên
           </p>
         </div>
 
         {/* Tab switch */}
-        <div className="flex items-center bg-slate-100 p-1 rounded-xl">
+        <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
           <button
             type="button"
             onClick={() => setOversightTab('TASKS')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
               oversightTab === 'TASKS'
-                ? 'bg-white text-blue-700 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white dark:bg-slate-900 text-blue-700 dark:text-blue-400 shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             Nhiệm vụ ({adminTasks.length})
@@ -811,8 +811,8 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
             onClick={() => setOversightTab('SUBMISSIONS')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
               oversightTab === 'SUBMISSIONS'
-                ? 'bg-white text-blue-700 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white dark:bg-slate-900 text-blue-700 dark:text-blue-400 shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             Bài nộp ({adminSubmissions.length})
@@ -822,7 +822,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
 
       {/* Success alert */}
       {successMsg && (
-        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-700 flex items-center gap-2">
+        <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
           <span className="material-symbols-outlined text-[18px]">check_circle</span>
           <span>{successMsg}</span>
         </div>
@@ -830,18 +830,18 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
 
       {/* Error alert */}
       {errorMsg && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 flex items-center gap-2">
+        <div className="p-3 bg-red-50 dark:bg-rose-950/40 border border-red-200 dark:border-rose-900/50 rounded-xl text-xs text-red-600 dark:text-rose-300 flex items-center gap-2">
           <span className="material-symbols-outlined text-[18px]">error</span>
           <span>{errorMsg}</span>
         </div>
       )}
 
       {/* Filters Toolbar */}
-      <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-wrap items-center gap-2.5">
+      <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-wrap items-center gap-2.5">
         <select
           value={selectedGroupId}
           onChange={(e) => setSelectedGroupId(e.target.value ? Number(e.target.value) : '')}
-          className="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+          className="px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
         >
           <option value="">Tất cả các nhóm thực tập</option>
           {groups.map((g) => (
@@ -854,7 +854,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
         <select
           value={adminStatusFilter}
           onChange={(e) => setAdminStatusFilter(e.target.value)}
-          className="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+          className="px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
         >
           <option value="">Tất cả trạng thái</option>
           {oversightTab === 'TASKS' ? (
@@ -874,7 +874,7 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
       </div>
 
       {/* Main Content */}
-      <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs overflow-hidden">
         {loading ? (
           <div className="py-16 text-center text-slate-400 flex flex-col items-center justify-center">
             <span className="material-symbols-outlined text-[32px] animate-spin mb-2">progress_activity</span>
@@ -1024,26 +1024,26 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
       {isReviewModalOpen && reviewingSubmission && (
         <Can permission="SUBMISSION_GRADE">
           <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-5 animate-in fade-in zoom-in-95">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h3 className="text-base font-bold text-slate-900">Đánh Giá & Chấm Điểm Bài Nộp</h3>
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md p-5 animate-in fade-in zoom-in-95">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Đánh Giá & Chấm Điểm Bài Nộp</h3>
                 <button
                   type="button"
                   onClick={() => setIsReviewModalOpen(false)}
-                  className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+                  className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   <span className="material-symbols-outlined text-[20px]">close</span>
                 </button>
               </div>
 
               <form onSubmit={handleSaveReview} className="py-4 space-y-4 text-xs">
-                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                  <p>Sinh viên: <strong className="text-slate-800">{reviewingSubmission.submittedByName}</strong></p>
-                  <p>Nhiệm vụ: <strong className="text-slate-800">{reviewingSubmission.taskTitle || 'Chung'}</strong> (v{reviewingSubmission.versionNumber})</p>
+                <div className="bg-slate-50 dark:bg-slate-800/70 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <p className="text-slate-700 dark:text-slate-300">Sinh viên: <strong className="text-slate-900 dark:text-white">{reviewingSubmission.submittedByName}</strong></p>
+                  <p className="text-slate-700 dark:text-slate-300">Nhiệm vụ: <strong className="text-slate-900 dark:text-white">{reviewingSubmission.taskTitle || 'Chung'}</strong> (v{reviewingSubmission.versionNumber})</p>
                 </div>
 
                 <div>
-                  <label className="font-semibold text-slate-700 block mb-1">Điểm số (Thang điểm 10) *</label>
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">Điểm số (Thang điểm 10) *</label>
                   <input
                     type="number"
                     min="0"
@@ -1052,26 +1052,26 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, d
                     required
                     value={reviewScore}
                     onChange={(e) => setReviewScore(Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
                   />
                 </div>
 
                 <div>
-                  <label className="font-semibold text-slate-700 block mb-1">Nhận xét chi tiết</label>
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">Nhận xét chi tiết</label>
                   <textarea
                     rows={3}
                     value={reviewComment}
                     onChange={(e) => setReviewComment(e.target.value)}
                     placeholder="Góp ý cho bài nộp của sinh viên..."
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
                   />
                 </div>
 
-                <div className="pt-2 flex justify-end gap-2 border-t border-slate-100">
+                <div className="pt-2 flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={() => setIsReviewModalOpen(false)}
-                    className="px-4 py-2 font-semibold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 cursor-pointer"
+                    className="px-4 py-2 font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer"
                   >
                     Hủy
                   </button>

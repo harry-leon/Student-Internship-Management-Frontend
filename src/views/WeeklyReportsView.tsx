@@ -158,13 +158,13 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
   return (
     <div className="space-y-3.5 animate-in fade-in duration-200">
       {/* Header Bar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs">
         <div>
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#004ac6] text-[20px]">calendar_today</span>
-            <h1 className="text-[20px] font-bold tracking-tight text-[#0b1c30]">Quản Lý Báo Cáo Tuần</h1>
+            <span className="material-symbols-outlined text-[#004ac6] dark:text-blue-400 text-[20px]">calendar_today</span>
+            <h1 className="text-[20px] font-bold tracking-tight text-[#0b1c30] dark:text-white">Quản Lý Báo Cáo Tuần</h1>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">Theo dõi tiến độ thực tập hàng tuần, nhận xét & phê duyệt báo cáo sinh viên.</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Theo dõi tiến độ thực tập hàng tuần, nhận xét & phê duyệt báo cáo sinh viên.</p>
         </div>
         <Can permission="SUBMISSION_CREATE">
           <button
@@ -180,26 +180,26 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-2xs hover:border-slate-300 transition-all">
-          <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Tổng Số Báo Cáo</div>
-          <div className="mt-1.5 text-[22px] font-bold text-slate-900">{reports.length}</div>
+        <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+          <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tổng Số Báo Cáo</div>
+          <div className="mt-1.5 text-[22px] font-bold text-slate-900 dark:text-white">{reports.length}</div>
         </div>
-        <div className="rounded-xl border border-blue-200/80 bg-blue-50/30 p-3.5 shadow-2xs hover:border-blue-300 transition-all">
-          <div className="text-[11px] font-semibold text-blue-800 uppercase tracking-wider">Chờ Duyệt</div>
-          <div className="mt-1.5 text-[22px] font-bold text-blue-900">{reports.filter(r => r.status === 'SUBMITTED').length}</div>
+        <div className="rounded-xl border border-blue-200/80 dark:border-blue-900/50 bg-blue-50/30 dark:bg-blue-950/20 p-3.5 shadow-2xs hover:border-blue-300 dark:hover:border-blue-800 transition-all">
+          <div className="text-[11px] font-semibold text-blue-800 dark:text-blue-300 uppercase tracking-wider">Chờ Duyệt</div>
+          <div className="mt-1.5 text-[22px] font-bold text-blue-900 dark:text-blue-200">{reports.filter(r => r.status === 'SUBMITTED').length}</div>
         </div>
-        <div className="rounded-xl border border-emerald-200/80 bg-emerald-50/30 p-3.5 shadow-2xs hover:border-emerald-300 transition-all">
-          <div className="text-[11px] font-semibold text-emerald-800 uppercase tracking-wider">Đã Duyệt</div>
-          <div className="mt-1.5 text-[22px] font-bold text-emerald-900">{reports.filter(r => r.status === 'REVIEWED').length}</div>
+        <div className="rounded-xl border border-emerald-200/80 dark:border-emerald-900/50 bg-emerald-50/30 dark:bg-emerald-950/20 p-3.5 shadow-2xs hover:border-emerald-300 dark:hover:border-emerald-800 transition-all">
+          <div className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">Đã Duyệt</div>
+          <div className="mt-1.5 text-[22px] font-bold text-emerald-900 dark:text-emerald-200">{reports.filter(r => r.status === 'REVIEWED').length}</div>
         </div>
-        <div className="rounded-xl border border-amber-200/80 bg-amber-50/30 p-3.5 shadow-2xs hover:border-amber-300 transition-all">
-          <div className="text-[11px] font-semibold text-amber-800 uppercase tracking-wider">Cần Chỉnh Sửa</div>
-          <div className="mt-1.5 text-[22px] font-bold text-amber-900">{reports.filter(r => r.status === 'NEEDS_REVISION').length}</div>
+        <div className="rounded-xl border border-amber-200/80 dark:border-amber-900/50 bg-amber-50/30 dark:bg-amber-950/20 p-3.5 shadow-2xs hover:border-amber-300 dark:hover:border-amber-800 transition-all">
+          <div className="text-[11px] font-semibold text-amber-800 dark:text-amber-300 uppercase tracking-wider">Cần Chỉnh Sửa</div>
+          <div className="mt-1.5 text-[22px] font-bold text-amber-900 dark:text-amber-200">{reports.filter(r => r.status === 'NEEDS_REVISION').length}</div>
         </div>
       </div>
 
       {/* Filters & View Toggle */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200/90 bg-white p-2.5 shadow-2xs">
+      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 shadow-2xs">
         <div className="flex flex-wrap items-center gap-1.5">
           {['ALL', 'SUBMITTED', 'REVIEWED', 'NEEDS_REVISION', 'DRAFT'].map((st) => (
             <button
@@ -209,7 +209,7 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
               className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors cursor-pointer ${
                 selectedStatus === st
                   ? 'bg-[#004ac6] text-white shadow-2xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
               {st === 'ALL' ? 'Tất cả' : st}
@@ -218,12 +218,12 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
         </div>
 
         {/* View Mode Toggle */}
-        <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-0.5 border border-slate-200">
+        <div className="flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 border border-slate-200 dark:border-slate-700">
           <button
             type="button"
             onClick={() => setViewMode('table')}
             className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
-              viewMode === 'table' ? 'bg-white text-[#004ac6] shadow-2xs' : 'text-slate-500 hover:text-slate-900'
+              viewMode === 'table' ? 'bg-white dark:bg-slate-900 text-[#004ac6] dark:text-blue-400 shadow-2xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
             }`}
           >
             📋 Bảng
@@ -232,7 +232,7 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
             type="button"
             onClick={() => setViewMode('timeline')}
             className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
-              viewMode === 'timeline' ? 'bg-white text-[#004ac6] shadow-2xs' : 'text-slate-500 hover:text-slate-900'
+              viewMode === 'timeline' ? 'bg-white dark:bg-slate-900 text-[#004ac6] dark:text-blue-400 shadow-2xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
             }`}
           >
             ⏳ Timeline
@@ -245,9 +245,9 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
         {/* Reports List */}
         <div className={`${selectedReport ? 'lg:col-span-6' : 'lg:col-span-12'} space-y-2.5`}>
           {loading ? (
-            <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-xs text-slate-500">Đang tải báo cáo...</div>
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center text-xs text-slate-500 dark:text-slate-400">Đang tải báo cáo...</div>
           ) : filteredReports.length === 0 ? (
-            <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-xs text-slate-500">Không tìm thấy báo cáo tuần nào</div>
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center text-xs text-slate-500 dark:text-slate-400">Không tìm thấy báo cáo tuần nào</div>
           ) : (
             filteredReports.map((report) => (
               <div
@@ -255,26 +255,26 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
                 onClick={() => setSelectedReport(report)}
                 className={`group cursor-pointer rounded-xl border p-3 transition-all ${
                   selectedReport?.reportId === report.reportId
-                    ? 'border-[#004ac6] bg-blue-50/30 shadow-2xs'
-                    : 'border-slate-200/90 bg-white hover:border-slate-300 hover:shadow-2xs'
+                    ? 'border-[#004ac6] dark:border-blue-500 bg-blue-50/30 dark:bg-blue-950/20 shadow-2xs'
+                    : 'border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-2xs'
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-0.5">
                     <div className="flex items-center gap-2">
-                      <span className="rounded bg-slate-100 px-1.5 py-0.2 text-[10px] font-bold text-slate-700">Tuần {report.weekNumber}</span>
-                      <h3 className="font-semibold text-slate-900 text-xs">{report.reportTitle || `Báo cáo Tuần ${report.weekNumber}`}</h3>
+                      <span className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 text-[10px] font-bold text-slate-700 dark:text-slate-300">Tuần {report.weekNumber}</span>
+                      <h3 className="font-semibold text-slate-900 dark:text-white text-xs">{report.reportTitle || `Báo cáo Tuần ${report.weekNumber}`}</h3>
                     </div>
-                    <p className="text-[11px] text-slate-500">Sinh viên: <span className="font-medium text-slate-700">{report.studentName || report.studentCode}</span> | Mentor: <span className="font-medium text-slate-700">{report.mentorName || 'Chưa phân công'}</span></p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Sinh viên: <span className="font-medium text-slate-700 dark:text-slate-200">{report.studentName || report.studentCode}</span> | Mentor: <span className="font-medium text-slate-700 dark:text-slate-200">{report.mentorName || 'Chưa phân công'}</span></p>
                   </div>
                   <div>{getStatusBadge(report.status)}</div>
                 </div>
 
-                <div className="mt-2 line-clamp-2 text-[11px] text-slate-600 leading-relaxed bg-slate-50 rounded-lg p-2">
+                <div className="mt-2 line-clamp-2 text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/60 rounded-lg p-2">
                   <strong>Đã làm:</strong> {report.completedTasks}
                 </div>
 
-                <div className="mt-2 flex items-center justify-between text-[10.5px] text-slate-400 border-t border-slate-100 pt-1.5">
+                <div className="mt-2 flex items-center justify-between text-[10.5px] text-slate-400 dark:text-slate-500 border-t border-slate-100 dark:border-slate-800 pt-1.5">
                   <span>Giờ làm: <strong>{report.workingHours || 0}h</strong></span>
                   <span>{report.submittedAt ? `Nộp: ${new Date(report.submittedAt).toLocaleDateString('vi-VN')}` : 'Chưa nộp'}</span>
                 </div>
@@ -285,12 +285,12 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
 
         {/* Selected Report Detail Panel */}
         {selectedReport && (
-          <div className="lg:col-span-6 rounded-xl border border-slate-200/90 bg-white p-4 shadow-2xs space-y-4">
-            <div className="flex items-start justify-between border-b border-slate-100 pb-3">
+          <div className="lg:col-span-6 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-2xs space-y-4">
+            <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div>
-                <span className="rounded-md bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">Tuần {selectedReport.weekNumber}</span>
-                <h2 className="text-lg font-bold text-slate-900 mt-2">{selectedReport.reportTitle}</h2>
-                <p className="text-xs text-slate-500 mt-1">Đợt: {selectedReport.phaseName || 'Spring 2026'}</p>
+                <span className="rounded-md bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1 text-xs font-bold text-blue-700 dark:text-blue-300">Tuần {selectedReport.weekNumber}</span>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white mt-2">{selectedReport.reportTitle}</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Đợt: {selectedReport.phaseName || 'Đang cập nhật'}</p>
               </div>
               <button
                 type="button"
@@ -373,78 +373,78 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
 
       {/* Create Modal */}
       {isCreateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-base font-bold text-slate-900">Tạo Báo Cáo Tuần Mới</h3>
-              <button onClick={() => setIsCreateOpen(false)} className="text-slate-400 hover:text-slate-600">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">Tạo Báo Cáo Tuần Mới</h3>
+              <button onClick={() => setIsCreateOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
                 <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
 
             <form onSubmit={handleCreateSubmit} className="space-y-3 text-xs">
               <div>
-                <label className="block font-medium text-slate-700 mb-1">Số Tuần</label>
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Số Tuần</label>
                 <input
                   type="number"
                   min="1"
                   required
                   value={formData.weekNumber}
                   onChange={(e) => setFormData({ ...formData, weekNumber: Number(e.target.value) })}
-                  className="w-full rounded-xl border border-slate-200 p-2.5 focus:border-[#004ac6] focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 p-2.5 focus:border-[#004ac6] dark:focus:border-blue-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block font-medium text-slate-700 mb-1">Tiêu Đề Báo Cáo</label>
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Tiêu Đề Báo Cáo</label>
                 <input
                   type="text"
                   placeholder="Ví dụ: Báo cáo Tuần 1 - Setup môi trường"
                   value={formData.reportTitle}
                   onChange={(e) => setFormData({ ...formData, reportTitle: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 p-2.5 focus:border-[#004ac6] focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 p-2.5 focus:border-[#004ac6] dark:focus:border-blue-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block font-medium text-slate-700 mb-1">Công Việc Đã Hoàn Thành (*)</label>
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Công Việc Đã Hoàn Thành (*)</label>
                 <textarea
                   rows={3}
                   required
                   placeholder="Liệt kê các việc đã làm trong tuần..."
                   value={formData.completedTasks}
                   onChange={(e) => setFormData({ ...formData, completedTasks: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 p-2.5 focus:border-[#004ac6] focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 p-2.5 focus:border-[#004ac6] dark:focus:border-blue-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block font-medium text-slate-700 mb-1">Khó Khăn & Vướng Mắc</label>
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Khó Khăn & Vướng Mắc</label>
                 <textarea
                   rows={2}
                   placeholder="Nêu vướng mắc cần mentor hỗ trợ..."
                   value={formData.difficulties}
                   onChange={(e) => setFormData({ ...formData, difficulties: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 p-2.5 focus:border-[#004ac6] focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 p-2.5 focus:border-[#004ac6] dark:focus:border-blue-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block font-medium text-slate-700 mb-1">Kế Hoạch Tuần Tới</label>
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Kế Hoạch Tuần Tới</label>
                 <textarea
                   rows={2}
                   placeholder="Kế hoạch tuần tiếp theo..."
                   value={formData.nextPlan}
                   onChange={(e) => setFormData({ ...formData, nextPlan: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 p-2.5 focus:border-[#004ac6] focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 p-2.5 focus:border-[#004ac6] dark:focus:border-blue-500 focus:outline-none"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsCreateOpen(false)}
-                  className="rounded-xl border border-slate-200 px-4 py-2 font-medium text-slate-600 hover:bg-slate-50"
+                  className="rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2 font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                 >
                   Hủy
                 </button>
@@ -463,26 +463,26 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
       {/* Review Modal */}
       <Can permission="SUBMISSION_GRADE">
         {isReviewOpen && selectedReport && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
-            <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-base font-bold text-slate-900">Duyệt Báo Cáo - Tuần {selectedReport.weekNumber}</h3>
-              <button onClick={() => setIsReviewOpen(false)} className="text-slate-400 hover:text-slate-600">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+            <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">Duyệt Báo Cáo - Tuần {selectedReport.weekNumber}</h3>
+              <button onClick={() => setIsReviewOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
                 <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
 
             <form onSubmit={handleReviewSubmit} className="space-y-4 text-xs">
               <div>
-                <label className="block font-medium text-slate-700 mb-1">Kết Quả Phê Duyệt</label>
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Kết Quả Phê Duyệt</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setReviewStatus('REVIEWED')}
                     className={`rounded-xl p-2.5 font-medium border text-center transition-colors ${
                       reviewStatus === 'REVIEWED'
-                        ? 'border-emerald-600 bg-emerald-50 text-emerald-800 font-bold'
-                        : 'border-slate-200 bg-slate-50 text-slate-600'
+                        ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-bold'
+                        : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
                     }`}
                   >
                     ✓ Đồng Ý (REVIEWED)
@@ -492,8 +492,8 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
                     onClick={() => setReviewStatus('NEEDS_REVISION')}
                     className={`rounded-xl p-2.5 font-medium border text-center transition-colors ${
                       reviewStatus === 'NEEDS_REVISION'
-                        ? 'border-amber-600 bg-amber-50 text-amber-800 font-bold'
-                        : 'border-slate-200 bg-slate-50 text-slate-600'
+                        ? 'border-amber-600 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 font-bold'
+                        : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
                     }`}
                   >
                     ⚠️ Cần Chỉnh Sửa
@@ -502,22 +502,22 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
               </div>
 
               <div>
-                <label className="block font-medium text-slate-700 mb-1">Nhận Xét Của Mentor (*)</label>
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">Nhận Xét Của Mentor (*)</label>
                 <textarea
                   rows={4}
                   required
                   placeholder="Nhập nhận xét chi tiết về tiến độ công việc..."
                   value={mentorComment}
                   onChange={(e) => setMentorComment(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 p-2.5 focus:border-[#004ac6] focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 p-2.5 focus:border-[#004ac6] dark:focus:border-blue-500 focus:outline-none"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsReviewOpen(false)}
-                  className="rounded-xl border border-slate-200 px-4 py-2 font-medium text-slate-600 hover:bg-slate-50"
+                  className="rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2 font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                 >
                   Hủy
                 </button>

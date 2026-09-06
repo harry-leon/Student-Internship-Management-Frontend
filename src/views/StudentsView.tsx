@@ -4,6 +4,10 @@ import { studentService } from '../api/services';
 import { mapStudentFromDTO } from '../api/mappers';
 import { StudentDetailModal } from '../components/StudentDetailModal';
 import { Can } from '../components/Can';
+import { useAuth } from '../context/AuthContext';
+import { PermissionCode } from '../config/permissions.config';
+import { PageContainer, PageHeader, Button, Badge } from '../components/ui';
+import { uiConfig } from '../config/ui.config';
 
 interface StudentsViewProps {
   currentRole: Role;
@@ -13,6 +17,10 @@ interface StudentsViewProps {
 export const StudentsView: React.FC<StudentsViewProps> = ({
   currentRole,
 }) => {
+  const { can, user } = useAuth();
+  const activeRole = (user?.role as Role) || currentRole;
+  const canManage = activeRole === 'Admin' || (activeRole as string) === 'Manager' || can(PermissionCode.STUDENT_CREATE);
+
   const [students, setStudents] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -151,33 +159,23 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
   };
 
   return (
-    <div className="flex w-full flex-col animate-in fade-in duration-200 space-y-3.5">
-      {/* Header */}
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#004ac6] text-[20px]">school</span>
-            <h1 className="text-[20px] font-bold tracking-tight text-[#0b1c30]">
-              Danh Sách Sinh Viên Thực Tập
-            </h1>
-          </div>
-          <p className="mt-0.5 text-xs text-slate-500">
-            Quản lý hồ sơ thực tập, đơn vị tiếp nhận và tiến độ hoàn thành của sinh viên.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Can permission="STUDENT_CREATE">
-            <button
-              type="button"
+    <PageContainer>
+      <PageHeader
+        title="Danh Sách Sinh Viên Thực Tập"
+        description="Quản lý hồ sơ thực tập, đơn vị tiếp nhận và tiến độ hoàn thành của sinh viên."
+        icon="school"
+        actions={
+          <Can permission={PermissionCode.STUDENT_CREATE}>
+            <Button
+              variant="primary"
+              icon="person_add"
               onClick={() => setIsCreateModalOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#003ea8] transition-colors cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[16px]">person_add</span>
-              <span>Thêm Sinh Viên Mới</span>
-            </button>
+              Thêm Sinh Viên Mới
+            </Button>
           </Can>
-        </div>
-      </div>
+        }
+      />
 
       {/* Search & Filter & View Switcher Bar */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-slate-200/90 bg-white p-2.5 shadow-2xs">
@@ -245,12 +243,13 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
           <h3 className="text-sm font-semibold text-[#0b1c30]">Chưa có dữ liệu sinh viên</h3>
           <p className="mt-1 text-xs text-slate-500">Hãy thêm sinh viên vào hệ thống để bắt đầu theo dõi tiến độ thực tập.</p>
           {canManage && (
-            <button
+            <Button
+              variant="primary"
+              className="mt-3"
               onClick={() => setIsCreateModalOpen(true)}
-              className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-[#003896] transition-colors"
             >
               + Thêm Sinh Viên Mới
-            </button>
+            </Button>
           )}
         </div>
       ) : viewMode === 'table' ? (
@@ -354,7 +353,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className={uiConfig.grid.list}>
           {filtered.map((student) => (
             <div
               key={student.id}
@@ -455,17 +454,17 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
 
       {/* Create Student Modal */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-[#e2e8f0] px-5 py-3.5 bg-slate-50/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[#e2e8f0] dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl">
+            <div className="flex items-center justify-between border-b border-[#e2e8f0] dark:border-slate-800 px-5 py-3.5 bg-slate-50/50 dark:bg-slate-800/50">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#004ac6] text-[18px]">person_add</span>
-                <h3 className="text-sm font-bold text-[#0b1c30]">Thêm Sinh Viên Thực Tập Mới</h3>
+                <span className="material-symbols-outlined text-[#004ac6] dark:text-blue-400 text-[18px]">person_add</span>
+                <h3 className="text-sm font-bold text-[#0b1c30] dark:text-slate-100">Thêm Sinh Viên Thực Tập Mới</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
@@ -473,14 +472,14 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
 
             <form onSubmit={handleCreateStudent} className="space-y-3.5 p-5">
               {formError && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700">
+                <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-300">
                   {formError}
                 </div>
               )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655] dark:text-slate-300">
                     Mã Sinh Viên (MSSV) *
                   </label>
                   <input
@@ -489,11 +488,11 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                     value={createCode}
                     onChange={(e) => setCreateCode(e.target.value.toUpperCase())}
                     placeholder="VD: SE190099"
-                    className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                    className="w-full rounded-lg border border-[#e2e8f0] dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-400"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655] dark:text-slate-300">
                     Lớp Sinh Hoạt
                   </label>
                   <input
@@ -501,13 +500,13 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                     value={createClass}
                     onChange={(e) => setCreateClass(e.target.value)}
                     placeholder="VD: SE1911"
-                    className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                    className="w-full rounded-lg border border-[#e2e8f0] dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-400"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655] dark:text-slate-300">
                   Họ và Tên Sinh Viên *
                 </label>
                 <input
@@ -516,13 +515,13 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                   value={createName}
                   onChange={(e) => setCreateName(e.target.value)}
                   placeholder="Nguyễn Văn A..."
-                  className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                  className="w-full rounded-lg border border-[#e2e8f0] dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-400"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655] dark:text-slate-300">
                     Email
                   </label>
                   <input
@@ -530,11 +529,11 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                     value={createEmail}
                     onChange={(e) => setCreateEmail(e.target.value)}
                     placeholder="sv@fpt.edu.vn"
-                    className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                    className="w-full rounded-lg border border-[#e2e8f0] dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-400"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655] dark:text-slate-300">
                     Số Điện Thoại
                   </label>
                   <input
@@ -542,19 +541,19 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                     value={createPhone}
                     onChange={(e) => setCreatePhone(e.target.value)}
                     placeholder="0912345678"
-                    className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                    className="w-full rounded-lg border border-[#e2e8f0] dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-400"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655] dark:text-slate-300">
                   Chuyên Ngành
                 </label>
                 <select
                   value={createMajor}
                   onChange={(e) => setCreateMajor(e.target.value)}
-                  className="w-full rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                  className="w-full rounded-lg border border-[#e2e8f0] dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-400"
                 >
                   <option value="Software Engineering">Software Engineering</option>
                   <option value="Artificial Intelligence">Artificial Intelligence</option>
@@ -563,11 +562,11 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                 </select>
               </div>
 
-              <div className="flex justify-end gap-2 border-t border-[#f1f5f9] pt-3">
+              <div className="flex justify-end gap-2 border-t border-[#f1f5f9] dark:border-slate-800 pt-3">
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="rounded-lg bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#64748b] hover:bg-[#e2e8f0]"
+                  className="rounded-lg bg-[#f1f5f9] dark:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-[#64748b] dark:text-slate-300 hover:bg-[#e2e8f0] dark:hover:bg-slate-700"
                 >
                   Hủy
                 </button>
@@ -586,19 +585,19 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
 
       {/* Edit Student Modal */}
       {editingStudent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-[#e2e8f0] px-5 py-3.5 bg-slate-50/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[#e2e8f0] dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl">
+            <div className="flex items-center justify-between border-b border-[#e2e8f0] dark:border-slate-800 px-5 py-3.5 bg-slate-50/50 dark:bg-slate-800/50">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#004ac6] text-[18px]">edit</span>
-                <h3 className="text-sm font-bold text-[#0b1c30]">
+                <span className="material-symbols-outlined text-[#004ac6] dark:text-blue-400 text-[18px]">edit</span>
+                <h3 className="text-sm font-bold text-[#0b1c30] dark:text-slate-100">
                   Cập Nhật Hồ Sơ Sinh Viên ({editingStudent.code})
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setEditingStudent(null)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
@@ -606,13 +605,13 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
 
             <form onSubmit={handleSaveEdit} className="space-y-3.5 p-5">
               {formError && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700">
+                <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-300">
                   {formError}
                 </div>
               )}
 
               <div>
-                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655] dark:text-slate-300">
                   Họ và Tên Sinh Viên *
                 </label>
                 <input
@@ -620,13 +619,13 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                   required
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                  className="w-full rounded-lg border border-[#e2e8f0] dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-400"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655] dark:text-slate-300">
                     Lớp Sinh Hoạt
                   </label>
                   <input
@@ -634,11 +633,11 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                     value={editClass}
                     onChange={(e) => setEditClass(e.target.value)}
                     placeholder="VD: SE1911"
-                    className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                    className="w-full rounded-lg border border-[#e2e8f0] dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-400"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655] dark:text-slate-300">
                     Số Điện Thoại
                   </label>
                   <input
@@ -646,19 +645,19 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                     value={editPhone}
                     onChange={(e) => setEditPhone(e.target.value)}
                     placeholder="0912345678"
-                    className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                    className="w-full rounded-lg border border-[#e2e8f0] dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-400"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655] dark:text-slate-300">
                   Chuyên Ngành
                 </label>
                 <select
                   value={editMajor}
                   onChange={(e) => setEditMajor(e.target.value)}
-                  className="w-full rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                  className="w-full rounded-lg border border-[#e2e8f0] dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-400"
                 >
                   <option value="Software Engineering">Software Engineering</option>
                   <option value="Artificial Intelligence">Artificial Intelligence</option>
@@ -667,11 +666,11 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                 </select>
               </div>
 
-              <div className="flex justify-end gap-2 border-t border-[#f1f5f9] pt-3">
+              <div className="flex justify-end gap-2 border-t border-[#f1f5f9] dark:border-slate-800 pt-3">
                 <button
                   type="button"
                   onClick={() => setEditingStudent(null)}
-                  className="rounded-lg bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#64748b] hover:bg-[#e2e8f0]"
+                  className="rounded-lg bg-[#f1f5f9] dark:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-[#64748b] dark:text-slate-300 hover:bg-[#e2e8f0] dark:hover:bg-slate-700"
                 >
                   Hủy
                 </button>
@@ -690,28 +689,28 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
 
       {/* Delete Confirmation Modal */}
       {deletingStudent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-xl p-5 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[#e2e8f0] dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl p-5 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400">
                 <span className="material-symbols-outlined text-[22px]">warning</span>
               </div>
               <div>
-                <h3 className="text-sm font-bold text-[#0b1c30]">Xóa Hồ Sơ Sinh Viên</h3>
-                <p className="text-xs text-slate-500">Xác nhận gỡ bỏ sinh viên</p>
+                <h3 className="text-sm font-bold text-[#0b1c30] dark:text-slate-100">Xóa Hồ Sơ Sinh Viên</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Xác nhận gỡ bỏ sinh viên</p>
               </div>
             </div>
 
-            <p className="text-xs text-[#434655]">
+            <p className="text-xs text-[#434655] dark:text-slate-300">
               Bạn có chắc chắn muốn xóa sinh viên <strong>{deletingStudent.name}</strong> ({deletingStudent.code})?
               Nếu sinh viên đã có lịch phân công, hệ thống sẽ bảo lưu an toàn dữ liệu và đánh dấu trạng thái tương ứng.
             </p>
 
-            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+            <div className="flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800 pt-3">
               <button
                 type="button"
                 onClick={() => setDeletingStudent(null)}
-                className="rounded-lg bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#64748b] hover:bg-[#e2e8f0]"
+                className="rounded-lg bg-[#f1f5f9] dark:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-[#64748b] dark:text-slate-300 hover:bg-[#e2e8f0] dark:hover:bg-slate-700"
               >
                 Hủy
               </button>
@@ -734,6 +733,6 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
         onClose={() => setSelectedStudentId(null)}
         studentId={selectedStudentId}
       />
-    </div>
+    </PageContainer>
   );
 };

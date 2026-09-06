@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Role } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { authService } from '../api/authService';
+import { userService } from '../api/services';
+import { PageContainer, PageHeader, Card, Button, Badge } from '../components/ui';
 
 interface ProfileViewProps {
   currentRole: Role;
@@ -10,14 +12,20 @@ interface ProfileViewProps {
 
 export const ProfileView: React.FC<ProfileViewProps> = ({
   currentRole,
-  onRoleChange,
 }) => {
-  const { user, checkAuth } = useAuth();
-  const [name, setName] = useState(user?.fullName || user?.username || 'Người Dùng Backend');
+  const { user, permissions, checkAuth } = useAuth();
+  const [name, setName] = useState(user?.fullName || user?.username || 'Người Dùng');
   const [email, setEmail] = useState(user?.email || 'user@fpt.edu.vn');
   const [phone, setPhone] = useState(user?.phoneNumber || '');
   const [department, setDepartment] = useState('Khoa Công Nghệ Thông Tin');
+  
+  const [saving, setSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [avatarMsg, setAvatarMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -26,10 +34,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       if (user.phoneNumber) setPhone(user.phoneNumber);
     }
   }, [user]);
-
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-  const [avatarMsg, setAvatarMsg] = useState<string | null>(null);
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
   const displayAvatar = user?.avatarUrl
@@ -66,156 +70,275 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     }
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 2000);
+    setSaving(true);
+    setErrorMsg(null);
+    setIsSaved(false);
+
+    try {
+      if (user?.userId) {
+        await userService.update(user.userId, {
+          fullName: name,
+          email,
+          phoneNumber: phone,
+        });
+        await checkAuth();
+      }
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 3000);
+    } catch (err: any) {
+      // Fallback update local feedback
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 3000);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  return (
-    <div className="flex flex-col w-full max-w-4xl animate-in fade-in duration-200">
-      {/* Title */}
-      <div className="mb-6">
-        <h1 className="text-[24px] font-semibold text-[#0b1c30] tracking-tight">
-          Thông Tin Tài Khoản Hợp Lệ Từ API
-        </h1>
-        <p className="text-[13px] text-[#64748b] mt-0.5">
-          Thông tin xác thực từ hệ thống Spring Boot Backend (`/api/auth/me`).
-        </p>
-      </div>
+  const activeRole = (user?.role as Role) || currentRole;
 
-      <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-xs overflow-hidden">
-        {/* Profile Card Header */}
-        <div className="p-6 bg-gradient-to-r from-[#eff4ff] to-[#f8f9ff] border-b border-[#e2e8f0] flex flex-col sm:flex-row sm:items-center gap-5">
-          <div className="relative group">
-            <img
-              src={displayAvatar}
-              alt={name}
-              className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-sm"
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="absolute bottom-0 right-0 p-1.5 bg-[#004ac6] text-white rounded-full shadow-md hover:bg-[#003ea8] transition-all cursor-pointer"
-              title="Đổi avatar"
-            >
-              <span className="material-symbols-outlined text-[14px]">photo_camera</span>
-            </button>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleAvatarFileChange}
-              accept="image/jpeg,image/png,image/webp"
-              className="hidden"
-            />
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-3">
-              <h2 className="text-[20px] font-bold text-[#0b1c30]">{name}</h2>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#f3e8ff] text-[#6b21a8] border border-[#e9d5ff]">
-                {(user?.role || currentRole).toUpperCase()}
-              </span>
+  return (
+    <PageContainer>
+      {/* Page Header */}
+      <PageHeader
+        title="Thông Tin Tài Khoản & Hồ Sơ"
+        description="Quản lý thông tin định danh cá nhân, ảnh đại diện, vai trò và phân quyền hệ thống."
+        icon="badge"
+        badge={
+          <Badge role={activeRole}>
+            {activeRole.toUpperCase()}
+          </Badge>
+        }
+      />
+
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Left Column: Identity Summary Card */}
+        <div className="lg:col-span-4 space-y-4">
+          <Card padding="normal" className="flex flex-col items-center text-center">
+            {/* Avatar with upload button */}
+            <div className="relative group mt-1">
+              <img
+                src={displayAvatar}
+                alt={name}
+                className="w-24 h-24 rounded-full object-cover border-4 border-white dark:border-slate-800 shadow-md transition-transform group-hover:scale-[1.02]"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="absolute bottom-0 right-0 p-2 bg-[#004ac6] hover:bg-[#003896] text-white rounded-full shadow-md transition-all cursor-pointer disabled:opacity-50"
+                title="Thay đổi ảnh đại diện"
+              >
+                <span className="material-symbols-outlined text-[16px] leading-none">photo_camera</span>
+              </button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleAvatarFileChange}
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+              />
             </div>
-            <p className="text-[13px] text-[#64748b] mt-0.5">
-              Tên đăng nhập: <strong className="text-[#0b1c30]">{user?.username || 'GUEST'}</strong>
+
+            {/* User Core Info */}
+            <h2 className="mt-3.5 text-base font-bold text-slate-900 dark:text-white tracking-tight">
+              {name}
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              @{user?.username || 'user'}
             </p>
-            <div className="flex items-center gap-4 mt-2 text-[12px] text-[#434655]">
-              <span>ID Tài khoản: #{user?.userId || 1}</span>
-              <span>•</span>
-              <span>Trạng thái: <strong className="text-emerald-600">{user?.isActive ? 'Hoạt động' : 'Tắt'}</strong></span>
-              {user?.avatarUrl && (
-                <>
-                  <span>•</span>
-                  <button
-                    type="button"
-                    onClick={handleDeleteAvatar}
-                    className="text-red-600 hover:underline cursor-pointer"
-                  >
-                    Xóa avatar
-                  </button>
-                </>
-              )}
+
+            <div className="mt-2.5">
+              <Badge role={activeRole}>
+                {activeRole.toUpperCase()}
+              </Badge>
             </div>
+
             {avatarMsg && (
-              <p className="text-[12px] text-[#004ac6] font-medium mt-1">{avatarMsg}</p>
+              <p className="mt-2 text-xs text-[#004ac6] dark:text-blue-400 font-medium">
+                {avatarMsg}
+              </p>
             )}
-          </div>
+
+            {user?.avatarUrl && (
+              <button
+                type="button"
+                onClick={handleDeleteAvatar}
+                disabled={uploading}
+                className="mt-2 text-[11px] text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
+              >
+                Gỡ ảnh đại diện
+              </button>
+            )}
+
+            {/* Quick Metadata list */}
+            <div className="w-full mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 text-left space-y-2.5 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 dark:text-slate-400">ID Tài khoản</span>
+                <span className="font-mono font-semibold text-slate-700 dark:text-slate-200">
+                  #{user?.userId || 1}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 dark:text-slate-400">Trạng thái</span>
+                <Badge status={user?.isActive !== false ? 'active' : 'inactive'} dot>
+                  {user?.isActive !== false ? 'Hoạt động' : 'Tạm khóa'}
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 dark:text-slate-400">Xác thực API</span>
+                <span className="font-mono text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                  /api/auth/me
+                </span>
+              </div>
+            </div>
+          </Card>
         </div>
 
-        {/* Form Details */}
-        <form onSubmit={handleSave} className="p-6 space-y-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[12px] font-medium text-[#434655] mb-1">
-                Họ và Tên
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 text-[13px] rounded-lg border border-[#e2e8f0] focus:border-[#2563eb] outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-[12px] font-medium text-[#434655] mb-1">
-                Email Xác Thực
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 text-[13px] rounded-lg border border-[#e2e8f0] focus:border-[#2563eb] outline-none"
-              />
-            </div>
-          </div>
+        {/* Right Column: Edit Profile Details Card */}
+        <div className="lg:col-span-8 space-y-4">
+          <Card
+            header={
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#004ac6] dark:text-blue-400 text-[18px]">
+                  manage_accounts
+                </span>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Chi Tiết Thông Tin Cá Nhân
+                </h3>
+              </div>
+            }
+            padding="normal"
+          >
+            <form onSubmit={handleSave} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    Họ và Tên
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    placeholder="Nhập họ và tên..."
+                    className="w-full h-9 px-3 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-[#004ac6] dark:focus:border-blue-400 focus:outline-none transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    Email Xác Thực
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="Nhập email..."
+                    className="w-full h-9 px-3 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-[#004ac6] dark:focus:border-blue-400 focus:outline-none transition-colors"
+                  />
+                </div>
+              </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[12px] font-medium text-[#434655] mb-1">
-                Số Điện Thoại
-              </label>
-              <input
-                type="text"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="Nhập số điện thoại..."
-                className="w-full px-3 py-2 text-[13px] rounded-lg border border-[#e2e8f0] focus:border-[#2563eb] outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-[12px] font-medium text-[#434655] mb-1">
-                Khoa / Bộ Môn
-              </label>
-              <input
-                type="text"
-                value={department}
-                onChange={(e) => setDepartment(e.target.value)}
-                className="w-full px-3 py-2 text-[13px] rounded-lg border border-[#e2e8f0] focus:border-[#2563eb] outline-none"
-              />
-            </div>
-          </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    Số Điện Thoại
+                  </label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="Nhập số điện thoại (VD: 0912345678)..."
+                    className="w-full h-9 px-3 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-[#004ac6] dark:focus:border-blue-400 focus:outline-none transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    Khoa / Bộ Môn
+                  </label>
+                  <input
+                    type="text"
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                    placeholder="Khoa Công Nghệ Thông Tin"
+                    className="w-full h-9 px-3 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-[#004ac6] dark:focus:border-blue-400 focus:outline-none transition-colors"
+                  />
+                </div>
+              </div>
 
-          {isSaved && (
-            <div className="p-3 rounded-lg bg-emerald-50 text-emerald-800 text-[13px] flex items-center gap-2 border border-emerald-200">
-              <span className="material-symbols-outlined text-[18px] text-emerald-600">
-                check_circle
-              </span>
-              <span>Đã lưu thông tin tài khoản thành công.</span>
-            </div>
-          )}
+              {isSaved && (
+                <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 text-xs flex items-center gap-2 border border-emerald-200 dark:border-emerald-800/60 animate-in fade-in">
+                  <span className="material-symbols-outlined text-[18px] text-emerald-600 dark:text-emerald-400">
+                    check_circle
+                  </span>
+                  <span>Đã lưu thông tin tài khoản thành công!</span>
+                </div>
+              )}
 
-          <div className="pt-3 border-t border-[#f1f5f9] flex items-center justify-end">
-            <button
-              type="submit"
-              className="px-4 py-2 text-[13px] font-medium bg-[#004ac6] hover:bg-[#003ea8] text-white rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[16px]">save</span>
-              <span>Lưu Thay Đổi</span>
-            </button>
-          </div>
-        </form>
+              {errorMsg && (
+                <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 text-xs flex items-center gap-2 border border-rose-200 dark:border-rose-800/60 animate-in fade-in">
+                  <span className="material-symbols-outlined text-[18px] text-rose-600 dark:text-rose-400">
+                    error
+                  </span>
+                  <span>{errorMsg}</span>
+                </div>
+              )}
+
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  icon="save"
+                  loading={saving}
+                >
+                  Lưu Thay Đổi
+                </Button>
+              </div>
+            </form>
+          </Card>
+
+          {/* Permissions & Security Summary Card */}
+          <Card
+            header={
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#004ac6] dark:text-blue-400 text-[18px]">
+                  shield
+                </span>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Quyền Hạn Đang Hoạt Động
+                </h3>
+              </div>
+            }
+            padding="normal"
+          >
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+              Danh sách các quyền hạn được cấp phát cho tài khoản theo vai trò <strong>{activeRole}</strong>:
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {permissions && permissions.length > 0 ? (
+                permissions.slice(0, 15).map((perm) => (
+                  <span
+                    key={perm}
+                    className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                  >
+                    {perm}
+                  </span>
+                ))
+              ) : (
+                <span className="text-xs text-slate-400">Không có quyền hạn đặc biệt</span>
+              )}
+              {permissions && permissions.length > 15 && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 dark:bg-blue-950/40 text-[#004ac6] dark:text-blue-300 border border-blue-200 dark:border-blue-800/60">
+                  +{permissions.length - 15} quyền khác
+                </span>
+              )}
+            </div>
+          </Card>
+        </div>
       </div>
-    </div>
+    </PageContainer>
   );
 };

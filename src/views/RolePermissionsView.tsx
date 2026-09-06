@@ -413,7 +413,7 @@ export const RolePermissionsView: React.FC<RolePermissionsViewProps> = ({ curren
         /* Permissions Tab */
         <div className="space-y-3">
           {/* Filters */}
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700">
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative">
                 <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[16px]">
@@ -424,14 +424,14 @@ export const RolePermissionsView: React.FC<RolePermissionsViewProps> = ({ curren
                   placeholder="Tìm theo mã quyền, mô tả..."
                   value={permSearch}
                   onChange={(e) => setPermSearch(e.target.value)}
-                  className="w-56 rounded-md border border-slate-300 bg-white py-1.5 pl-8 pr-3 text-xs placeholder:text-slate-400 focus:border-blue-500 focus:outline-hidden"
+                  className="w-56 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 py-1.5 pl-8 pr-3 text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-500 focus:outline-hidden"
                 />
               </div>
 
               <select
                 value={selectedModule}
                 onChange={(e) => setSelectedModule(e.target.value)}
-                className="rounded-md border border-slate-300 bg-white py-1.5 px-2.5 text-xs text-slate-700 focus:border-blue-500 focus:outline-hidden"
+                className="rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 py-1.5 px-2.5 text-xs text-slate-700 dark:text-slate-200 focus:border-blue-500 focus:outline-hidden"
               >
                 <option value="ALL">Tất cả Module ({modules.length})</option>
                 {modules.map((m) => (
@@ -442,15 +442,15 @@ export const RolePermissionsView: React.FC<RolePermissionsViewProps> = ({ curren
               </select>
             </div>
 
-            <div className="text-[11px] text-slate-500">
-              Hiển thị <strong className="text-slate-700">{filteredPermissions.length}</strong> / {permissions.length} quyền
+            <div className="text-[11px] text-slate-500 dark:text-slate-400">
+              Hiển thị <strong className="text-slate-700 dark:text-slate-200">{filteredPermissions.length}</strong> / {permissions.length} quyền
             </div>
           </div>
 
           {/* Matrix Table */}
-          <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-xs">
+          <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-[11px] font-semibold text-slate-600 uppercase tracking-wider border-b border-slate-200">
+              <thead className="bg-slate-50 dark:bg-slate-800/80 text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
                 <tr>
                   <th className="py-2.5 px-3 min-w-[120px]">Module</th>
                   <th className="py-2.5 px-3 min-w-[200px]">Mã Quyền (Permission)</th>
@@ -459,10 +459,10 @@ export const RolePermissionsView: React.FC<RolePermissionsViewProps> = ({ curren
                     <th key={r.roleCode} className="py-2.5 px-3 text-center min-w-[90px]">
                       <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
                         r.roleCode === 'ADMIN'
-                          ? 'bg-purple-100 text-purple-800'
+                          ? 'bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300'
                           : r.roleCode === 'MENTOR'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-emerald-100 text-emerald-800'
+                          ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300'
+                          : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
                       }`}>
                         {r.roleName}
                       </span>
@@ -470,25 +470,25 @@ export const RolePermissionsView: React.FC<RolePermissionsViewProps> = ({ curren
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {filteredPermissions.length === 0 ? (
                   <tr>
-                    <td colSpan={3 + roles.length} className="py-8 text-center text-slate-500">
+                    <td colSpan={3 + roles.length} className="py-8 text-center text-slate-500 dark:text-slate-400">
                       Không tìm thấy quyền nào khớp với bộ lọc.
                     </td>
                   </tr>
                 ) : (
                   filteredPermissions.map((perm) => (
-                    <tr key={perm.permissionCode} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="py-2 px-3 font-medium text-slate-600">
-                        <span className="inline-block px-1.5 py-0.5 rounded bg-slate-100 text-[10px] font-mono font-semibold text-slate-700">
+                    <tr key={perm.permissionCode} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">
+                      <td className="py-2 px-3 font-medium text-slate-600 dark:text-slate-400">
+                        <span className="inline-block px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-mono font-semibold text-slate-700 dark:text-slate-300">
                           {perm.moduleCode}
                         </span>
                       </td>
-                      <td className="py-2 px-3 font-mono font-semibold text-slate-900 text-[11.5px]">
+                      <td className="py-2 px-3 font-mono font-semibold text-slate-900 dark:text-slate-100 text-[11.5px]">
                         {perm.permissionCode}
                       </td>
-                      <td className="py-2 px-3 text-slate-600">
+                      <td className="py-2 px-3 text-slate-600 dark:text-slate-400">
                         {perm.description || 'Chức năng hệ thống'}
                       </td>
                       {roles.map((r) => {
@@ -505,7 +505,7 @@ export const RolePermissionsView: React.FC<RolePermissionsViewProps> = ({ curren
                               checked={isGranted}
                               disabled={isLockedAdmin}
                               onChange={() => handleTogglePermission(r.roleCode, perm.permissionCode)}
-                              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer disabled:cursor-not-allowed"
+                              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500 cursor-pointer disabled:cursor-not-allowed"
                               title={isLockedAdmin ? 'Quyền quản trị bắt buộc' : `Gán quyền cho ${r.roleName}`}
                             />
                           </td>
@@ -522,7 +522,7 @@ export const RolePermissionsView: React.FC<RolePermissionsViewProps> = ({ curren
         /* Feature Flags Tab */
         <div className="space-y-3">
           {/* Search */}
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700">
             <div className="relative">
               <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[16px]">
                 search
@@ -532,18 +532,18 @@ export const RolePermissionsView: React.FC<RolePermissionsViewProps> = ({ curren
                 placeholder="Tìm cờ tính năng theo mã, tên..."
                 value={featureSearch}
                 onChange={(e) => setFeatureSearch(e.target.value)}
-                className="w-72 rounded-md border border-slate-300 bg-white py-1.5 pl-8 pr-3 text-xs placeholder:text-slate-400 focus:border-blue-500 focus:outline-hidden"
+                className="w-72 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 py-1.5 pl-8 pr-3 text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-500 focus:outline-hidden"
               />
             </div>
-            <div className="text-[11px] text-slate-500">
-              Tổng số <strong className="text-slate-700">{filteredFeatures.length}</strong> cờ tính năng
+            <div className="text-[11px] text-slate-500 dark:text-slate-400">
+              Tổng số <strong className="text-slate-700 dark:text-slate-200">{filteredFeatures.length}</strong> cờ tính năng
             </div>
           </div>
 
           {/* Features Table */}
-          <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-xs">
+          <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-[11px] font-semibold text-slate-600 uppercase tracking-wider border-b border-slate-200">
+              <thead className="bg-slate-50 dark:bg-slate-800/80 text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
                 <tr>
                   <th className="py-2.5 px-3 min-w-[100px]">Module</th>
                   <th className="py-2.5 px-3 min-w-[180px]">Mã Feature Flag</th>
@@ -553,10 +553,10 @@ export const RolePermissionsView: React.FC<RolePermissionsViewProps> = ({ curren
                     <th key={r.roleCode} className="py-2.5 px-3 text-center min-w-[90px]">
                       <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
                         r.roleCode === 'ADMIN'
-                          ? 'bg-purple-100 text-purple-800'
+                          ? 'bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300'
                           : r.roleCode === 'MENTOR'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-emerald-100 text-emerald-800'
+                          ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300'
+                          : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
                       }`}>
                         {r.roleName}
                       </span>
@@ -564,7 +564,7 @@ export const RolePermissionsView: React.FC<RolePermissionsViewProps> = ({ curren
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {filteredFeatures.length === 0 ? (
                   <tr>
                     <td colSpan={4 + roles.length} className="py-8 text-center text-slate-500">

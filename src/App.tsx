@@ -52,6 +52,8 @@ import {
   criterionService,
 } from './api/services';
 import { ROLE_PAGES, canAccessPage } from './auth/roleAccess';
+import { PermissionCode } from './config/permissions.config';
+import { layoutConfig } from './config/layout.config';
 
 const PAGE_ROUTE_MAP: Partial<Record<NavPage, string>> = {
   dashboard: '/dashboard',
@@ -101,6 +103,11 @@ function AppRoutes() {
   }, [user]);
 
   const activeRole = (user?.role as Role) || currentRole;
+  const canManage =
+    activeRole === 'Admin' ||
+    (activeRole as string) === 'Manager' ||
+    can(PermissionCode.PHASE_UPDATE) ||
+    can(PermissionCode.STUDENT_CREATE);
 
   const activePhase = phases[0] || {
     id: '0',
@@ -237,7 +244,7 @@ function AppRoutes() {
         onCloseMobile={() => setIsMobileSidebarOpen(false)}
       />
 
-      <div className="lg:pl-[228px] flex flex-col min-h-screen">
+      <div className={`${layoutConfig.sidebar.contentOffsetClass} flex flex-col min-h-screen`}>
         <Header
           currentRole={activeRole}
           onOpenSearch={() => setIsSearchOpen(true)}
@@ -245,15 +252,15 @@ function AppRoutes() {
           onOpenLoginModal={() => setIsLoginModalOpen(true)}
         />
 
-        <main className="flex-1 pt-[56px]">
-          <div className="w-full max-w-[1480px] mx-auto p-3 sm:p-4 lg:p-4.5">
+        <main className={`flex-1 ${layoutConfig.header.contentOffsetClass}`}>
+          <div className={layoutConfig.content.wrapperClass}>
             <Routes>
               {/* Primary Resource-Based Routes */}
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route
                 path="/dashboard"
                 element={
-                  <PermissionGuard page="dashboard">
+                  <PermissionGuard page="dashboard" requiredPermission={PermissionCode.DASHBOARD_VIEW}>
                     <DashboardView
                       phase={activePhase}
                       assignments={[]}
@@ -272,7 +279,7 @@ function AppRoutes() {
               <Route
                 path="/users"
                 element={
-                  <PermissionGuard page="users" requiredPermission="USER_VIEW">
+                  <PermissionGuard page="users" requiredPermission={PermissionCode.USER_VIEW}>
                     <UsersView users={[]} onRefreshData={() => {}} />
                   </PermissionGuard>
                 }
@@ -280,7 +287,7 @@ function AppRoutes() {
               <Route
                 path="/students"
                 element={
-                  <PermissionGuard page="students" requiredPermission="STUDENT_VIEW">
+                  <PermissionGuard page="students" requiredPermission={PermissionCode.STUDENT_VIEW}>
                     <StudentsView
                       currentRole={activeRole}
                       onOpenAddStudent={() => canManage && setIsQuickActionOpen(true)}
@@ -291,7 +298,7 @@ function AppRoutes() {
               <Route
                 path="/mentors"
                 element={
-                  <PermissionGuard page="mentors" requiredPermission="MENTOR_VIEW">
+                  <PermissionGuard page="mentors" requiredPermission={PermissionCode.MENTOR_VIEW}>
                     <MentorsView currentRole={activeRole} />
                   </PermissionGuard>
                 }
@@ -299,7 +306,7 @@ function AppRoutes() {
               <Route
                 path="/companies"
                 element={
-                  <PermissionGuard page="companies" requiredPermission="COMPANY_VIEW">
+                  <PermissionGuard page="companies" requiredPermission={PermissionCode.COMPANY_VIEW}>
                     <CompaniesView currentRole={activeRole} />
                   </PermissionGuard>
                 }
@@ -307,7 +314,7 @@ function AppRoutes() {
               <Route
                 path="/groups"
                 element={
-                  <PermissionGuard page="groups" requiredPermission="GROUP_VIEW">
+                  <PermissionGuard page="groups" requiredPermission={PermissionCode.GROUP_VIEW}>
                     <MentorGroupsView currentRole={activeRole} />
                   </PermissionGuard>
                 }
@@ -315,7 +322,7 @@ function AppRoutes() {
               <Route
                 path="/groups/:groupId"
                 element={
-                  <PermissionGuard page="groups" requiredPermission="GROUP_ROOM_VIEW">
+                  <PermissionGuard page="groups" requiredPermission={PermissionCode.GROUP_ROOM_VIEW}>
                     <MentorGroupRoomView />
                   </PermissionGuard>
                 }
@@ -323,7 +330,7 @@ function AppRoutes() {
               <Route
                 path="/groups/:groupId/tasks"
                 element={
-                  <PermissionGuard page="groups" requiredPermission="GROUP_ROOM_VIEW">
+                  <PermissionGuard page="groups" requiredPermission={PermissionCode.GROUP_ROOM_VIEW}>
                     <MentorGroupRoomView />
                   </PermissionGuard>
                 }
@@ -331,7 +338,7 @@ function AppRoutes() {
               <Route
                 path="/tasks"
                 element={
-                  <PermissionGuard page="tasks" requiredPermissions={['GROUP_TASK_VIEW', 'SUBMISSION_VIEW']}>
+                  <PermissionGuard page="tasks" requiredPermissions={[PermissionCode.GROUP_TASK_VIEW, PermissionCode.SUBMISSION_VIEW]}>
                     <SubmissionsView currentRole={activeRole} defaultTab="TASKS" />
                   </PermissionGuard>
                 }
@@ -339,7 +346,7 @@ function AppRoutes() {
               <Route
                 path="/submissions"
                 element={
-                  <PermissionGuard page="submissions" requiredPermission="SUBMISSION_VIEW">
+                  <PermissionGuard page="submissions" requiredPermission={PermissionCode.SUBMISSION_VIEW}>
                     <SubmissionsView currentRole={activeRole} defaultTab="SUBMISSIONS" />
                   </PermissionGuard>
                 }
@@ -347,7 +354,7 @@ function AppRoutes() {
               <Route
                 path="/assessment-results"
                 element={
-                  <PermissionGuard page="assessment-results" requiredPermission="ASSESSMENT_VIEW">
+                  <PermissionGuard page="assessment-results" requiredPermission={PermissionCode.ASSESSMENT_VIEW}>
                     <AssessmentResultsView students={[]} currentRole={activeRole} />
                   </PermissionGuard>
                 }
@@ -355,7 +362,7 @@ function AppRoutes() {
               <Route
                 path="/settings/roles"
                 element={
-                  <PermissionGuard page="settings-roles" requiredPermissions={['ROLE_VIEW', 'ROLE_PERMISSION_VIEW']}>
+                  <PermissionGuard page="settings-roles" requiredPermissions={[PermissionCode.ROLE_VIEW, PermissionCode.ROLE_PERMISSION_VIEW]}>
                     <RolePermissionsView currentRole={activeRole} defaultTab="roles" />
                   </PermissionGuard>
                 }
@@ -363,7 +370,7 @@ function AppRoutes() {
               <Route
                 path="/settings/permissions"
                 element={
-                  <PermissionGuard page="settings-permissions" requiredPermissions={['PERMISSION_VIEW', 'ROLE_PERMISSION_VIEW']}>
+                  <PermissionGuard page="settings-permissions" requiredPermissions={[PermissionCode.PERMISSION_VIEW, PermissionCode.ROLE_PERMISSION_VIEW]}>
                     <RolePermissionsView currentRole={activeRole} defaultTab="permissions" />
                   </PermissionGuard>
                 }
@@ -373,7 +380,7 @@ function AppRoutes() {
               <Route
                 path="/weekly-reports"
                 element={
-                  <PermissionGuard page="weekly-reports">
+                  <PermissionGuard page="weekly-reports" requiredPermission={PermissionCode.PHASE_VIEW}>
                     <WeeklyReportsView currentRole={activeRole} />
                   </PermissionGuard>
                 }
@@ -381,7 +388,7 @@ function AppRoutes() {
               <Route
                 path="/applications"
                 element={
-                  <PermissionGuard page="applications">
+                  <PermissionGuard page="applications" requiredPermission={PermissionCode.PHASE_VIEW}>
                     <InternshipApplicationsView currentRole={activeRole} />
                   </PermissionGuard>
                 }
@@ -389,7 +396,7 @@ function AppRoutes() {
               <Route
                 path="/assignments"
                 element={
-                  <PermissionGuard page="assignments" requiredPermission="ASSIGNMENT_VIEW">
+                  <PermissionGuard page="assignments" requiredPermission={PermissionCode.ASSIGNMENT_VIEW}>
                     <AssignmentsView
                       currentRole={activeRole}
                       onSelectAssignment={setSelectedAssignment}
@@ -401,7 +408,7 @@ function AppRoutes() {
               <Route
                 path="/internship-phases"
                 element={
-                  <PermissionGuard page="internship-phases" requiredPermission="PHASE_VIEW">
+                  <PermissionGuard page="internship-phases" requiredPermission={PermissionCode.PHASE_VIEW}>
                     <PhasesView
                       phases={phases}
                       currentRole={activeRole}
@@ -415,7 +422,7 @@ function AppRoutes() {
               <Route
                 path="/evaluation-criteria"
                 element={
-                  <PermissionGuard page="evaluation-criteria" requiredPermission="ASSESSMENT_VIEW">
+                  <PermissionGuard page="evaluation-criteria" requiredPermission={PermissionCode.ASSESSMENT_VIEW}>
                     <EvaluationCriteriaView
                       criteria={[]}
                       currentRole={activeRole}
@@ -427,7 +434,7 @@ function AppRoutes() {
               <Route
                 path="/assessment-rounds"
                 element={
-                  <PermissionGuard page="assessment-rounds" requiredPermission="ASSESSMENT_VIEW">
+                  <PermissionGuard page="assessment-rounds" requiredPermission={PermissionCode.ASSESSMENT_VIEW}>
                     <AssessmentRoundsView rounds={rounds} />
                   </PermissionGuard>
                 }
@@ -435,7 +442,7 @@ function AppRoutes() {
               <Route
                 path="/admin-group-rooms"
                 element={
-                  <PermissionGuard page="admin-group-rooms" requiredPermission="ADMIN_GROUP_ROOM_VIEW_ALL">
+                  <PermissionGuard page="admin-group-rooms" requiredPermission={PermissionCode.ADMIN_GROUP_ROOM_VIEW_ALL}>
                     <AdminGroupRoomsView />
                   </PermissionGuard>
                 }

@@ -3,12 +3,20 @@ import { Mentor, Role } from '../types';
 import { mentorService } from '../api/services';
 import { mapMentorFromDTO } from '../api/mappers';
 import { Can } from '../components/Can';
+import { useAuth } from '../context/AuthContext';
+import { PermissionCode } from '../config/permissions.config';
+import { PageContainer, PageHeader, Button, Badge } from '../components/ui';
+import { uiConfig } from '../config/ui.config';
 
 interface MentorsViewProps {
   currentRole?: Role;
 }
 
 export const MentorsView: React.FC<MentorsViewProps> = ({ currentRole = 'Admin' }) => {
+  const { can, user } = useAuth();
+  const activeRole = (user?.role as Role) || currentRole;
+  const canManage = activeRole === 'Admin' || (activeRole as string) === 'Manager' || can(PermissionCode.MENTOR_CREATE);
+
   const [mentors, setMentors] = useState<Mentor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -135,36 +143,28 @@ export const MentorsView: React.FC<MentorsViewProps> = ({ currentRole = 'Admin' 
   };
 
   return (
-    <div className="flex w-full flex-col animate-in fade-in duration-200 space-y-3.5">
-      {/* Header */}
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#004ac6] text-[20px]">supervisor_account</span>
-            <h1 className="text-[20px] font-bold tracking-tight text-[#0b1c30]">
-              Đội Ngũ Giảng Viên Hướng Dẫn
-            </h1>
-          </div>
-          <p className="mt-0.5 text-xs text-slate-500">
-            Giảng viên cố vấn thực tập, hạn mức hướng dẫn và tỷ lệ phân công sinh viên.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-[#004ac6]">
+    <PageContainer>
+      <PageHeader
+        title="Đội Ngũ Giảng Viên Hướng Dẫn"
+        description="Giảng viên cố vấn thực tập, hạn mức hướng dẫn và tỷ lệ phân công sinh viên."
+        icon="supervisor_account"
+        badge={
+          <Badge status="completed">
             Tổng số: {mentors.length} giảng viên
-          </div>
-          <Can permission="MENTOR_CREATE">
-            <button
-              type="button"
+          </Badge>
+        }
+        actions={
+          <Can permission={PermissionCode.MENTOR_CREATE}>
+            <Button
+              variant="primary"
+              icon="person_add"
               onClick={() => setIsCreateModalOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#003ea8] transition-colors cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[16px]">person_add</span>
-              <span>Thêm Giảng Viên</span>
-            </button>
+              Thêm Giảng Viên
+            </Button>
           </Can>
-        </div>
-      </div>
+        }
+      />
 
       {/* Search Toolbar */}
       <div className="max-w-md rounded-xl border border-slate-200/90 bg-white p-2.5 shadow-2xs">
@@ -196,16 +196,17 @@ export const MentorsView: React.FC<MentorsViewProps> = ({ currentRole = 'Admin' 
             Cơ sở dữ liệu backend hiện tại chưa ghi nhận danh sách giảng viên hướng dẫn.
           </p>
           {canManage && (
-            <button
+            <Button
+              variant="primary"
+              className="mt-3"
               onClick={() => setIsCreateModalOpen(true)}
-              className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-[#003896] transition-colors"
             >
               + Thêm Giảng Viên
-            </button>
+            </Button>
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3 xl:grid-cols-2 2xl:grid-cols-3">
+        <div className={uiConfig.grid.cards3Col}>
           {filtered.map((mentor) => {
             const loadPercent = Math.round((mentor.activeStudents / mentor.maxCapacity) * 100);
             const isNearCapacity = loadPercent >= 90;
@@ -593,7 +594,7 @@ export const MentorsView: React.FC<MentorsViewProps> = ({ currentRole = 'Admin' 
           </div>
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 };
 

@@ -3,6 +3,8 @@ import { UserAccount, Role } from '../types';
 import { userService, UserQueryParams } from '../api/services';
 import { mapUserFromDTO } from '../api/mappers';
 import { Can } from '../components/Can';
+import { PageContainer, PageHeader, Button, Badge } from '../components/ui';
+import { PermissionCode } from '../config/permissions.config';
 
 interface UsersViewProps {
   users: UserAccount[];
@@ -204,34 +206,23 @@ export const UsersView: React.FC<UsersViewProps> = ({ users: initialUsers, onRef
   };
 
   return (
-    <div className="flex flex-col w-full animate-in fade-in duration-200 space-y-3.5">
-      {/* Header */}
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#004ac6] text-[20px]">manage_accounts</span>
-            <h1 className="text-[20px] font-bold text-[#0b1c30] tracking-tight">
-              Quản Lý Tài Khoản Người Dùng
-            </h1>
-          </div>
-          <p className="mt-0.5 text-xs text-slate-500">
-            Quản lý danh sách tài khoản, phân quyền vai trò và trạng thái hoạt động trong hệ thống.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Can permission="USER_CREATE">
-            <button
-              type="button"
+    <PageContainer>
+      <PageHeader
+        title="Quản Lý Tài Khoản Người Dùng"
+        description="Quản lý danh sách tài khoản, phân quyền vai trò và trạng thái hoạt động trong hệ thống."
+        icon="manage_accounts"
+        actions={
+          <Can permission={PermissionCode.USER_CREATE}>
+            <Button
+              variant="primary"
+              icon="person_add"
               onClick={() => setIsAddModalOpen(true)}
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition-all hover:bg-[#003ea8]"
             >
-              <span className="material-symbols-outlined text-[16px]">person_add</span>
-              <span>Thêm tài khoản</span>
-            </button>
+              Thêm tài khoản
+            </Button>
           </Can>
-        </div>
-      </div>
+        }
+      />
 
       {/* Filter Row: Search & Role Filter Buttons */}
       <div className="mb-3 flex flex-col items-center justify-between gap-2 rounded-xl border border-[#e2e8f0] bg-white p-2.5 shadow-xs md:flex-row">
@@ -377,28 +368,13 @@ export const UsersView: React.FC<UsersViewProps> = ({ users: initialUsers, onRef
                         </div>
                       </td>
                       <td className="px-3 py-2">
-                        {isAdmin && (
-                          <span className="inline-flex items-center rounded-full border border-[#e9d5ff] bg-[#f3e8ff] px-2 py-0.5 text-[10px] font-bold text-[#6b21a8]">
-                            ADMIN
-                          </span>
-                        )}
-                        {isMentor && (
-                          <span className="inline-flex items-center rounded-full border border-[#bfdbfe] bg-[#eff6ff] px-2 py-0.5 text-[10px] font-bold text-[#1d4ed8]">
-                            MENTOR
-                          </span>
-                        )}
-                        {!isAdmin && !isMentor && (
-                          <span className="inline-flex items-center rounded-full border border-[#e2e8f0] bg-[#f8fafc] px-2 py-0.5 text-[10px] font-bold text-[#334155]">
-                            STUDENT
-                          </span>
-                        )}
+                        <Badge role={u.role}>{u.role}</Badge>
                       </td>
-                      <td className="px-3 py-2 text-[#434655]">{u.department || 'Khoa CNTT'}</td>
+                      <td className="px-3 py-2 text-[#434655] dark:text-slate-300">{u.department || 'Khoa CNTT'}</td>
                       <td className="px-3 py-2">
-                        <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-700">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                        <Badge status={u.status || 'Active'} dot>
                           {u.status || 'Active'}
-                        </span>
+                        </Badge>
                       </td>
                       <td className="px-2.5 py-2 text-right space-x-1 whitespace-nowrap">
                         <Can permission="USER_UPDATE">
@@ -500,13 +476,13 @@ export const UsersView: React.FC<UsersViewProps> = ({ users: initialUsers, onRef
       {/* Add User Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-sm rounded-xl border border-[#e2e8f0] bg-white p-4 shadow-2xl">
-            <div className="mb-3 flex items-center justify-between border-b border-[#f1f5f9] pb-2">
-              <h3 className="text-sm font-bold text-[#0b1c30]">Thêm tài khoản mới</h3>
+          <div className="relative w-full max-w-sm rounded-xl border border-[#e2e8f0] dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-2xl">
+            <div className="mb-3 flex items-center justify-between border-b border-[#f1f5f9] dark:border-slate-800 pb-2">
+              <h3 className="text-sm font-bold text-[#0b1c30] dark:text-slate-100">Thêm tài khoản mới</h3>
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="text-[#64748b] hover:text-[#0b1c30]"
+                className="text-[#64748b] hover:text-[#0b1c30] dark:text-slate-400 dark:hover:text-slate-200"
               >
                 ✕
               </button>
@@ -514,13 +490,13 @@ export const UsersView: React.FC<UsersViewProps> = ({ users: initialUsers, onRef
 
             <form onSubmit={handleCreateUser} className="space-y-2.5">
               {formError && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700">
+                <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-300">
                   {formError}
                 </div>
               )}
 
               <div>
-                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655] dark:text-slate-300">
                   Tên Đăng Nhập (Username) *
                 </label>
                 <input
@@ -529,12 +505,12 @@ export const UsersView: React.FC<UsersViewProps> = ({ users: initialUsers, onRef
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Ví dụ: user01, mentor02..."
-                  className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#2563eb]"
+                  className="w-full rounded-lg border border-[#e2e8f0] dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-[#2563eb]"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655] dark:text-slate-300">
                   Họ và Tên (Full Name) *
                 </label>
                 <input
@@ -543,12 +519,12 @@ export const UsersView: React.FC<UsersViewProps> = ({ users: initialUsers, onRef
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="Ví dụ: Nguyễn Văn A..."
-                  className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#2563eb]"
+                  className="w-full rounded-lg border border-[#e2e8f0] dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-[#2563eb]"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655] dark:text-slate-300">
                   Email Xác Thực
                 </label>
                 <input
@@ -556,18 +532,18 @@ export const UsersView: React.FC<UsersViewProps> = ({ users: initialUsers, onRef
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="user@fpt.edu.vn"
-                  className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#2563eb]"
+                  className="w-full rounded-lg border border-[#e2e8f0] dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-[#2563eb]"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655] dark:text-slate-300">
                   Vai Trò (Role) *
                 </label>
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value as Role)}
-                  className="w-full rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-xs outline-none focus:border-[#2563eb]"
+                  className="w-full rounded-lg border border-[#e2e8f0] dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-[#2563eb]"
                 >
                   <option value="Admin">Admin (Quản trị viên)</option>
                   <option value="Mentor">Mentor (Giảng viên hướng dẫn)</option>
@@ -575,11 +551,11 @@ export const UsersView: React.FC<UsersViewProps> = ({ users: initialUsers, onRef
                 </select>
               </div>
 
-              <div className="flex justify-end gap-2 border-t border-[#f1f5f9] pt-2.5">
+              <div className="flex justify-end gap-2 border-t border-[#f1f5f9] dark:border-slate-800 pt-2.5">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="rounded-lg bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#64748b] hover:bg-[#e2e8f0]"
+                  className="rounded-lg bg-[#f1f5f9] dark:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-[#64748b] dark:text-slate-300 hover:bg-[#e2e8f0] dark:hover:bg-slate-700"
                 >
                   Hủy
                 </button>
@@ -597,19 +573,19 @@ export const UsersView: React.FC<UsersViewProps> = ({ users: initialUsers, onRef
       )}
       {/* Edit User Modal */}
       {editingUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-[#e2e8f0] px-5 py-3.5 bg-slate-50/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[#e2e8f0] dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl">
+            <div className="flex items-center justify-between border-b border-[#e2e8f0] dark:border-slate-800 px-5 py-3.5 bg-slate-50/50 dark:bg-slate-800/50">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#004ac6] text-[18px]">edit</span>
-                <h3 className="text-sm font-bold text-[#0b1c30]">
+                <span className="material-symbols-outlined text-[#004ac6] dark:text-blue-400 text-[18px]">edit</span>
+                <h3 className="text-sm font-bold text-[#0b1c30] dark:text-slate-100">
                   Chỉnh Sửa Tài Khoản #{editingUser.id}
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setEditingUser(null)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
@@ -617,25 +593,25 @@ export const UsersView: React.FC<UsersViewProps> = ({ users: initialUsers, onRef
 
             <form onSubmit={handleSaveEdit} className="space-y-3.5 p-5">
               {formError && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700">
+                <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-300">
                   {formError}
                 </div>
               )}
 
               <div>
-                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655] dark:text-slate-300">
                   Tên tài khoản (Read-only)
                 </label>
                 <input
                   type="text"
                   disabled
                   value={editingUser.username || ''}
-                  className="w-full rounded-lg border border-[#e2e8f0] bg-slate-50 px-3 py-1.5 text-xs text-slate-500 cursor-not-allowed"
+                  className="w-full rounded-lg border border-[#e2e8f0] dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 text-xs text-slate-500 dark:text-slate-400 cursor-not-allowed"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655] dark:text-slate-300">
                   Họ và Tên *
                 </label>
                 <input
@@ -643,30 +619,30 @@ export const UsersView: React.FC<UsersViewProps> = ({ users: initialUsers, onRef
                   required
                   value={editFullName}
                   onChange={(e) => setEditFullName(e.target.value)}
-                  className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                  className="w-full rounded-lg border border-[#e2e8f0] dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-400"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655] dark:text-slate-300">
                   Email
                 </label>
                 <input
                   type="email"
                   value={editEmail}
                   onChange={(e) => setEditEmail(e.target.value)}
-                  className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                  className="w-full rounded-lg border border-[#e2e8f0] dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-400"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655] dark:text-slate-300">
                   Vai Trò (Role)
                 </label>
                 <select
                   value={editRole}
                   onChange={(e) => setEditRole(e.target.value as Role)}
-                  className="w-full rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                  className="w-full rounded-lg border border-[#e2e8f0] dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-400"
                 >
                   <option value="Admin">Admin (Quản trị viên)</option>
                   <option value="Mentor">Mentor (Giảng viên hướng dẫn)</option>
@@ -682,16 +658,16 @@ export const UsersView: React.FC<UsersViewProps> = ({ users: initialUsers, onRef
                   onChange={(e) => setEditIsActive(e.target.checked)}
                   className="h-4 w-4 rounded border-slate-300 text-[#004ac6] focus:ring-[#004ac6]"
                 />
-                <label htmlFor="editIsActive" className="text-xs font-medium text-[#0b1c30]">
+                <label htmlFor="editIsActive" className="text-xs font-medium text-[#0b1c30] dark:text-slate-200">
                   Kích hoạt trạng thái hoạt động (Active)
                 </label>
               </div>
 
-              <div className="flex justify-end gap-2 border-t border-[#f1f5f9] pt-3">
+              <div className="flex justify-end gap-2 border-t border-[#f1f5f9] dark:border-slate-800 pt-3">
                 <button
                   type="button"
                   onClick={() => setEditingUser(null)}
-                  className="rounded-lg bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#64748b] hover:bg-[#e2e8f0]"
+                  className="rounded-lg bg-[#f1f5f9] dark:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-[#64748b] dark:text-slate-300 hover:bg-[#e2e8f0] dark:hover:bg-slate-700"
                 >
                   Hủy
                 </button>
@@ -710,27 +686,27 @@ export const UsersView: React.FC<UsersViewProps> = ({ users: initialUsers, onRef
 
       {/* Delete Confirmation Modal */}
       {deletingUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-xl p-5 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[#e2e8f0] dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl p-5 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400">
                 <span className="material-symbols-outlined text-[22px]">warning</span>
               </div>
               <div>
-                <h3 className="text-sm font-bold text-[#0b1c30]">Xác Nhận Xóa Tài Khoản</h3>
-                <p className="text-xs text-slate-500">Hành động này không thể hoàn tác.</p>
+                <h3 className="text-sm font-bold text-[#0b1c30] dark:text-slate-100">Xác Nhận Xóa Tài Khoản</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Hành động này không thể hoàn tác.</p>
               </div>
             </div>
 
-            <p className="text-xs text-[#434655]">
+            <p className="text-xs text-[#434655] dark:text-slate-300">
               Bạn có chắc chắn muốn xóa tài khoản <strong>{deletingUser.name}</strong> ({deletingUser.email}) khỏi hệ thống?
             </p>
 
-            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+            <div className="flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800 pt-3">
               <button
                 type="button"
                 onClick={() => setDeletingUser(null)}
-                className="rounded-lg bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#64748b] hover:bg-[#e2e8f0]"
+                className="rounded-lg bg-[#f1f5f9] dark:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-[#64748b] dark:text-slate-300 hover:bg-[#e2e8f0] dark:hover:bg-slate-700"
               >
                 Hủy
               </button>
@@ -746,6 +722,6 @@ export const UsersView: React.FC<UsersViewProps> = ({ users: initialUsers, onRef
           </div>
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 };

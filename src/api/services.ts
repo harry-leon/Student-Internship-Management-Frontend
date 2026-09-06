@@ -243,6 +243,10 @@ export interface GroupMemberDTO {
   groupRole?: 'OWNER' | 'CO_MENTOR' | 'LEADER' | 'MEMBER' | 'OBSERVER';
   isMuted?: boolean;
   mutedUntil?: string;
+  userId?: number;
+  avatarUrl?: string;
+  isOnline?: boolean;
+  lastSeenAt?: string;
   joinedAt: string;
   removedAt?: string;
 }
@@ -422,6 +426,16 @@ export interface GroupMessageAttachmentDTO {
   contentType: string;
 }
 
+export interface GroupMessageReaderDTO {
+  userId: number;
+  studentId: number;
+  studentCode: string;
+  fullName: string;
+  avatarUrl?: string;
+  groupRole: string;
+  readAt?: string;
+}
+
 export interface GroupMessageDTO {
   messageId: number;
   groupId: number;
@@ -438,6 +452,7 @@ export interface GroupMessageDTO {
   createdAt: string;
   updatedAt: string;
   attachments: GroupMessageAttachmentDTO[];
+  readBy?: GroupMessageReaderDTO[];
 }
 
 export interface GroupAnnouncementDTO {
@@ -550,12 +565,55 @@ export interface GroupRoomOverviewDTO {
   mutedUntil?: string;
   settings: GroupRoomSettingsDTO;
   memberCount: number;
+  onlineMemberCount?: number;
   unreadMessageCount: number;
   activeTaskCount: number;
   overdueTaskCount: number;
+  earliestDeadline?: string;
+  pendingReviewSubmissionCount?: number;
   latestSubmission?: GroupSubmissionDTO;
   members: GroupMemberDTO[];
   pinnedAnnouncements: GroupAnnouncementDTO[];
+}
+
+export interface MemberPresenceDTO {
+  userId: number;
+  studentId?: number;
+  fullName: string;
+  avatarUrl?: string;
+  groupRole: string;
+  isOnline: boolean;
+  lastSeenAt?: string;
+}
+
+export interface GroupPresenceDTO {
+  groupId: number;
+  onlineCount: number;
+  totalCount: number;
+  members: MemberPresenceDTO[];
+}
+
+export interface GroupMemberDetailDTO {
+  memberId: number;
+  studentId: number;
+  userId: number;
+  studentCode: string;
+  fullName: string;
+  email: string;
+  phoneNumber?: string;
+  avatarUrl?: string;
+  major?: string;
+  groupRole: GroupMemberRole;
+  joinMethod: string;
+  status: string;
+  isMuted: boolean;
+  mutedUntil?: string;
+  isOnline: boolean;
+  lastSeenAt?: string;
+  joinedAt: string;
+  totalTasksAssigned: number;
+  completedTasksCount: number;
+  totalSubmissionsCount: number;
 }
 
 export interface GroupRoomAdminDTO {
@@ -599,6 +657,15 @@ export const groupRoomService = {
   muteMember: (groupId: number, studentId: number, isMuted: boolean, mutedMinutes?: number) =>
     api.patch<GroupMemberDTO>(`/api/mentor-groups/${groupId}/members/${studentId}/mute`, { isMuted, mutedMinutes }),
 
+  getMemberDetail: (groupId: number, studentId: number) =>
+    api.get<GroupMemberDetailDTO>(`/api/mentor-groups/${groupId}/members/${studentId}/detail`),
+
+  getPresence: (groupId: number) =>
+    api.get<GroupPresenceDTO>(`/api/mentor-groups/${groupId}/presence`),
+
+  sendHeartbeat: (groupId?: number) =>
+    api.post<void>(groupId ? `/api/mentor-groups/${groupId}/presence/heartbeat` : '/api/me/presence/heartbeat'),
+
   // Messages
   getMessages: (groupId: number, page: number = 0, size: number = 50) =>
     api.get<any>(`/api/mentor-groups/${groupId}/messages?page=${page}&size=${size}`),
@@ -620,6 +687,12 @@ export const groupRoomService = {
 
   markMessageRead: (groupId: number, messageId: number) =>
     api.post<void>(`/api/mentor-groups/${groupId}/messages/${messageId}/read`),
+
+  markBatchRead: (groupId: number, messageIds: number[]) =>
+    api.post<void>(`/api/mentor-groups/${groupId}/messages/read-batch`, { messageIds }),
+
+  getMessageReads: (groupId: number, messageId: number) =>
+    api.get<GroupMessageReaderDTO[]>(`/api/mentor-groups/${groupId}/messages/${messageId}/reads`),
 
   // Announcements
   getAnnouncements: (groupId: number) =>

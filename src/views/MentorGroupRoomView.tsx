@@ -7,10 +7,12 @@ import {
   fileService,
   GroupRoomOverviewDTO,
   GroupMessageDTO,
+  GroupMessageReaderDTO,
   GroupAnnouncementDTO,
   GroupTaskDTO,
   GroupSubmissionDTO,
   GroupMemberDTO,
+  GroupMemberDetailDTO,
   GroupMemberRole,
   GroupTaskStatus,
   GroupTaskPriority,
@@ -48,6 +50,12 @@ import {
   RefreshCw,
   Copy,
   Check,
+  Activity,
+  FileText,
+  X,
+  Mail,
+  Phone,
+  GraduationCap,
 } from 'lucide-react';
 
 export const MentorGroupRoomView: React.FC = () => {
@@ -160,6 +168,13 @@ export const MentorGroupRoomView: React.FC = () => {
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [settingsSuccess, setSettingsSuccess] = useState(false);
 
+  // Presence & Online State
+  const [presenceMap, setPresenceMap] = useState<Record<number, boolean>>({});
+
+  // Member Detail Drawer/Modal State
+  const [selectedStudentDetail, setSelectedStudentDetail] = useState<GroupMemberDetailDTO | null>(null);
+  const [isLoadingMemberDetail, setIsLoadingMemberDetail] = useState(false);
+
   // Feedback State
   const [copiedCode, setCopiedCode] = useState(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
@@ -257,6 +272,84 @@ export const MentorGroupRoomView: React.FC = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Heartbeat Polling (every 35 seconds when in room)
+  useEffect(() => {
+    if (!numericGroupId) return;
+    groupRoomService.sendHeartbeat(numericGroupId).catch(() => {});
+    const hbTimer = setInterval(() => {
+      groupRoomService.sendHeartbeat(numericGroupId).catch(() => {});
+    }, 35000);
+    return () => clearInterval(hbTimer);
+  }, [numericGroupId]);
+
+  // Presence Polling (every 25 seconds)
+  useEffect(() => {
+    if (!numericGroupId) return;
+    const fetchPresence = async () => {
+      try {
+        const pres = await groupRoomService.getPresence(numericGroupId);
+        if (pres?.members) {
+          const map: Record<number, boolean> = {};
+          pres.members.forEach((m) => {
+            if (m.userId) map[m.userId] = Boolean(m.isOnline);
+            if (m.studentId) map[m.studentId] = Boolean(m.isOnline);
+          });
+          setPresenceMap(map);
+        }
+      } catch {
+        // Fallback
+      }
+    };
+    fetchPresence();
+    const pTimer = setInterval(fetchPresence, 25000);
+    return () => clearInterval(pTimer);
+  }, [numericGroupId]);
+
+  // Automatically mark latest message as read
+  useEffect(() => {
+    if (!numericGroupId || messages.length === 0) return;
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg?.messageId) {
+      groupRoomService.markMessageRead(numericGroupId, lastMsg.messageId).catch(() => {});
+    }
+  }, [numericGroupId, messages]);
+
+  const handleOpenMemberDetail = async (studentId?: number) => {
+    if (!studentId || !numericGroupId) return;
+    setIsLoadingMemberDetail(true);
+    try {
+      const detail = await groupRoomService.getMemberDetail(numericGroupId, studentId);
+      setSelectedStudentDetail(detail);
+    } catch {
+      const local = overview?.members?.find((m) => m.studentId === studentId);
+      if (local) {
+        setSelectedStudentDetail({
+          memberId: local.memberId,
+          studentId: local.studentId,
+          userId: local.userId || 0,
+          studentCode: local.studentCode,
+          fullName: local.studentName,
+          email: local.studentEmail,
+          avatarUrl: local.avatarUrl,
+          major: local.studentMajor,
+          groupRole: local.groupRole || 'MEMBER',
+          joinMethod: local.joinMethod,
+          status: local.status,
+          isMuted: Boolean(local.isMuted),
+          mutedUntil: local.mutedUntil,
+          isOnline: (local.userId ? presenceMap[local.userId] : undefined) ?? Boolean(local.isOnline),
+          lastSeenAt: local.lastSeenAt,
+          joinedAt: local.joinedAt,
+          totalTasksAssigned: 0,
+          completedTasksCount: 0,
+          totalSubmissionsCount: 0,
+        });
+      }
+    } finally {
+      setIsLoadingMemberDetail(false);
+    }
+  };
 
   // Send Message
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -617,7 +710,7 @@ export const MentorGroupRoomView: React.FC = () => {
                 {myRole === 'OWNER' ? 'Mentor (Owner)' : myRole === 'LEADER' ? 'Trưởng nhóm' : 'Thành viên'}
               </span>
             </div>
-            <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400 mt-1">
               <span>Mentor: <strong className="text-slate-700 dark:text-slate-300">{overview.mentorName}</strong></span>
               <span>•</span>
               <button
@@ -630,12 +723,58 @@ export const MentorGroupRoomView: React.FC = () => {
               </button>
               <span>•</span>
               <span>{overview.memberCount} thành viên</span>
+              <span>•</span>
+              <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                {overview.onlineMemberCount ?? Object.values(presenceMap).filter(Boolean).length} trực tuyến
+              </span>
+              <span>•</span>
+              <span className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 font-medium">
+                <CheckSquare className="w-3.5 h-3.5" />
+                {overview.activeTaskCount} tasks mở
+              </span>
+              {overview.earliestDeadline && (
+                <>
+                  <span>•</span>
+                  <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
+                    <Clock className="w-3.5 h-3.5" />
+                    Hạn: {new Date(overview.earliestDeadline).toLocaleDateString([], { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </>
+              )}
+              {overview.pendingReviewSubmissionCount !== undefined && overview.pendingReviewSubmissionCount > 0 && (
+                <>
+                  <span>•</span>
+                  <span className="inline-flex items-center gap-1 text-purple-600 dark:text-purple-400 font-medium">
+                    <Upload className="w-3.5 h-3.5" />
+                    {overview.pendingReviewSubmissionCount} chờ chấm
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </div>
 
         {/* Header Right Action Tools */}
         <div className="flex items-center gap-1.5 sm:gap-2">
+          {canCreateTask && (
+            <button
+              onClick={() => setIsCreateTaskOpen(true)}
+              className="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-xs transition"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Tạo Task</span>
+            </button>
+          )}
+          {canManageRoom && (
+            <button
+              onClick={() => setIsCreateAnnounceOpen(true)}
+              className="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold transition"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Thông báo</span>
+            </button>
+          )}
           {/* Toggle Left Column (Members) */}
           <button
             onClick={toggleLeftCollapse}
@@ -764,26 +903,41 @@ export const MentorGroupRoomView: React.FC = () => {
               {/* Mentor Avatar */}
               <div
                 onClick={toggleLeftCollapse}
-                className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 to-orange-400 text-white flex items-center justify-center font-bold text-xs shadow-xs ring-2 ring-amber-300 dark:ring-amber-800 cursor-pointer"
+                className="relative cursor-pointer"
                 title={`Mentor: ${overview.mentorName} (Bấm để mở rộng)`}
               >
-                {overview.mentorName.charAt(0)}
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 to-orange-400 text-white flex items-center justify-center font-bold text-xs shadow-xs ring-2 ring-amber-300 dark:ring-amber-800">
+                  {overview.mentorName.charAt(0)}
+                </div>
+                {presenceMap[overview.mentorId] && (
+                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-1.5 ring-white dark:ring-slate-900" />
+                )}
               </div>
               {/* Student Avatars */}
-              {overview.members.slice(0, 8).map((m: GroupMemberDTO) => (
-                <div
-                  key={m.memberId}
-                  onClick={toggleLeftCollapse}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-xs cursor-pointer ${
-                    m.groupRole === 'LEADER'
-                      ? 'bg-blue-600 text-white ring-2 ring-blue-300'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
-                  }`}
-                  title={`${m.studentName} (${m.groupRole === 'LEADER' ? 'Trưởng nhóm' : 'Thành viên'}) - Bấm để mở rộng`}
-                >
-                  {m.studentName.charAt(0)}
-                </div>
-              ))}
+              {overview.members.slice(0, 8).map((m: GroupMemberDTO) => {
+                const isOnline = (m.userId ? presenceMap[m.userId] : undefined) ?? (m.studentId ? presenceMap[m.studentId] : undefined) ?? Boolean(m.isOnline);
+                return (
+                  <div
+                    key={m.memberId}
+                    onClick={() => handleOpenMemberDetail(m.studentId)}
+                    className="relative cursor-pointer"
+                    title={`${m.studentName} (${m.groupRole === 'LEADER' ? 'Trưởng nhóm' : 'Thành viên'}) - ${isOnline ? 'Trực tuyến' : 'Ngoại tuyến'}`}
+                  >
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-xs ${
+                        m.groupRole === 'LEADER'
+                          ? 'bg-blue-600 text-white ring-2 ring-blue-300'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+                      }`}
+                    >
+                      {m.studentName.charAt(0)}
+                    </div>
+                    {isOnline && (
+                      <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-1.5 ring-white dark:ring-slate-900" />
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         ) : (
@@ -831,19 +985,30 @@ export const MentorGroupRoomView: React.FC = () => {
               {overview.members.map((m: GroupMemberDTO) => {
                 const isMuted = Boolean(m.isMuted);
                 const isStudentLeader = m.groupRole === 'LEADER';
+                const isOnline = presenceMap[m.studentId]?.isOnline ?? m.isOnline;
                 return (
                   <div
                     key={m.memberId}
                     className="p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 bg-white dark:bg-slate-900/80 transition"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
-                          {m.studentName.charAt(0)}
+                      <div
+                        onClick={() => handleOpenMemberDetail(m.studentId)}
+                        className="flex items-center gap-2.5 min-w-0 cursor-pointer group/member"
+                      >
+                        <div className="relative shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                            {m.studentName.charAt(0)}
+                          </div>
+                          {isOnline ? (
+                            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full" title="Đang online" />
+                          ) : (
+                            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-slate-300 dark:bg-slate-600 border-2 border-white dark:border-slate-900 rounded-full" title="Offline" />
+                          )}
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                            <p className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover/member:text-indigo-600 dark:group-hover/member:text-indigo-400 truncate transition">
                               {m.studentName}
                             </p>
                             {isStudentLeader && (
@@ -1076,6 +1241,67 @@ export const MentorGroupRoomView: React.FC = () => {
                           </div>
                         )}
                       </div>
+
+                      {/* Read Receipts (Messenger style) */}
+                      {(() => {
+                        const readers = (msg.readBy || []).filter((r) => r.userId !== msg.senderUserId);
+                        if (readers.length === 0) return null;
+                        const maxVisible = 4;
+                        const visible = readers.slice(0, maxVisible);
+                        const remaining = readers.length - maxVisible;
+                        const tooltipText = readers.map((r) => r.fullName).join(', ') + ' đã xem';
+
+                        return (
+                          <div
+                            className={`flex items-center gap-1.5 mt-1 px-1 select-none ${
+                              isMe ? 'justify-end' : 'justify-start'
+                            }`}
+                            title={tooltipText}
+                          >
+                            <div className="flex items-center -space-x-1.5 overflow-hidden py-0.5">
+                              {visible.map((reader) => {
+                                const memberMatch = overview.members.find(
+                                  (m) => m.userId === reader.userId || m.studentName === reader.fullName
+                                );
+                                return (
+                                  <button
+                                    key={reader.userId}
+                                    type="button"
+                                    onClick={() => {
+                                      if (memberMatch) {
+                                        handleOpenMemberDetail(memberMatch.studentId);
+                                      }
+                                    }}
+                                    className="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700 ring-1.5 ring-white dark:ring-slate-900 flex items-center justify-center text-[8px] font-bold text-slate-700 dark:text-slate-200 hover:scale-125 transition-transform cursor-pointer shrink-0 shadow-xs"
+                                    title={`${reader.fullName} (${reader.groupRole || 'Member'}) đã xem`}
+                                  >
+                                    {reader.avatarUrl ? (
+                                      <img
+                                        src={reader.avatarUrl}
+                                        alt={reader.fullName}
+                                        className="w-full h-full rounded-full object-cover"
+                                      />
+                                    ) : (
+                                      reader.fullName.charAt(0)
+                                    )}
+                                  </button>
+                                );
+                              })}
+                              {remaining > 0 && (
+                                <span
+                                  className="w-4 h-4 rounded-full bg-slate-300 dark:bg-slate-600 ring-1.5 ring-white dark:ring-slate-900 flex items-center justify-center text-[7px] font-bold text-slate-700 dark:text-slate-200 shrink-0"
+                                  title={tooltipText}
+                                >
+                                  +{remaining}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[9px] text-slate-400 font-medium">
+                              {readers.length === 1 ? 'Đã xem' : `${readers.length} đã xem`}
+                            </span>
+                          </div>
+                        );
+                      })()}
 
                       {/* Message Hover Actions */}
                       {!isDeleted && (
@@ -2134,6 +2360,214 @@ export const MentorGroupRoomView: React.FC = () => {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MEMBER DETAIL MODAL / DRAWER */}
+      {(selectedStudentDetail || isLoadingMemberDetail) && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            {isLoadingMemberDetail && !selectedStudentDetail ? (
+              <div className="p-8 flex flex-col items-center justify-center gap-3">
+                <RefreshCw className="w-8 h-8 text-indigo-500 animate-spin" />
+                <p className="text-xs text-slate-500">Đang tải thông tin thành viên...</p>
+              </div>
+            ) : selectedStudentDetail ? (
+              <div>
+                {/* Header with gradient background */}
+                <div className="relative bg-gradient-to-r from-indigo-500 to-purple-600 p-6 text-white">
+                  <button
+                    onClick={() => setSelectedStudentDetail(null)}
+                    className="absolute top-4 right-4 p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition"
+                    title="Đóng"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  <div className="flex items-center gap-4">
+                    <div className="relative shrink-0">
+                      <div className="w-16 h-16 rounded-2xl bg-white/20 border-2 border-white/40 flex items-center justify-center text-2xl font-bold text-white shadow-inner">
+                        {selectedStudentDetail.avatarUrl ? (
+                          <img
+                            src={selectedStudentDetail.avatarUrl}
+                            alt={selectedStudentDetail.fullName}
+                            className="w-full h-full rounded-2xl object-cover"
+                          />
+                        ) : (
+                          selectedStudentDetail.fullName.charAt(0)
+                        )}
+                      </div>
+                      {selectedStudentDetail.isOnline ? (
+                        <span
+                          className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full"
+                          title="Trực tuyến"
+                        />
+                      ) : (
+                        <span
+                          className="absolute -bottom-1 -right-1 w-4 h-4 bg-slate-400 border-2 border-white dark:border-slate-900 rounded-full"
+                          title="Ngoại tuyến"
+                        />
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white leading-tight">
+                        {selectedStudentDetail.fullName}
+                      </h3>
+                      <p className="text-xs text-indigo-100 font-mono mt-0.5">
+                        {selectedStudentDetail.studentCode}
+                      </p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white/20 text-white uppercase tracking-wider">
+                          {selectedStudentDetail.groupRole}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                          selectedStudentDetail.isOnline
+                            ? 'bg-emerald-400/20 text-emerald-100 border border-emerald-300/30'
+                            : 'bg-white/10 text-indigo-100'
+                        }`}>
+                          {selectedStudentDetail.isOnline ? 'Online' : 'Offline'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Body Content */}
+                <div className="p-5 space-y-4">
+                  {/* Presence Status */}
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-xs">
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">Trạng thái hoạt động:</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">
+                      {selectedStudentDetail.isOnline
+                        ? 'Đang hoạt động trên hệ thống'
+                        : selectedStudentDetail.lastSeenAt
+                        ? `Hoạt động lúc ${new Date(selectedStudentDetail.lastSeenAt).toLocaleString('vi-VN', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            day: '2-digit',
+                            month: '2-digit',
+                          })}`
+                        : 'Chưa có dữ liệu'}
+                    </span>
+                  </div>
+
+                  {/* Contact details */}
+                  <div className="space-y-2 text-xs">
+                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                      <Mail className="w-4 h-4 text-slate-400 shrink-0" />
+                      <span className="font-medium truncate">{selectedStudentDetail.email}</span>
+                    </div>
+                    {selectedStudentDetail.phoneNumber && (
+                      <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                        <Phone className="w-4 h-4 text-slate-400 shrink-0" />
+                        <span className="font-medium">{selectedStudentDetail.phoneNumber}</span>
+                      </div>
+                    )}
+                    {selectedStudentDetail.major && (
+                      <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                        <GraduationCap className="w-4 h-4 text-slate-400 shrink-0" />
+                        <span className="font-medium">Chuyên ngành: {selectedStudentDetail.major}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                      <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
+                      <span className="font-medium">
+                        Tham gia nhóm:{' '}
+                        {new Date(selectedStudentDetail.joinedAt).toLocaleDateString('vi-VN')}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Task & Submission KPI Grid */}
+                  <div className="grid grid-cols-3 gap-2.5 pt-1">
+                    <div className="p-3 rounded-xl bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 text-center">
+                      <p className="text-base font-bold text-indigo-700 dark:text-indigo-400">
+                        {selectedStudentDetail.totalTasksAssigned}
+                      </p>
+                      <p className="text-[10px] text-indigo-600/80 dark:text-indigo-400/80 font-medium mt-0.5">
+                        Task giao
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/50 text-center">
+                      <p className="text-base font-bold text-emerald-700 dark:text-emerald-400">
+                        {selectedStudentDetail.completedTasksCount}
+                      </p>
+                      <p className="text-[10px] text-emerald-600/80 dark:text-emerald-400/80 font-medium mt-0.5">
+                        Hoàn thành
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-purple-50/60 dark:bg-purple-950/40 border border-purple-100 dark:border-purple-900/50 text-center">
+                      <p className="text-base font-bold text-purple-700 dark:text-purple-400">
+                        {selectedStudentDetail.totalSubmissionsCount}
+                      </p>
+                      <p className="text-[10px] text-purple-600/80 dark:text-purple-400/80 font-medium mt-0.5">
+                        Bài nộp
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Moderation quick actions */}
+                  {canManageRoom && (
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                      {selectedStudentDetail.groupRole === 'LEADER' ? (
+                        <button
+                          onClick={() => {
+                            handleUpdateRole(selectedStudentDetail.studentId, 'MEMBER');
+                            setSelectedStudentDetail(null);
+                          }}
+                          className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium transition"
+                        >
+                          Hạ vai trò Member
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            handleUpdateRole(selectedStudentDetail.studentId, 'LEADER');
+                            setSelectedStudentDetail(null);
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 text-xs font-medium transition"
+                        >
+                          Bổ nhiệm Leader
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => {
+                          const sid = selectedStudentDetail.studentId;
+                          setSelectedStudentDetail(null);
+                          setMuteStudentId(sid);
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 hover:bg-amber-100 text-xs font-medium transition"
+                      >
+                        {selectedStudentDetail.isMuted ? 'Mở chat' : 'Khóa chat'}
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          const sid = selectedStudentDetail.studentId;
+                          const name = selectedStudentDetail.fullName;
+                          setSelectedStudentDetail(null);
+                          handleRemoveMember(sid, name);
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 hover:bg-rose-100 text-xs font-medium transition"
+                      >
+                        Xóa khỏi nhóm
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Close button */}
+                  <div className="pt-2 flex justify-end">
+                    <button
+                      onClick={() => setSelectedStudentDetail(null)}
+                      className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition"
+                    >
+                      Đóng
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
       )}

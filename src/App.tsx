@@ -300,7 +300,7 @@ function AppRoutes() {
               <Route
                 path="/companies"
                 element={
-                  <PermissionGuard page="companies" requiredPermission="COMPANY_VIEW">
+                  <PermissionGuard page="companies" requiredPermission="COMPANY_VIEW" requiredRoles={['Admin', 'Mentor']}>
                     <CompaniesView currentRole={activeRole} />
                   </PermissionGuard>
                 }

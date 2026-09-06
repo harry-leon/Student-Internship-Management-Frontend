@@ -48,7 +48,6 @@ export const ROLE_PAGES: Record<Role, NavPage[]> = {
   Student: [
     'landing',
     'dashboard',
-    'companies',
     'weekly-reports',
     'submissions',
     'tasks',

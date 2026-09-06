@@ -24,19 +24,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [mentorWorkloads, setMentorWorkloads] = useState<DashboardMentorWorkload[]>([]);
   const [companyDistribution, setCompanyDistribution] = useState<DashboardCompanyDistribution[]>([]);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await dashboardService.getMyDashboard();
-        if (res && res.kpis) {
-          setKpis(res.kpis);
-        }
-        setMentorWorkloads(Array.isArray(res?.details?.mentorWorkloads) ? res.details.mentorWorkloads : []);
-        setCompanyDistribution(Array.isArray(res?.details?.companyDistribution) ? res.details.companyDistribution : []);
-      } catch {
-        // Ignore fallback
+  const fetchStats = async () => {
+    try {
+      const res = await dashboardService.getMyDashboard();
+      if (res && res.kpis) {
+        setKpis(res.kpis);
       }
-    };
+      setMentorWorkloads(Array.isArray(res?.details?.mentorWorkloads) ? res.details.mentorWorkloads : []);
+      setCompanyDistribution(Array.isArray(res?.details?.companyDistribution) ? res.details.companyDistribution : []);
+    } catch {
+      // Ignore fallback
+    }
+  };
+
+  useEffect(() => {
     fetchStats();
   }, []);
 
@@ -56,10 +57,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* Admin Action Header */}
       <PageHeader
         title="Tổng Quan Hệ Thống Quản Lý Thực Tập"
-        description={`Đợt: ${phase.name || 'Spring 2026 Batch A'} (${phase.term}) • Tổng hợp dữ liệu đợt thực tập, phân công hướng dẫn và kết quả đánh giá.`}
+        description={`Đợt: ${phase.name || 'Chưa thiết lập đợt'}${phase.term ? ` (${phase.term})` : ''} • Tổng hợp dữ liệu đợt thực tập, phân công hướng dẫn và kết quả đánh giá.`}
         badge={<Badge status="active">Operational Control</Badge>}
         actions={
           <>
+            <Button
+              variant="outline"
+              icon="refresh"
+              onClick={fetchStats}
+            >
+              Làm Mới
+            </Button>
             <Button
               variant="outline"
               icon="tune"

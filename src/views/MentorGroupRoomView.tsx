@@ -82,7 +82,8 @@ export const MentorGroupRoomView: React.FC = () => {
 
   // Section Collapse State
   const [isLeftCollapsed, setIsLeftCollapsed] = useState<boolean>(() => {
-    return localStorage.getItem('group_room_left_collapsed') === 'true';
+    const saved = localStorage.getItem('group_room_left_collapsed_v2');
+    return saved !== null ? saved === 'true' : true;
   });
   const [isRightCollapsed, setIsRightCollapsed] = useState<boolean>(() => {
     return localStorage.getItem('group_room_right_collapsed') === 'true';
@@ -92,7 +93,7 @@ export const MentorGroupRoomView: React.FC = () => {
   const toggleLeftCollapse = () => {
     setIsLeftCollapsed((prev) => {
       const next = !prev;
-      localStorage.setItem('group_room_left_collapsed', String(next));
+      localStorage.setItem('group_room_left_collapsed_v2', String(next));
       return next;
     });
   };

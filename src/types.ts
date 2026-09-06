@@ -68,6 +68,9 @@ export interface Assignment {
   status: AssignmentStatus;
   companyName?: string;
   projectTopic?: string;
+  studentId?: number;
+  mentorId?: number;
+  phaseId?: number;
   grade?: string;
   latestSubmissionId?: number;
   latestSubmissionType?: 'GITHUB' | 'ZIP';

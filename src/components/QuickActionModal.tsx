@@ -24,7 +24,7 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
   const [studentName, setStudentName] = useState('');
   const [studentCode, setStudentCode] = useState('');
   const [selectedMentor, setSelectedMentor] = useState(mentors[0]?.name || '');
-  const [selectedPhase, setSelectedPhase] = useState(phases[0]?.term || 'Fall 2026');
+  const [selectedPhase, setSelectedPhase] = useState(phases[0]?.term || phases[0]?.name || '');
   const [companyName, setCompanyName] = useState('');
   const [projectTopic, setProjectTopic] = useState('');
 
@@ -46,19 +46,14 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
       id: `asg-${Date.now()}`,
       studentName,
       studentCode,
-      studentAvatar:
-        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      mentorName: mentorObj?.name || 'Dr. Nguyen Van Minh',
-      mentorDept: mentorObj?.department || 'Faculty of SE',
-      phase: selectedPhase,
-      date: new Date().toLocaleDateString('en-US', {
-        month: 'short',
-        day: '2-digit',
-        year: 'numeric',
-      }),
+      studentAvatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(studentName)}&background=2563EB&color=fff`,
+      mentorName: mentorObj?.name || 'Chưa phân công',
+      mentorDept: mentorObj?.department || '',
+      phase: selectedPhase || 'Chưa phân đợt',
+      date: new Date().toLocaleDateString('vi-VN'),
       status: 'IN PROGRESS',
-      companyName: companyName || 'Academic Research Lab',
-      projectTopic: projectTopic || 'Software Development Internship',
+      companyName: companyName || 'Chưa phân công',
+      projectTopic: projectTopic || 'Chưa phân công',
     };
 
     onAddAssignment(newAsg);
@@ -75,14 +70,12 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
       code: newStudentCode,
       email: newStudentEmail || `${newStudentCode.toLowerCase()}@university.edu.vn`,
       department: newStudentDept,
-      avatar:
-        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-      phase: selectedPhase,
-      mentor: selectedMentor,
-      company: companyName || 'FPT Software',
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(newStudentName)}&background=0D8ABC&color=fff`,
+      phase: selectedPhase || 'Chưa phân đợt',
+      mentor: selectedMentor || 'Chưa phân công',
+      company: companyName || 'Chưa phân công',
       status: 'IN PROGRESS',
-      progress: 25,
-      score: 8.5,
+      progress: 0,
     };
 
     onAddStudent(newStd);
@@ -90,22 +83,22 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-[#e2e8f0] overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
+      <div className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-[#e2e8f0] dark:border-slate-800 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#e2e8f0]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#e2e8f0] dark:border-slate-800">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[20px] text-[#2563eb]">
+            <span className="material-symbols-outlined text-[20px] text-[#2563eb] dark:text-blue-400">
               bolt
             </span>
-            <h3 className="text-[17px] font-semibold text-[#0b1c30]">
+            <h3 className="text-[17px] font-semibold text-[#0b1c30] dark:text-slate-100">
               Quick Action
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+            className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             <span className="material-symbols-outlined text-[18px]">close</span>
           </button>

@@ -339,19 +339,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onSuccessNavigate }) => {
 
                 <button
                   type="button"
-                  onClick={async () => {
-                    setLoading(true);
-                    setError(null);
-                    try {
-                      const demoEmail = `student.google${Math.floor(Math.random() * 100)}@fpt.edu.vn`;
-                      await authService.loginWithOAuth2(demoEmail, 'Sinh Viên Google OAuth', 'google-12345');
-                      setSuccessMsg('Đăng nhập Google thành công!');
-                      setTimeout(() => onSuccessNavigate('dashboard'), 800);
-                    } catch (err: any) {
-                      setError(err.message || 'Không thể xác thực Google OAuth2');
-                    } finally {
-                      setLoading(false);
-                    }
+                  onClick={() => {
+                    const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+                    window.location.href = `${apiBase}/oauth2/authorization/google`;
                   }}
                   className="w-full py-3 bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-white font-semibold text-sm rounded-2xl transition-all flex items-center justify-center space-x-2 cursor-pointer"
                 >
@@ -373,18 +363,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onSuccessNavigate }) => {
                       d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.61l3.99 3.15c.95-2.85 3.6-4.96 6.72-4.96z"
                     />
                   </svg>
-                  <span>Đăng Nhập Bằng Google</span>
-                </button>
-              </div>
-
-              {/* Direct Demo Bypass link */}
-              <div className="text-center pt-2">
-                <button
-                  type="button"
-                  onClick={() => onSuccessNavigate('dashboard')}
-                  className="text-xs text-slate-400 hover:text-slate-200 underline underline-offset-4 transition-colors"
-                >
-                  Bỏ qua đăng nhập, xem giao diện Demo
+                  <span>Đăng Nhập Bằng Google OAuth</span>
                 </button>
               </div>
             </form>

@@ -45,15 +45,15 @@ export const mapMentorFromDTO = (dto: MentorDTO): Mentor => {
     email: dto.email || '',
     avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(dto.fullName || 'Mentor')}&background=4F46E5&color=fff`,
     activeStudents: 0,
-    maxCapacity: 15,
-    specialization: dto.department || 'Software Engineering',
-    rating: 5.0,
+    maxCapacity: (dto as any).maxCapacity ?? 0,
+    specialization: dto.department || '',
+    rating: (dto as any).rating ?? 0,
   };
 };
 
 export const mapUserFromDTO = (dto: UserDTO): UserAccount => {
   return {
-    id: String(dto.userId || (dto as any).id || 1),
+    id: String(dto.userId || (dto as any).id || ''),
     name: dto.fullName || dto.username || 'User',
     email: dto.email || '',
     role: normalizeRole(dto.role),
@@ -65,15 +65,23 @@ export const mapUserFromDTO = (dto: UserDTO): UserAccount => {
 };
 
 export const mapPhaseFromDTO = (dto: InternshipPhaseDTO): InternshipPhase => {
+  const now = new Date().getTime();
+  const end = dto.endDate ? new Date(dto.endDate).getTime() : now;
+  const start = dto.startDate ? new Date(dto.startDate).getTime() : now;
+  const weeksRemaining = Math.max(0, Math.ceil((end - now) / (1000 * 60 * 60 * 24 * 7)));
+  const totalDuration = Math.max(1, end - start);
+  const elapsed = Math.max(0, Math.min(totalDuration, now - start));
+  const progressPercent = Math.round((elapsed / totalDuration) * 100);
+
   return {
     id: String(dto.phaseId),
     name: dto.phaseName,
-    term: 'Spring 2026',
+    term: dto.phaseName,
     status: 'ACTIVE',
-    startDate: dto.startDate || '2026-01-01',
-    endDate: dto.endDate || '2026-05-30',
-    weeksRemaining: 8,
-    progressPercent: 50,
+    startDate: dto.startDate || '',
+    endDate: dto.endDate || '',
+    weeksRemaining,
+    progressPercent,
     targetMilestone: dto.description || 'Đợt thực tập chính thức',
     totalStudents: 0,
     totalMentors: 0,
@@ -90,7 +98,7 @@ export const mapAssignmentFromDTO = (dto: InternshipAssignmentDTO): Assignment =
     mentorName: dto.mentorFullName || 'Chưa phân công',
     mentorDept: dto.mentorDepartment || 'Khoa CNTT',
     phase: dto.phaseName || 'Đợt thực tập',
-    date: dto.assignedDate ? dto.assignedDate.split('T')[0] : '2026-01-15',
+    date: dto.assignedDate ? dto.assignedDate.split('T')[0] : '',
     status: (dto.status as AssignmentStatus) || 'IN PROGRESS',
     companyName: 'Doanh nghiệp thực tập',
     projectTopic: 'Đề tài thực tập',
@@ -119,7 +127,7 @@ export const mapCriterionFromDTO = (dto: EvaluationCriterionDTO): EvaluationCrit
     id: String(dto.criterionId),
     name: dto.criterionName,
     category: 'Đánh giá chung',
-    weight: 20,
+    weight: (dto as any).weight ?? 0,
     maxScore: dto.maxScore || 10,
     description: dto.description || '',
   };

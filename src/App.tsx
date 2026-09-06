@@ -112,13 +112,13 @@ function AppRoutes() {
   const activePhase = phases[0] || {
     id: '0',
     name: 'Chưa có đợt thực tập',
-    term: 'Spring 2026',
-    status: 'ACTIVE',
-    startDate: '2026-01-01',
-    endDate: '2026-05-30',
+    term: '',
+    status: 'DRAFT',
+    startDate: '',
+    endDate: '',
     weeksRemaining: 0,
     progressPercent: 0,
-    targetMilestone: 'Tạo đợt thực tập mới trong hệ thống',
+    targetMilestone: 'Chưa có thông tin đợt thực tập',
     totalStudents: 0,
     totalMentors: 0,
     scheduledRounds: 0,
@@ -137,28 +137,36 @@ function AppRoutes() {
 
   const handleAddAssignment = async (newAsg: Assignment) => {
     if (isAuthenticated && hasPermission('ASSIGNMENT_CREATE')) {
-      try {
-        await assignmentService.create({
-          studentId: Number(newAsg.id) || 1,
-          mentorId: 1,
-          phaseId: Number(activePhase.id) || 1,
-        });
-      } catch (err) {
-        console.warn('API error creating assignment:', err);
+      const studentId = Number(newAsg.studentId);
+      const mentorId = Number(newAsg.mentorId);
+      const phaseId = Number(activePhase.id);
+      if (studentId && mentorId && phaseId) {
+        try {
+          await assignmentService.create({
+            studentId,
+            mentorId,
+            phaseId,
+          });
+        } catch (err) {
+          console.warn('API error creating assignment:', err);
+        }
       }
     }
   };
 
   const handleAddStudent = async (newStd: Student) => {
     if (isAuthenticated && hasPermission('STUDENT_CREATE')) {
-      try {
-        await studentService.create({
-          userId: 1,
-          studentCode: newStd.code,
-          major: newStd.department,
-        });
-      } catch (err) {
-        console.warn('API error creating student:', err);
+      const userId = Number(newStd.id);
+      if (!isNaN(userId) && userId > 0) {
+        try {
+          await studentService.create({
+            userId,
+            studentCode: newStd.code,
+            major: newStd.department,
+          });
+        } catch (err) {
+          console.warn('API error creating student:', err);
+        }
       }
     }
   };

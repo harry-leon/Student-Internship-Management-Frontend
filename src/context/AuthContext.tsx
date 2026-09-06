@@ -124,7 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(currentUser);
       } catch {
         setUser({
-          userId: 1,
+          userId: 0,
           username: response.username,
           fullName: response.fullName,
           email: `${response.username}@fpt.edu.vn`,

@@ -237,202 +237,210 @@ export const AssessmentResultsView: React.FC<AssessmentResultsViewProps> = ({
   // =========================================================================
   // ADMIN & MENTOR VIEW: Grading Management & Rubric Assessment
   // =========================================================================
-  const displayStudents = displayList.length > 0 ? displayList : [
-    {
-      id: '1',
-      name: 'Nguyen Van A',
-      code: 'SE190001',
-      email: 'nva@fpt.edu.vn',
-      department: 'Software Engineering',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-      phase: 'Spring 2026',
-      mentor: 'Dr. Le Thi B',
-      company: 'FPT Software',
-      status: 'IN PROGRESS' as const,
-      progress: 85,
-      score: 8.7,
-    },
-    {
-      id: '2',
-      name: 'Tran Thi C',
-      code: 'SE190002',
-      email: 'ttc@fpt.edu.vn',
-      department: 'Information Assurance',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-      phase: 'Spring 2026',
-      mentor: 'Dr. Le Thi B',
-      company: 'Viettel Telecom',
-      status: 'IN PROGRESS' as const,
-      progress: 90,
-      score: 9.2,
-    },
-  ];
+  // =========================================================================
+  // ADMIN & MENTOR VIEW: Grading Management & Rubric Assessment
+  // =========================================================================
+  const displayStudents = displayList;
+  const scoredStudents = displayStudents.filter((s) => s.score !== undefined && s.score > 0);
+  const avgScore = scoredStudents.length > 0
+    ? (scoredStudents.reduce((acc, s) => acc + (s.score || 0), 0) / scoredStudents.length).toFixed(2)
+    : '--';
+  const passedStudents = scoredStudents.filter((s) => (s.score || 0) >= 5.0);
+  const passRate = scoredStudents.length > 0
+    ? `${((passedStudents.length / scoredStudents.length) * 100).toFixed(1)}%`
+    : '--';
+  const honorsRate = scoredStudents.length > 0
+    ? `${((scoredStudents.filter((s) => (s.score || 0) >= 9.0).length / scoredStudents.length) * 100).toFixed(1)}%`
+    : '--';
 
   return (
     <div className="flex flex-col w-full animate-in fade-in duration-200 space-y-3.5">
       {/* Title */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs">
         <div>
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#004ac6] text-[20px]">grading</span>
-            <h1 className="text-[20px] font-bold text-[#0b1c30] tracking-tight">
+            <span className="material-symbols-outlined text-[#004ac6] dark:text-blue-400 text-[20px]">grading</span>
+            <h1 className="text-[20px] font-bold text-[#0b1c30] dark:text-slate-100 tracking-tight">
               Bảng Điểm Đánh Giá & Rubric Grading
             </h1>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             {isMentor
               ? 'Quản lý bảng điểm thực tập & chấm điểm theo Rubric cho sinh viên hướng dẫn.'
               : 'Quản lý bảng điểm thực tập, chấm điểm theo Rubric & công bố kết quả đánh giá.'}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {userCanGrade && (
+          {userCanGrade && displayStudents.length > 0 && (
             <button
               type="button"
-              onClick={() => handleOpenGrading(1, 1)}
+              onClick={() => handleOpenGrading(Number(displayStudents[0].id) || 1, 1)}
               className="inline-flex items-center gap-1.5 rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#003eb3] transition-colors cursor-pointer"
             >
               <span className="material-symbols-outlined text-[16px]">edit_note</span>
               <span>Chấm Điểm Rubric</span>
             </button>
           )}
-          <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-            98.8% Đã Đạt
+          <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800">
+            {passRate} Đã Đạt
           </span>
         </div>
       </div>
 
-      {/* Analytics KPI Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs">
-          <div className="text-[11px] font-semibold uppercase text-slate-500 tracking-wider">
-            Điểm Trung Bình Đợt
-          </div>
-          <div className="flex items-baseline gap-1.5 mt-1">
-            <span className="text-[24px] font-bold text-[#0b1c30]">8.72</span>
-            <span className="text-[11px] text-slate-500">/ 10.0</span>
-          </div>
-          <div className="text-[11px] text-emerald-600 mt-0.5 flex items-center gap-1 font-medium">
-            <span className="material-symbols-outlined text-[14px]">trending_up</span>
-            <span>+0.35 so với kỳ trước</span>
-          </div>
+      {loading ? (
+        <div className="bg-white dark:bg-slate-900 p-12 rounded-xl border border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
+          Đang tải danh sách đánh giá...
         </div>
-
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs">
-          <div className="text-[11px] font-semibold uppercase text-slate-500 tracking-wider">
-            Xuất Sắc (Grade A)
+      ) : displayStudents.length === 0 ? (
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center shadow-2xs">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-950/50 text-[#004ac6] dark:text-blue-400">
+            <span className="material-symbols-outlined text-[28px]">assignment_turned_in</span>
           </div>
-          <div className="flex items-baseline gap-1.5 mt-1">
-            <span className="text-[24px] font-bold text-[#004ac6]">64.2%</span>
-            <span className="text-[11px] text-slate-500">sinh viên</span>
-          </div>
-          <div className="text-[11px] text-slate-500 mt-0.5">
-            Đạt chuẩn Rubric doanh nghiệp
-          </div>
+          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Chưa Có Dữ Liệu Đánh Giá</h3>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+            Hiện tại chưa có phân công thực tập hoặc kết quả đánh giá nào cho đợt này. Sinh viên được phân công sẽ hiển thị tại đây khi bắt đầu kỳ thực tập.
+          </p>
         </div>
+      ) : (
+        <>
+          {/* Analytics KPI Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs">
+              <div className="text-[11px] font-semibold uppercase text-slate-500 dark:text-slate-400 tracking-wider">
+                Điểm Trung Bình Đợt
+              </div>
+              <div className="flex items-baseline gap-1.5 mt-1">
+                <span className="text-[24px] font-bold text-[#0b1c30] dark:text-slate-100">{avgScore}</span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">/ 10.0</span>
+              </div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Tính trên {scoredStudents.length} sinh viên đã có điểm
+              </div>
+            </div>
 
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs">
-          <div className="text-[11px] font-semibold uppercase text-slate-500 tracking-wider">
-            Tỷ Lệ Nhận Việc Doanh Nghiệp
+            <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs">
+              <div className="text-[11px] font-semibold uppercase text-slate-500 dark:text-slate-400 tracking-wider">
+                Xuất Sắc (Grade A)
+              </div>
+              <div className="flex items-baseline gap-1.5 mt-1">
+                <span className="text-[24px] font-bold text-[#004ac6] dark:text-blue-400">{honorsRate}</span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">sinh viên</span>
+              </div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Điểm từ 9.0 trở lên
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs">
+              <div className="text-[11px] font-semibold uppercase text-slate-500 dark:text-slate-400 tracking-wider">
+                Tỷ Lệ Đạt (Passed)
+              </div>
+              <div className="flex items-baseline gap-1.5 mt-1">
+                <span className="text-[24px] font-bold text-[#712ae2] dark:text-purple-400">{passRate}</span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">tổng số</span>
+              </div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Điểm đạt chuẩn từ 5.0 trở lên
+              </div>
+            </div>
           </div>
-          <div className="flex items-baseline gap-1.5 mt-1">
-            <span className="text-[24px] font-bold text-[#712ae2]">78.5%</span>
-            <span className="text-[11px] text-slate-500">offer chính thức</span>
-          </div>
-          <div className="text-[11px] text-slate-500 mt-0.5">
-            Tuyển dụng trực tiếp sau thực tập
-          </div>
-        </div>
-      </div>
 
-      {/* Student Scorecards Table */}
-      <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
-        <div className="px-3.5 py-2.5 border-b border-slate-100 flex items-center justify-between">
-          <h3 className="text-xs font-bold text-[#0b1c30]">
-            Bảng Tổng Hợp Điểm Đánh Giá Sinh Viên
-          </h3>
-          <span className="text-[11px] text-slate-500">
-            {displayStudents.length} sinh viên trong danh sách
-          </span>
-        </div>
+          {/* Student Scorecards Table */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs overflow-hidden">
+            <div className="px-3.5 py-2.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <h3 className="text-xs font-bold text-[#0b1c30] dark:text-slate-100">
+                Bảng Tổng Hợp Điểm Đánh Giá Sinh Viên
+              </h3>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                {displayStudents.length} sinh viên trong danh sách
+              </span>
+            </div>
 
-        <div className="overflow-x-auto no-scrollbar">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="bg-slate-50/80 text-[11px] font-semibold uppercase text-slate-600 tracking-wider border-b border-slate-200">
-                <th className="py-2.5 px-3.5">Sinh Viên</th>
-                <th className="py-2.5 px-3">Giảng Viên Hướng Dẫn</th>
-                <th className="py-2.5 px-3">Doanh Nghiệp</th>
-                <th className="py-2.5 px-3">Kỹ Thuật (50%)</th>
-                <th className="py-2.5 px-3">Thái Độ (50%)</th>
-                <th className="py-2.5 px-3">Điểm Trọng Số</th>
-                <th className="py-2.5 px-3">Trạng Thái</th>
-                <th className="py-2.5 px-3.5 text-right">Thao Tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-800">
-              {displayStudents.map((s, idx) => {
-                const score = s.score || 8.5;
-                const isHonors = score >= 9.0;
-                const assignmentIdNum = Number(s.id) || (idx + 1);
-
-                return (
-                  <tr key={s.id} className="hover:bg-blue-50/40 transition-colors">
-                    <td className="py-2.5 px-3.5">
-                      <div className="flex items-center gap-2.5">
-                        <img
-                          src={s.avatar}
-                          alt={s.name}
-                          className="w-7 h-7 rounded-full object-cover border border-slate-200"
-                        />
-                        <div>
-                          <div className="font-semibold text-[#0b1c30]">{s.name}</div>
-                          <div className="text-[10.5px] font-mono text-slate-500">{s.code}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-2.5 px-3 text-slate-600">{s.mentor}</td>
-                    <td className="py-2.5 px-3 text-slate-600">{s.company}</td>
-                    <td className="py-2.5 px-3 font-mono font-medium text-slate-900">
-                      {(score * 0.95).toFixed(1)} / 10
-                    </td>
-                    <td className="py-2.5 px-3 font-mono font-medium text-slate-900">
-                      {(score * 1.02 > 10 ? 10 : score * 1.02).toFixed(1)} / 10
-                    </td>
-                    <td className="py-2.5 px-3 font-mono font-bold text-[#004ac6]">
-                      {score.toFixed(2)}
-                    </td>
-                    <td className="py-2.5 px-3">
-                      {isHonors ? (
-                        <span className="inline-flex items-center px-2 py-0.2 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                          XUẤT SẮC
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-0.2 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                          GIỎI
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-2.5 px-3.5 text-right">
-                      {userCanGrade ? (
-                        <button
-                          type="button"
-                          onClick={() => handleOpenGrading(assignmentIdNum, 1)}
-                          className="rounded-md bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-[#004ac6] hover:bg-blue-100 transition-colors cursor-pointer"
-                        >
-                          Chấm / Sửa
-                        </button>
-                      ) : (
-                        <span className="text-[11px] text-slate-400 italic">Chỉ xem</span>
-                      )}
-                    </td>
+            <div className="overflow-x-auto no-scrollbar">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-slate-50/80 dark:bg-slate-800/80 text-[11px] font-semibold uppercase text-slate-600 dark:text-slate-300 tracking-wider border-b border-slate-200 dark:border-slate-800">
+                    <th className="py-2.5 px-3.5">Sinh Viên</th>
+                    <th className="py-2.5 px-3">Giảng Viên Hướng Dẫn</th>
+                    <th className="py-2.5 px-3">Doanh Nghiệp</th>
+                    <th className="py-2.5 px-3">Điểm Đánh Giá</th>
+                    <th className="py-2.5 px-3">Trạng Thái</th>
+                    <th className="py-2.5 px-3.5 text-right">Thao Tác</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
+                  {displayStudents.map((s, idx) => {
+                    const score = s.score;
+                    const isHonors = score !== undefined && score >= 9.0;
+                    const assignmentIdNum = Number(s.id) || (idx + 1);
+
+                    return (
+                      <tr key={s.id} className="hover:bg-blue-50/40 dark:hover:bg-slate-800/50 transition-colors">
+                        <td className="py-2.5 px-3.5">
+                          <div className="flex items-center gap-2.5">
+                            <img
+                              src={s.avatar}
+                              alt={s.name}
+                              className="w-7 h-7 rounded-full object-cover border border-slate-200 dark:border-slate-700"
+                            />
+                            <div>
+                              <div className="font-semibold text-[#0b1c30] dark:text-slate-100">{s.name}</div>
+                              <div className="text-[10.5px] font-mono text-slate-500 dark:text-slate-400">{s.code}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-3 text-slate-600 dark:text-slate-400">{s.mentor}</td>
+                        <td className="py-2.5 px-3 text-slate-600 dark:text-slate-400">{s.company}</td>
+                        <td className="py-2.5 px-3 font-mono font-bold text-[#004ac6] dark:text-blue-400">
+                          {score !== undefined && score > 0 ? score.toFixed(2) : '--'}
+                        </td>
+                        <td className="py-2.5 px-3">
+                          {score !== undefined && score > 0 ? (
+                            isHonors ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                                XUẤT SẮC
+                              </span>
+                            ) : score >= 8.0 ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                                GIỎI
+                              </span>
+                            ) : score >= 5.0 ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                ĐẠT
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                                CHƯA ĐẠT
+                              </span>
+                            )
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                              CHƯA CHẤM
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3.5 text-right">
+                          {userCanGrade ? (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenGrading(assignmentIdNum, 1)}
+                              className="rounded-md bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1 text-[11px] font-semibold text-[#004ac6] dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors cursor-pointer"
+                            >
+                              Chấm / Sửa
+                            </button>
+                          ) : (
+                            <span className="text-[11px] text-slate-400 italic">Chỉ xem</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
 
       {userCanGrade && (
         <GradingFormModal

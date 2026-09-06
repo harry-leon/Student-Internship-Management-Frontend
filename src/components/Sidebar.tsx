@@ -131,10 +131,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
             <div className="min-w-0 flex flex-col">
               <span className="truncate text-[12px] font-medium leading-tight text-[#0b1c30] dark:text-slate-200">
-                Academic Term 2024-2
+                Hệ Thống Trực Tuyến
               </span>
               <span className="truncate text-[10px] leading-tight text-[#64748b] dark:text-slate-400">
-                Active Operational Phase
+                System Connected
               </span>
             </div>
           </div>

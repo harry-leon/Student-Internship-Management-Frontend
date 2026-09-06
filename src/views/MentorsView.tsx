@@ -167,9 +167,9 @@ export const MentorsView: React.FC<MentorsViewProps> = ({ currentRole = 'Admin' 
       />
 
       {/* Search Toolbar */}
-      <div className="max-w-md rounded-xl border border-slate-200/90 bg-white p-2.5 shadow-2xs">
-        <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-1.5">
-          <span className="material-symbols-outlined text-[17px] text-slate-400">
+      <div className="max-w-md rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 shadow-2xs">
+        <div className="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/80 px-3 py-1.5">
+          <span className="material-symbols-outlined text-[17px] text-slate-400 dark:text-slate-500">
             search
           </span>
           <input
@@ -177,22 +177,22 @@ export const MentorsView: React.FC<MentorsViewProps> = ({ currentRole = 'Admin' 
             placeholder="Tìm theo tên, khoa, chuyên ngành..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-transparent text-xs text-[#0b1c30] outline-none placeholder:text-slate-400"
+            className="w-full bg-transparent text-xs text-[#0b1c30] dark:text-slate-100 outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
           />
         </div>
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center p-12 text-[#004ac6]">
-          <div className="h-7 w-7 animate-spin rounded-full border-3 border-[#004ac6] border-t-transparent"></div>
+        <div className="flex justify-center p-12 text-[#004ac6] dark:text-blue-400">
+          <div className="h-7 w-7 animate-spin rounded-full border-3 border-[#004ac6] dark:border-blue-400 border-t-transparent"></div>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-2xs">
-          <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-[#004ac6]">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-10 text-center shadow-2xs">
+          <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-950/50 text-[#004ac6] dark:text-blue-400">
             <span className="material-symbols-outlined text-[22px]">supervisor_account</span>
           </div>
-          <h3 className="text-sm font-semibold text-[#0b1c30]">Chưa có dữ liệu Giảng viên</h3>
-          <p className="mt-0.5 text-xs text-slate-500">
+          <h3 className="text-sm font-semibold text-[#0b1c30] dark:text-slate-100">Chưa có dữ liệu Giảng viên</h3>
+          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
             Cơ sở dữ liệu backend hiện tại chưa ghi nhận danh sách giảng viên hướng dẫn.
           </p>
           {canManage && (
@@ -214,7 +214,7 @@ export const MentorsView: React.FC<MentorsViewProps> = ({ currentRole = 'Admin' 
             return (
               <div
                 key={mentor.id}
-                className="flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-2xs transition-all hover:border-slate-300 hover:shadow-xs"
+                className="flex flex-col justify-between rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 shadow-2xs transition-all hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs"
               >
                 <div>
                   <div className="mb-2.5 flex items-start justify-between gap-3">
@@ -222,58 +222,58 @@ export const MentorsView: React.FC<MentorsViewProps> = ({ currentRole = 'Admin' 
                       <img
                         src={mentor.avatar}
                         alt={mentor.name}
-                        className="h-10 w-10 rounded-lg border border-slate-200 object-cover shadow-2xs"
+                        className="h-10 w-10 rounded-lg border border-slate-200 dark:border-slate-700 object-cover shadow-2xs"
                       />
                       <div>
-                        <h3 className="text-xs font-bold text-[#0b1c30]">
+                        <h3 className="text-xs font-bold text-[#0b1c30] dark:text-slate-100">
                           {mentor.name}
                         </h3>
-                        <div className="text-[11px] font-semibold text-[#004ac6]">
+                        <div className="text-[11px] font-semibold text-[#004ac6] dark:text-blue-400">
                           {mentor.title}
                         </div>
-                        <div className="text-[11px] text-slate-500">
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400">
                           {mentor.department}
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10.5px] font-bold text-amber-800">
-                      <span className="material-symbols-outlined text-[13px] text-amber-500">
+                    <div className="flex items-center gap-1 rounded-md border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 text-[10.5px] font-bold text-amber-800 dark:text-amber-300">
+                      <span className="material-symbols-outlined text-[13px] text-amber-500 dark:text-amber-400">
                         star
                       </span>
                       <span>{mentor.rating}</span>
                     </div>
                   </div>
 
-                  <div className="mb-2.5 rounded-lg border border-blue-100 bg-blue-50/40 p-2 text-[11px] text-slate-700">
-                    <span className="font-semibold text-slate-900">Lĩnh vực: </span>
+                  <div className="mb-2.5 rounded-lg border border-blue-100 dark:border-blue-900/40 bg-blue-50/40 dark:bg-blue-950/40 p-2 text-[11px] text-slate-700 dark:text-slate-300">
+                    <span className="font-semibold text-slate-900 dark:text-slate-100">Lĩnh vực: </span>
                     {mentor.specialization}
                   </div>
                 </div>
 
-                <div className="border-t border-slate-100 pt-2.5">
+                <div className="border-t border-slate-100 dark:border-slate-800 pt-2.5">
                   <div className="mb-1 flex items-center justify-between text-[11px]">
-                    <span className="text-slate-500">Chỉ tiêu & Tải trọng</span>
-                    <span className={`font-semibold ${isNearCapacity ? 'text-amber-600' : 'text-[#004ac6]'}`}>
+                    <span className="text-slate-500 dark:text-slate-400">Chỉ tiêu & Tải trọng</span>
+                    <span className={`font-semibold ${isNearCapacity ? 'text-amber-600 dark:text-amber-400' : 'text-[#004ac6] dark:text-blue-400'}`}>
                       {mentor.activeStudents} / {mentor.maxCapacity} ({loadPercent}%)
                     </span>
                   </div>
-                  <div className="mb-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                  <div className="mb-2 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                     <div
-                      className={`h-full rounded-full transition-all ${isNearCapacity ? 'bg-amber-500' : 'bg-[#004ac6]'}`}
+                      className={`h-full rounded-full transition-all ${isNearCapacity ? 'bg-amber-500' : 'bg-[#004ac6] dark:bg-blue-500'}`}
                       style={{ width: `${loadPercent}%` }}
                     ></div>
                   </div>
 
                   <div className="flex items-center justify-between text-[11px]">
-                    <span className="max-w-[150px] truncate text-slate-400">
+                    <span className="max-w-[150px] truncate text-slate-400 dark:text-slate-500">
                       {mentor.email}
                     </span>
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
                         onClick={() => setViewingMentor(mentor)}
-                        className="inline-flex items-center gap-0.5 rounded px-2 py-0.5 text-[11px] font-medium text-slate-700 bg-slate-100 hover:bg-slate-200"
+                        className="inline-flex items-center gap-0.5 rounded px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                         title="Xem chi tiết"
                       >
                         <span className="material-symbols-outlined text-[12px]">visibility</span>
@@ -310,17 +310,17 @@ export const MentorsView: React.FC<MentorsViewProps> = ({ currentRole = 'Admin' 
 
       {/* Create Mentor Modal */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-[#e2e8f0] px-5 py-3.5 bg-slate-50/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 px-5 py-3.5 bg-slate-50/50 dark:bg-slate-800/60">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#004ac6] text-[18px]">person_add</span>
-                <h3 className="text-sm font-bold text-[#0b1c30]">Thêm Giảng Viên Hướng Dẫn Mới</h3>
+                <span className="material-symbols-outlined text-[#004ac6] dark:text-blue-400 text-[18px]">person_add</span>
+                <h3 className="text-sm font-bold text-[#0b1c30] dark:text-slate-100">Thêm Giảng Viên Hướng Dẫn Mới</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
@@ -328,13 +328,13 @@ export const MentorsView: React.FC<MentorsViewProps> = ({ currentRole = 'Admin' 
 
             <form onSubmit={handleCreateMentor} className="space-y-3.5 p-5">
               {formError && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700">
+                <div className="rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/40 p-2 text-xs text-red-700 dark:text-red-400">
                   {formError}
                 </div>
               )}
 
               <div>
-                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655] dark:text-slate-300">
                   Họ và Tên Giảng Viên *
                 </label>
                 <input
@@ -343,12 +343,12 @@ export const MentorsView: React.FC<MentorsViewProps> = ({ currentRole = 'Admin' 
                   value={createName}
                   onChange={(e) => setCreateName(e.target.value)}
                   placeholder="VD: TS. Lê Văn B..."
-                  className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-500"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655] dark:text-slate-300">
                   Email Công Tác
                 </label>
                 <input
@@ -356,13 +356,13 @@ export const MentorsView: React.FC<MentorsViewProps> = ({ currentRole = 'Admin' 
                   value={createEmail}
                   onChange={(e) => setCreateEmail(e.target.value)}
                   placeholder="giangvien@fpt.edu.vn"
-                  className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655] dark:text-slate-300">
                     Khoa / Bộ Môn
                   </label>
                   <input
@@ -370,17 +370,17 @@ export const MentorsView: React.FC<MentorsViewProps> = ({ currentRole = 'Admin' 
                     value={createDepartment}
                     onChange={(e) => setCreateDepartment(e.target.value)}
                     placeholder="Khoa CNTT"
-                    className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655] dark:text-slate-300">
                     Học Hàm / Học Vị
                   </label>
                   <select
                     value={createAcademicRank}
                     onChange={(e) => setCreateAcademicRank(e.target.value)}
-                    className="w-full rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-500"
                   >
                     <option value="Thạc sĩ">Thạc sĩ (ThS)</option>
                     <option value="Tiến sĩ">Tiến sĩ (TS)</option>
@@ -390,11 +390,11 @@ export const MentorsView: React.FC<MentorsViewProps> = ({ currentRole = 'Admin' 
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 border-t border-[#f1f5f9] pt-3">
+              <div className="flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800 pt-3">
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="rounded-lg bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#64748b] hover:bg-[#e2e8f0]"
+                  className="rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
                 >
                   Hủy
                 </button>
@@ -403,7 +403,7 @@ export const MentorsView: React.FC<MentorsViewProps> = ({ currentRole = 'Admin' 
                   disabled={isSubmitting}
                   className="rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#003ea8]"
                 >
-                  {isSubmitting ? 'Đang thêm...' : 'Thêm Giảng Viên'}
+                  {isSubmitting ? 'Đang tạo...' : 'Tạo Mới'}
                 </button>
               </div>
             </form>
@@ -413,19 +413,19 @@ export const MentorsView: React.FC<MentorsViewProps> = ({ currentRole = 'Admin' 
 
       {/* Edit Mentor Modal */}
       {editingMentor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-[#e2e8f0] px-5 py-3.5 bg-slate-50/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 px-5 py-3.5 bg-slate-50/50 dark:bg-slate-800/60">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#004ac6] text-[18px]">edit</span>
-                <h3 className="text-sm font-bold text-[#0b1c30]">
+                <span className="material-symbols-outlined text-[#004ac6] dark:text-blue-400 text-[18px]">edit</span>
+                <h3 className="text-sm font-bold text-[#0b1c30] dark:text-slate-100">
                   Cập Nhật Giảng Viên #{editingMentor.id}
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setEditingMentor(null)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
@@ -433,13 +433,13 @@ export const MentorsView: React.FC<MentorsViewProps> = ({ currentRole = 'Admin' 
 
             <form onSubmit={handleSaveEdit} className="space-y-3.5 p-5">
               {formError && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700">
+                <div className="rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/40 p-2 text-xs text-red-700 dark:text-red-400">
                   {formError}
                 </div>
               )}
 
               <div>
-                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                <label className="mb-1 block text-[11.5px] font-semibold text-[#434655] dark:text-slate-300">
                   Họ và Tên Giảng Viên *
                 </label>
                 <input
@@ -447,24 +447,24 @@ export const MentorsView: React.FC<MentorsViewProps> = ({ currentRole = 'Admin' 
                   required
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655] dark:text-slate-300">
                     Khoa / Bộ Môn
                   </label>
                   <input
                     type="text"
                     value={editDepartment}
                     onChange={(e) => setEditDepartment(e.target.value)}
-                    className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655]">
+                  <label className="mb-1 block text-[11.5px] font-semibold text-[#434655] dark:text-slate-300">
                     Học Hàm / Học Vị
                   </label>
                   <input
@@ -472,16 +472,16 @@ export const MentorsView: React.FC<MentorsViewProps> = ({ currentRole = 'Admin' 
                     value={editAcademicRank}
                     onChange={(e) => setEditAcademicRank(e.target.value)}
                     placeholder="VD: TS, ThS..."
-                    className="w-full rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-xs outline-none focus:border-[#004ac6]"
+                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-[#004ac6] dark:focus:border-blue-500"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 border-t border-[#f1f5f9] pt-3">
+              <div className="flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800 pt-3">
                 <button
                   type="button"
                   onClick={() => setEditingMentor(null)}
-                  className="rounded-lg bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#64748b] hover:bg-[#e2e8f0]"
+                  className="rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
                 >
                   Hủy
                 </button>
@@ -500,49 +500,49 @@ export const MentorsView: React.FC<MentorsViewProps> = ({ currentRole = 'Admin' 
 
       {/* View Detail Modal */}
       {viewingMentor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-xl p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-3">
                 <img
                   src={viewingMentor.avatar}
                   alt={viewingMentor.name}
-                  className="h-12 w-12 rounded-xl border border-slate-200 object-cover shadow-2xs"
+                  className="h-12 w-12 rounded-xl border border-slate-200 dark:border-slate-700 object-cover shadow-2xs"
                 />
                 <div>
-                  <h3 className="text-sm font-bold text-[#0b1c30]">{viewingMentor.name}</h3>
-                  <div className="text-xs font-semibold text-[#004ac6]">{viewingMentor.title} • {viewingMentor.department}</div>
+                  <h3 className="text-sm font-bold text-[#0b1c30] dark:text-slate-100">{viewingMentor.name}</h3>
+                  <div className="text-xs font-semibold text-[#004ac6] dark:text-blue-400">{viewingMentor.title} • {viewingMentor.department}</div>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setViewingMentor(null)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
             </div>
 
             <div className="space-y-2 text-xs">
-              <div className="flex justify-between py-1 border-b border-slate-50">
-                <span className="text-slate-500">Email:</span>
-                <span className="font-semibold text-slate-800">{viewingMentor.email}</span>
+              <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                <span className="text-slate-500 dark:text-slate-400">Email:</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200">{viewingMentor.email}</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-slate-50">
-                <span className="text-slate-500">Chuyên ngành hướng dẫn:</span>
-                <span className="font-semibold text-slate-800">{viewingMentor.specialization}</span>
+              <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                <span className="text-slate-500 dark:text-slate-400">Chuyên ngành hướng dẫn:</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200">{viewingMentor.specialization}</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-slate-50">
-                <span className="text-slate-500">Số sinh viên đang nhận:</span>
-                <span className="font-semibold text-[#004ac6]">{viewingMentor.activeStudents} / {viewingMentor.maxCapacity}</span>
+              <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                <span className="text-slate-500 dark:text-slate-400">Số sinh viên đang nhận:</span>
+                <span className="font-semibold text-[#004ac6] dark:text-blue-400">{viewingMentor.activeStudents} / {viewingMentor.maxCapacity}</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-slate-50">
-                <span className="text-slate-500">Đánh giá trung bình:</span>
-                <span className="font-semibold text-amber-600">★ {viewingMentor.rating} / 5.0</span>
+              <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                <span className="text-slate-500 dark:text-slate-400">Đánh giá trung bình:</span>
+                <span className="font-semibold text-amber-600 dark:text-amber-400">★ {viewingMentor.rating} / 5.0</span>
               </div>
             </div>
 
-            <div className="flex justify-end border-t border-slate-100 pt-3">
+            <div className="flex justify-end border-t border-slate-100 dark:border-slate-800 pt-3">
               <button
                 type="button"
                 onClick={() => setViewingMentor(null)}
@@ -557,28 +557,28 @@ export const MentorsView: React.FC<MentorsViewProps> = ({ currentRole = 'Admin' 
 
       {/* Delete Confirmation Modal */}
       {deletingMentor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-xl p-5 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl p-5 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400">
                 <span className="material-symbols-outlined text-[22px]">warning</span>
               </div>
               <div>
-                <h3 className="text-sm font-bold text-[#0b1c30]">Xóa Giảng Viên Hướng Dẫn</h3>
-                <p className="text-xs text-slate-500">Xác nhận gỡ bỏ giảng viên</p>
+                <h3 className="text-sm font-bold text-[#0b1c30] dark:text-slate-100">Xóa Giảng Viên Hướng Dẫn</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Xác nhận gỡ bỏ giảng viên</p>
               </div>
             </div>
 
-            <p className="text-xs text-[#434655]">
+            <p className="text-xs text-[#434655] dark:text-slate-300">
               Bạn có chắc chắn muốn xóa giảng viên <strong>{deletingMentor.name}</strong>?
               Nếu giảng viên đã được phân công hướng dẫn sinh viên, hệ thống sẽ bảo lưu và khóa an toàn.
             </p>
 
-            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+            <div className="flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800 pt-3">
               <button
                 type="button"
                 onClick={() => setDeletingMentor(null)}
-                className="rounded-lg bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#64748b] hover:bg-[#e2e8f0]"
+                className="rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
               >
                 Hủy
               </button>

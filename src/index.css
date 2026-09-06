@@ -29,6 +29,139 @@
   }
 }
 
+/* ==========================================================================
+   GLOBAL DARK THEME STANDARD STANDARDS
+   Ensures cards, panels, inputs, tables, and text automatically adapt
+   in dark mode across all pages without losing contrast or light mode design.
+   ========================================================================== */
+html.dark {
+  /* Cards & Surface backgrounds */
+  .bg-white {
+    background-color: #0f172a !important; /* slate-900 */
+    color: #f1f5f9;
+  }
+
+  .bg-slate-50,
+  .bg-slate-50\/50,
+  .bg-slate-50\/60,
+  .bg-slate-50\/70,
+  .bg-slate-50\/80,
+  .bg-slate-50\/90,
+  .bg-slate-100,
+  .bg-\[\#f1f5f9\],
+  .bg-\[\#f8f9ff\],
+  .bg-\[\#f8fafc\] {
+    background-color: #1e293b !important; /* slate-800 */
+    color: #cbd5e1;
+  }
+
+  /* Borders */
+  .border-slate-100,
+  .border-slate-200,
+  .border-slate-200\/70,
+  .border-slate-200\/80,
+  .border-slate-200\/90,
+  .border-slate-300,
+  .border-\[\#e2e8f0\],
+  .border-\[\#f1f5f9\] {
+    border-color: #334155 !important; /* slate-700 */
+  }
+
+  /* Headings & Text */
+  .text-\[\#0b1c30\],
+  .text-slate-900 {
+    color: #f8fafc !important; /* slate-50 */
+  }
+  .text-slate-800,
+  .text-\[\#434655\] {
+    color: #f1f5f9 !important; /* slate-100 */
+  }
+  .text-slate-700 {
+    color: #e2e8f0 !important; /* slate-200 */
+  }
+  .text-slate-600 {
+    color: #cbd5e1 !important; /* slate-300 */
+  }
+
+  /* Inputs, selects, and textareas */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+  select,
+  textarea {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: #64748b !important;
+  }
+
+  /* Dividers */
+  .divide-slate-100 > :not(:last-child),
+  .divide-\[\#f1f5f9\] > :not(:last-child) {
+    border-color: #334155 !important;
+  }
+
+  /* Tinted tag chips */
+  .bg-blue-50,
+  .bg-blue-50\/30,
+  .bg-blue-50\/40,
+  .bg-blue-50\/50,
+  .bg-blue-50\/60,
+  .bg-blue-50\/70,
+  .bg-blue-50\/80,
+  .bg-blue-100 {
+    background-color: rgba(30, 58, 138, 0.35) !important; /* blue-900/35 */
+    border-color: rgba(59, 130, 246, 0.3) !important;
+    color: #93c5fd !important;
+  }
+  .bg-amber-50,
+  .bg-amber-50\/30,
+  .bg-amber-50\/50,
+  .bg-amber-50\/60,
+  .bg-amber-50\/80,
+  .bg-amber-100 {
+    background-color: rgba(120, 53, 15, 0.35) !important; /* amber-900/35 */
+    border-color: rgba(245, 158, 11, 0.3) !important;
+    color: #fcd34d !important;
+  }
+  .bg-emerald-50,
+  .bg-emerald-50\/20,
+  .bg-emerald-50\/30,
+  .bg-emerald-50\/60,
+  .bg-emerald-100 {
+    background-color: rgba(6, 78, 59, 0.35) !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+    color: #6ee7b7 !important;
+  }
+  .bg-purple-50,
+  .bg-purple-50\/30,
+  .bg-purple-50\/60,
+  .bg-purple-100 {
+    background-color: rgba(88, 28, 135, 0.35) !important;
+    border-color: rgba(168, 85, 247, 0.3) !important;
+    color: #d8b4fe !important;
+  }
+  .bg-rose-50,
+  .bg-rose-50\/70,
+  .bg-rose-100,
+  .bg-red-50 {
+    background-color: rgba(136, 19, 55, 0.35) !important;
+    border-color: rgba(244, 63, 94, 0.3) !important;
+    color: #fda4af !important;
+  }
+
+  /* Table rows hover */
+  tr:hover {
+    background-color: rgba(30, 41, 59, 0.5) !important;
+  }
+
+  /* Subtle card shadows in dark mode */
+  .shadow-xl, .shadow-2xs, .shadow-xs, .shadow-md, .shadow-lg {
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5) !important;
+  }
+}
+
 :root {
   --landing-ink: #08111c;
   --landing-paper: #f4efe4;

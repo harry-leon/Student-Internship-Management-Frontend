@@ -210,6 +210,7 @@ export type NavPage =
   | 'my-profile'
   | 'role-permissions'
   | 'admin-group-rooms'
+  | 'group-rooms'
   | 'group-room'
   | 'login'
   | 'landing';

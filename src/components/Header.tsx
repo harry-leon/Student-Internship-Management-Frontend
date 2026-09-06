@@ -28,6 +28,7 @@ const PAGE_TITLES: Record<NavPage, { parent: string; current: string }> = {
   'assessment-results': { parent: 'Evaluation', current: 'Assessment Results' },
   'role-permissions': { parent: 'System', current: 'Role & Permissions' },
   'admin-group-rooms': { parent: 'System', current: 'Quản Lý Phòng Nhóm' },
+  'group-rooms': { parent: 'Mentor Groups', current: 'Phòng Làm Việc Nhóm' },
   'group-room': { parent: 'Mentor Groups', current: 'Phòng Làm Việc Nhóm' },
   'my-profile': { parent: 'Account', current: 'My Profile' },
   login: { parent: 'Account', current: 'Xác thực hệ thống' },

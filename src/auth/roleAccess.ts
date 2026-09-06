@@ -19,6 +19,7 @@ export const ROLE_PAGES: Record<Role, NavPage[]> = {
     'assessment-results',
     'role-permissions',
     'admin-group-rooms',
+    'group-rooms',
     'group-room',
     'my-profile',
   ],
@@ -31,6 +32,7 @@ export const ROLE_PAGES: Record<Role, NavPage[]> = {
     'submissions',
     'students',
     'mentor-groups',
+    'group-rooms',
     'group-room',
     'assessment-results',
     'my-profile',
@@ -43,6 +45,7 @@ export const ROLE_PAGES: Record<Role, NavPage[]> = {
     'weekly-reports',
     'submissions',
     'mentor-groups',
+    'group-rooms',
     'group-room',
     'assessment-results',
     'my-profile',
@@ -63,6 +66,7 @@ export const PAGE_PERMISSIONS: Partial<Record<NavPage, string>> = {
   'mentor-groups': 'GROUP_VIEW',
   'role-permissions': 'ROLE_PERMISSION_VIEW',
   'admin-group-rooms': 'ADMIN_GROUP_ROOM_VIEW_ALL',
+  'group-rooms': 'GROUP_ROOM_VIEW',
   'group-room': 'GROUP_ROOM_VIEW',
 };
 

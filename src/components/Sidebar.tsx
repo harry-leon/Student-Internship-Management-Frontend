@@ -57,6 +57,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       title: 'SYSTEM',
       items: [
+        { id: 'admin-group-rooms' as NavPage, label: 'Group Rooms Oversight', icon: 'meeting_room' },
         { id: 'role-permissions' as NavPage, label: 'Role & Permissions', icon: 'security' },
       ],
     },

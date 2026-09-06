@@ -209,6 +209,8 @@ export type NavPage =
   | 'assessment-results'
   | 'my-profile'
   | 'role-permissions'
+  | 'admin-group-rooms'
+  | 'group-room'
   | 'login'
   | 'landing';
 

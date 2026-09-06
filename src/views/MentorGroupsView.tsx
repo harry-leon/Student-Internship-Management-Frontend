@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Role } from '../types';
 import {
   mentorGroupService,
@@ -18,6 +19,7 @@ export const MentorGroupsView: React.FC<MentorGroupsViewProps> = ({ currentRole 
   const isMentor = currentRole === 'Mentor';
   const isStudent = currentRole === 'Student';
   const isAdmin = currentRole === 'Admin';
+  const navigate = useNavigate();
 
   // Data state
   const [myGroups, setMyGroups] = useState<MentorGroupDTO[]>([]);
@@ -457,13 +459,22 @@ export const MentorGroupsView: React.FC<MentorGroupsViewProps> = ({ currentRole 
                           {g.memberCount} / {g.maxStudents}
                         </span>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right flex items-center justify-end gap-2">
                         <button
                           type="button"
                           onClick={() => handleOpenDetail(g.groupId)}
-                          className="text-[11px] font-semibold text-[#004ac6] hover:underline cursor-pointer"
+                          className="text-[11px] font-semibold text-slate-500 hover:text-[#004ac6] cursor-pointer"
                         >
-                          Xem danh sách nhóm
+                          DS Nhóm
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/admin/group-rooms/${g.groupId}`)}
+                          className="px-2 py-0.5 rounded bg-emerald-600 text-white hover:bg-emerald-700 text-[11px] font-semibold transition-colors cursor-pointer flex items-center gap-1"
+                          title="Vào phòng làm việc nhóm"
+                        >
+                          <span className="material-symbols-outlined text-[13px]">forum</span>
+                          <span>Vào Phòng</span>
                         </button>
                       </div>
                     </div>
@@ -697,6 +708,15 @@ export const MentorGroupsView: React.FC<MentorGroupsViewProps> = ({ currentRole 
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             type="button"
+                            onClick={() => navigate(`/admin/group-rooms/${g.groupId}`)}
+                            className="px-2.5 py-1 rounded bg-[#004ac6] text-white hover:bg-[#003eb3] text-[11px] font-semibold transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
+                            title="Vào phòng làm việc nhóm"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">forum</span>
+                            <span>Vào Phòng</span>
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => handleOpenDetail(g.groupId)}
                             className="px-2 py-1 rounded bg-blue-50 text-[#004ac6] hover:bg-blue-100 text-[11px] font-semibold transition-colors cursor-pointer"
                           >
@@ -767,13 +787,23 @@ export const MentorGroupsView: React.FC<MentorGroupsViewProps> = ({ currentRole 
                   </div>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setSelectedGroupDetail(null)}
-                className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[18px]">close</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => navigate(`/admin/group-rooms/${selectedGroupDetail.groupId}`)}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors cursor-pointer shadow-xs"
+                >
+                  <span className="material-symbols-outlined text-[16px]">forum</span>
+                  <span>Vào Phòng Làm Việc</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedGroupDetail(null)}
+                  className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[18px]">close</span>
+                </button>
+              </div>
             </div>
 
             <div className="p-4 overflow-y-auto space-y-3 flex-1">

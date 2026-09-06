@@ -34,6 +34,8 @@ import { ProfileView } from './views/ProfileView';
 import { RolePermissionsView } from './views/RolePermissionsView';
 import { LoginView } from './views/LoginView';
 import { PublicLandingView } from './views/PublicLandingView';
+import { MentorGroupRoomView } from './views/MentorGroupRoomView';
+import { AdminGroupRoomsView } from './views/AdminGroupRoomsView';
 
 import { CommandPaletteModal } from './components/CommandPaletteModal';
 import { QuickActionModal } from './components/QuickActionModal';
@@ -291,6 +293,8 @@ function AppRoutes() {
                 } />
                 <Route path="/admin/mentors" element={<MentorsView currentRole={activeRole} />} />
                 <Route path="/admin/mentor-groups" element={<MentorGroupsView currentRole={activeRole} />} />
+                <Route path="/admin/group-rooms/:groupId" element={<MentorGroupRoomView />} />
+                <Route path="/admin/admin-group-rooms" element={<AdminGroupRoomsView />} />
                 <Route path="/admin/internship-phases" element={
                   <PhasesView
                     phases={phases}

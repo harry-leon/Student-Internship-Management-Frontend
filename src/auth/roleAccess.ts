@@ -18,6 +18,8 @@ export const ROLE_PAGES: Record<Role, NavPage[]> = {
     'assessment-rounds',
     'assessment-results',
     'role-permissions',
+    'admin-group-rooms',
+    'group-room',
     'my-profile',
   ],
   Mentor: [
@@ -29,6 +31,7 @@ export const ROLE_PAGES: Record<Role, NavPage[]> = {
     'submissions',
     'students',
     'mentor-groups',
+    'group-room',
     'assessment-results',
     'my-profile',
   ],
@@ -40,6 +43,7 @@ export const ROLE_PAGES: Record<Role, NavPage[]> = {
     'weekly-reports',
     'submissions',
     'mentor-groups',
+    'group-room',
     'assessment-results',
     'my-profile',
   ],
@@ -58,6 +62,8 @@ export const PAGE_PERMISSIONS: Partial<Record<NavPage, string>> = {
   'assessment-results': 'ASSESSMENT_VIEW',
   'mentor-groups': 'GROUP_VIEW',
   'role-permissions': 'ROLE_PERMISSION_VIEW',
+  'admin-group-rooms': 'ADMIN_GROUP_ROOM_VIEW_ALL',
+  'group-room': 'GROUP_ROOM_VIEW',
 };
 
 export const canAccessPage = (

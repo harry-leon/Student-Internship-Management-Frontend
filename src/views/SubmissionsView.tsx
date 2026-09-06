@@ -1,151 +1,250 @@
 import React, { useState, useEffect } from 'react';
-import { Role, StudentSubmission, StudentSubmissionType, InternshipPhase, AssessmentRound, Assignment } from '../types';
-import { studentSubmissionService } from '../api/studentSubmissionService';
-import { StudentSubmissionModal } from '../components/StudentSubmissionModal';
-import { phaseService, roundService, assignmentService } from '../api/services';
-import { mapPhaseFromDTO, mapRoundFromDTO, mapAssignmentFromDTO } from '../api/mappers';
+import { Role } from '../types';
 import { useAuth } from '../context/AuthContext';
-import { canDownload, canCreate, canDelete } from '../auth/roleAccess';
+import {
+  studentTaskService,
+  StudentTask,
+  GroupSubmissionItem,
+} from '../api/studentTaskService';
+import { mentorGroupService, MentorGroupDTO } from '../api/services';
 
 interface SubmissionsViewProps {
   currentRole: Role;
 }
 
 export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole }) => {
-  const { can, hasFeature } = useAuth();
-  const [submissions, setSubmissions] = useState<StudentSubmission[]>([]);
+  const { user } = useAuth();
+
+  // Common State
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Dropdown filter data
-  const [phases, setPhases] = useState<InternshipPhase[]>([]);
-  const [rounds, setRounds] = useState<AssessmentRound[]>([]);
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  // ==========================================
+  // Student State
+  // ==========================================
+  const [studentTasks, setStudentTasks] = useState<StudentTask[]>([]);
+  const [taskStatusFilter, setTaskStatusFilter] = useState<string>('');
+  const [overdueFilter, setOverdueFilter] = useState<boolean | undefined>(undefined);
 
-  // Filter state
-  const [selectedPhaseId, setSelectedPhaseId] = useState<number | ''>('');
-  const [selectedRoundId, setSelectedRoundId] = useState<number | ''>('');
-  const [selectedType, setSelectedType] = useState<StudentSubmissionType | ''>('');
-  const [studentCodeQuery, setStudentCodeQuery] = useState('');
-
-  // Pagination state
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
-  const [totalElements, setTotalElements] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-
-  // Modals state
+  // Submit Modal State (Student)
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
-  const [detailSubmission, setDetailSubmission] = useState<StudentSubmission | null>(null);
+  const [selectedTaskForSubmit, setSelectedTaskForSubmit] = useState<StudentTask | null>(null);
+  const [submitMode, setSubmitMode] = useState<'GITHUB' | 'ZIP'>('GITHUB');
+  const [githubUrl, setGithubUrl] = useState('');
+  const [submissionNote, setSubmissionNote] = useState('');
+  const [zipFile, setZipFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // History Modal State
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [historyTask, setHistoryTask] = useState<StudentTask | null>(null);
+  const [taskSubmissions, setTaskSubmissions] = useState<GroupSubmissionItem[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  // ==========================================
+  // Admin & Mentor Oversight State
+  // ==========================================
+  const [oversightTab, setOversightTab] = useState<'TASKS' | 'SUBMISSIONS'>('TASKS');
+  const [adminTasks, setAdminTasks] = useState<StudentTask[]>([]);
+  const [adminSubmissions, setAdminSubmissions] = useState<GroupSubmissionItem[]>([]);
+  const [groups, setGroups] = useState<MentorGroupDTO[]>([]);
+  const [selectedGroupId, setSelectedGroupId] = useState<number | ''>('');
+  const [adminStatusFilter, setAdminStatusFilter] = useState<string>('');
+
+  // Review Modal State (Admin / Mentor)
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [reviewingSubmission, setReviewingSubmission] = useState<GroupSubmissionItem | null>(null);
+  const [reviewScore, setReviewScore] = useState<number>(8.5);
+  const [reviewComment, setReviewComment] = useState<string>('');
+  const [isSavingReview, setIsSavingReview] = useState(false);
 
   useEffect(() => {
-    loadFilterData();
-  }, []);
-
-  useEffect(() => {
-    loadSubmissions();
-  }, [selectedPhaseId, selectedRoundId, selectedType, page, pageSize]);
-
-  const loadFilterData = async () => {
-    try {
-      const [phaseData, roundData, assignmentData] = await Promise.all([
-        phaseService.getAll(),
-        roundService.getAll(),
-        assignmentService.getAll(),
-      ]);
-      setPhases(Array.isArray(phaseData) ? phaseData.map(mapPhaseFromDTO) : []);
-      setRounds(Array.isArray(roundData) ? roundData.map(mapRoundFromDTO) : []);
-      setAssignments(Array.isArray(assignmentData) ? assignmentData.map(mapAssignmentFromDTO) : []);
-    } catch {
-      // Ignored non-critical filter lookup error
+    if (currentRole === 'Student') {
+      loadStudentTasks();
+    } else {
+      loadGroups();
+      loadAdminOversight();
     }
-  };
+  }, [currentRole, taskStatusFilter, overdueFilter, oversightTab, selectedGroupId, adminStatusFilter]);
 
-  const loadSubmissions = async () => {
+  const loadStudentTasks = async () => {
     setLoading(true);
     setErrorMsg('');
     try {
-      let res: StudentSubmission[] & { _page?: any };
-
-      if (currentRole === 'Student') {
-        res = await studentSubmissionService.getMySubmissions({
-          roundId: selectedRoundId ? Number(selectedRoundId) : undefined,
-          type: selectedType || undefined,
-          page,
-          size: pageSize,
-          sortBy: 'submittedAt',
-          sortDirection: 'DESC',
-        });
-      } else {
-        res = await studentSubmissionService.getSubmissions({
-          phaseId: selectedPhaseId ? Number(selectedPhaseId) : undefined,
-          roundId: selectedRoundId ? Number(selectedRoundId) : undefined,
-          studentCode: studentCodeQuery.trim() || undefined,
-          type: selectedType || undefined,
-          page,
-          size: pageSize,
-          sortBy: 'submittedAt',
-          sortDirection: 'DESC',
-        });
-      }
-
-      setSubmissions(res || []);
-      if (res?._page) {
-        setTotalElements(res._page.totalElements ?? res.length);
-        setTotalPages(res._page.totalPages ?? 1);
-      } else {
-        setTotalElements(res?.length || 0);
-        setTotalPages(Math.ceil((res?.length || 0) / pageSize) || 1);
-      }
+      const data = await studentTaskService.getMyTasks({
+        status: taskStatusFilter || undefined,
+        overdue: overdueFilter,
+      });
+      setStudentTasks(data || []);
     } catch (err: any) {
-      setErrorMsg(err.message || 'Không thể tải danh sách bài nộp');
+      setErrorMsg(err?.message || 'Không thể tải danh sách nhiệm vụ');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setPage(0);
-    loadSubmissions();
-  };
-
-  const handleResetFilters = () => {
-    setSelectedPhaseId('');
-    setSelectedRoundId('');
-    setSelectedType('');
-    setStudentCodeQuery('');
-    setPage(0);
-  };
-
-  const handleDownloadZip = async (sub: StudentSubmission) => {
+  const loadGroups = async () => {
     try {
-      await studentSubmissionService.downloadZip(sub.submissionId, sub.originalFileName);
+      const res = await mentorGroupService.getAll();
+      setGroups(res || []);
+    } catch {
+      // Ignored
+    }
+  };
+
+  const loadAdminOversight = async () => {
+    setLoading(true);
+    setErrorMsg('');
+    try {
+      if (oversightTab === 'TASKS') {
+        const data = await studentTaskService.getAdminGroupTasks({
+          groupId: selectedGroupId ? Number(selectedGroupId) : undefined,
+          status: adminStatusFilter || undefined,
+        });
+        setAdminTasks(data || []);
+      } else {
+        const data = await studentTaskService.getAdminGroupSubmissions({
+          groupId: selectedGroupId ? Number(selectedGroupId) : undefined,
+          status: adminStatusFilter || undefined,
+        });
+        setAdminSubmissions(data || []);
+      }
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Không thể tải dữ liệu giám sát');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenSubmitModal = (task: StudentTask) => {
+    setSelectedTaskForSubmit(task);
+    setSubmitMode(task.latestSubmissionType === 'ZIP_FILE' ? 'ZIP' : 'GITHUB');
+    setGithubUrl(task.latestGithubUrl || '');
+    setSubmissionNote('');
+    setZipFile(null);
+    setIsSubmitModalOpen(true);
+  };
+
+  const handleSubmitWork = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTaskForSubmit || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setErrorMsg('');
+    try {
+      if (submitMode === 'GITHUB') {
+        if (!githubUrl.trim()) {
+          alert('Vui lòng nhập link GitHub repository');
+          setIsSubmitting(false);
+          return;
+        }
+        await studentTaskService.submitGithub(selectedTaskForSubmit.taskId, {
+          githubUrl: githubUrl.trim(),
+          note: submissionNote.trim() || undefined,
+        });
+      } else {
+        if (!zipFile) {
+          alert('Vui lòng chọn tệp ZIP mã nguồn');
+          setIsSubmitting(false);
+          return;
+        }
+        await studentTaskService.submitZip(
+          selectedTaskForSubmit.taskId,
+          zipFile,
+          submissionNote.trim() || undefined
+        );
+      }
+
+      setSuccessMsg('Nộp bài làm thành công!');
+      setTimeout(() => setSuccessMsg(''), 3000);
+      setIsSubmitModalOpen(false);
+      loadStudentTasks();
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Nộp bài thất bại');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleOpenHistoryModal = async (task: StudentTask) => {
+    setHistoryTask(task);
+    setIsHistoryModalOpen(true);
+    setLoadingHistory(true);
+    try {
+      const subs = await studentTaskService.getTaskSubmissions(task.taskId);
+      setTaskSubmissions(subs || []);
+    } catch (err: any) {
+      alert(err?.message || 'Không thể tải lịch sử nộp bài');
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const handleDownloadZip = async (sub: GroupSubmissionItem) => {
+    if (!sub.groupId || !sub.submissionId) return;
+    try {
+      const token = localStorage.getItem('token') || '';
+      const response = await fetch(`/api/mentor-groups/${sub.groupId}/submissions/${sub.submissionId}/download`, {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : '',
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`Download failed with status ${response.status}`);
+      }
+      const blob = await response.blob();
+      const disposition = response.headers.get('content-disposition');
+      let filename = sub.fileName || `submission_${sub.submissionId}.zip`;
+      if (disposition && disposition.includes('filename=')) {
+        const match = disposition.match(/filename="?([^"]+)"?/);
+        if (match && match[1]) filename = match[1];
+      }
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     } catch (err: any) {
       alert(err.message || 'Không thể tải xuống tệp');
     }
   };
 
-  const handleDelete = async (sub: StudentSubmission) => {
-    if (!window.confirm(`Bạn có chắc muốn xóa bài nộp phiên bản v${sub.versionNo}?`)) {
-      return;
-    }
-    try {
-      await studentSubmissionService.deleteSubmission(sub.submissionId);
-      setSuccessMsg(`Đã xóa bài nộp v${sub.versionNo} thành công`);
-      setTimeout(() => setSuccessMsg(''), 3000);
-      loadSubmissions();
-    } catch (err: any) {
-      alert(err.message || 'Không thể xóa bài nộp');
-    }
+  const handleOpenReviewModal = (sub: GroupSubmissionItem) => {
+    setReviewingSubmission(sub);
+    const existingRev = sub.reviews && sub.reviews.length > 0 ? sub.reviews[0] : null;
+    setReviewScore(existingRev?.score ?? 8.5);
+    setReviewComment(existingRev?.comment ?? '');
+    setIsReviewModalOpen(true);
   };
 
-  const formatFileSize = (bytes?: number) => {
-    if (!bytes) return 'N/A';
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  const handleSaveReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewingSubmission || isSavingReview) return;
+
+    setIsSavingReview(true);
+    try {
+      await studentTaskService.reviewGroupSubmission(
+        reviewingSubmission.groupId,
+        reviewingSubmission.submissionId,
+        {
+          score: reviewScore,
+          comment: reviewComment.trim(),
+          status: 'PUBLISHED',
+        }
+      );
+      setSuccessMsg('Chấm điểm và nhận xét thành công!');
+      setTimeout(() => setSuccessMsg(''), 3000);
+      setIsReviewModalOpen(false);
+      loadAdminOversight();
+    } catch (err: any) {
+      alert(err?.message || 'Không thể lưu đánh giá');
+    } finally {
+      setIsSavingReview(false);
+    }
   };
 
   const formatDate = (isoString?: string) => {
@@ -164,67 +263,551 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole })
     }
   };
 
-  // Metrics calculation
-  const totalCount = totalElements;
-  const githubCount = submissions.filter((s) => s.submissionType === 'GITHUB').length;
-  const zipCount = submissions.filter((s) => s.submissionType === 'ZIP').length;
+  const formatFileSize = (bytes?: number) => {
+    if (!bytes) return 'N/A';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  };
 
+  const getPriorityBadge = (priority: string) => {
+    switch (priority) {
+      case 'URGENT':
+        return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200">Khẩn cấp</span>;
+      case 'HIGH':
+        return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200">Cao</span>;
+      case 'MEDIUM':
+        return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">Trung bình</span>;
+      case 'LOW':
+        return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">Thấp</span>;
+      default:
+        return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">{priority}</span>;
+    }
+  };
+
+  const getSubmissionStatusBadge = (status: string) => {
+    switch (status) {
+      case 'NOT_SUBMITTED':
+        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">Chưa nộp bài</span>;
+      case 'SUBMITTED':
+        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">Đã nộp bài</span>;
+      case 'REVIEWED':
+        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-700 border border-purple-200">Đã chấm điểm</span>;
+      case 'ACCEPTED':
+        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Đạt yêu cầu</span>;
+      case 'NEEDS_CHANGES':
+        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-orange-50 text-orange-700 border border-orange-200">Cần chỉnh sửa</span>;
+      case 'REJECTED':
+        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">Không đạt</span>;
+      default:
+        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700">{status}</span>;
+    }
+  };
+
+  // =========================================================================
+  // RENDER STUDENT VIEW
+  // =========================================================================
+  if (currentRole === 'Student') {
+    const totalTasks = studentTasks.length;
+    const notSubmittedCount = studentTasks.filter((t) => t.submissionStatus === 'NOT_SUBMITTED').length;
+    const submittedCount = studentTasks.filter((t) => t.submissionStatus === 'SUBMITTED').length;
+    const reviewedCount = studentTasks.filter((t) => t.submissionStatus === 'REVIEWED' || t.submissionStatus === 'ACCEPTED').length;
+
+    return (
+      <div className="space-y-4">
+        {/* Header banner */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-blue-600 text-[24px]">assignment_turned_in</span>
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900">Nhiệm Vụ & Bài Nộp Thực Tập</h1>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Theo dõi danh sách các nhiệm vụ được mentor phân công trong nhóm và nộp bài làm (GitHub URL hoặc tệp ZIP)
+            </p>
+          </div>
+        </div>
+
+        {/* Metrics Overview */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="bg-white p-3.5 rounded-xl border border-slate-200/70 shadow-2xs flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
+              <span className="material-symbols-outlined text-[20px]">task</span>
+            </div>
+            <div>
+              <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Tổng nhiệm vụ</p>
+              <p className="text-base font-bold text-slate-900">{totalTasks}</p>
+            </div>
+          </div>
+
+          <div className="bg-white p-3.5 rounded-xl border border-slate-200/70 shadow-2xs flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100">
+              <span className="material-symbols-outlined text-[20px]">pending_actions</span>
+            </div>
+            <div>
+              <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Chưa nộp bài</p>
+              <p className="text-base font-bold text-amber-600">{notSubmittedCount}</p>
+            </div>
+          </div>
+
+          <div className="bg-white p-3.5 rounded-xl border border-slate-200/70 shadow-2xs flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100">
+              <span className="material-symbols-outlined text-[20px]">upload_file</span>
+            </div>
+            <div>
+              <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Đã nộp bài</p>
+              <p className="text-base font-bold text-indigo-600">{submittedCount}</p>
+            </div>
+          </div>
+
+          <div className="bg-white p-3.5 rounded-xl border border-slate-200/70 shadow-2xs flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
+              <span className="material-symbols-outlined text-[20px]">verified</span>
+            </div>
+            <div>
+              <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Đã chấm điểm</p>
+              <p className="text-base font-bold text-emerald-600">{reviewedCount}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Success alert */}
+        {successMsg && (
+          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-700 flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px]">check_circle</span>
+            <span>{successMsg}</span>
+          </div>
+        )}
+
+        {/* Error alert */}
+        {errorMsg && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px]">error</span>
+            <span>{errorMsg}</span>
+          </div>
+        )}
+
+        {/* Filters Toolbar */}
+        <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-wrap items-center gap-2.5">
+          <select
+            value={taskStatusFilter}
+            onChange={(e) => setTaskStatusFilter(e.target.value)}
+            className="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="">Tất cả trạng thái task</option>
+            <option value="TODO">Cần làm (TODO)</option>
+            <option value="IN_PROGRESS">Đang thực hiện (IN_PROGRESS)</option>
+            <option value="REVIEW">Chờ duyệt (REVIEW)</option>
+            <option value="DONE">Hoàn thành (DONE)</option>
+          </select>
+
+          <select
+            value={overdueFilter === undefined ? '' : String(overdueFilter)}
+            onChange={(e) => {
+              if (e.target.value === '') setOverdueFilter(undefined);
+              else setOverdueFilter(e.target.value === 'true');
+            }}
+            className="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="">Tất cả hạn chót</option>
+            <option value="true">Đang quá hạn</option>
+            <option value="false">Còn hạn</option>
+          </select>
+        </div>
+
+        {/* Tasks List */}
+        <div className="space-y-3">
+          {loading ? (
+            <div className="bg-white py-16 rounded-xl border border-slate-200/80 text-center text-slate-400 flex flex-col items-center justify-center">
+              <span className="material-symbols-outlined text-[32px] animate-spin mb-2">progress_activity</span>
+              <p className="text-xs">Đang tải danh sách nhiệm vụ được giao...</p>
+            </div>
+          ) : studentTasks.length === 0 ? (
+            <div className="bg-white py-16 rounded-xl border border-slate-200/80 text-center text-slate-400 flex flex-col items-center justify-center">
+              <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 mb-3">
+                <span className="material-symbols-outlined text-[26px]">inbox</span>
+              </div>
+              <p className="text-sm font-semibold text-slate-700">Chưa có nhiệm vụ nào</p>
+              <p className="text-xs text-slate-400 mt-1 max-w-sm">
+                Hiện tại bạn chưa được mentor phân công nhiệm vụ nào trong nhóm thực tập.
+              </p>
+            </div>
+          ) : (
+            studentTasks.map((task) => (
+              <div
+                key={task.taskId}
+                className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-2xs hover:border-slate-300 transition"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                  <div className="space-y-1.5 flex-1">
+                    {/* Tags row */}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                        {task.groupName} ({task.groupCode})
+                      </span>
+                      {getPriorityBadge(task.priority)}
+                      {task.isOverdue && (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[12px]">alarm</span> Quá hạn
+                        </span>
+                      )}
+                      {getSubmissionStatusBadge(task.submissionStatus)}
+                    </div>
+
+                    {/* Title & Desc */}
+                    <h3 className="text-base font-bold text-slate-900">{task.title}</h3>
+                    {task.description && (
+                      <p className="text-xs text-slate-600 whitespace-pre-wrap">{task.description}</p>
+                    )}
+
+                    {/* Metadata info */}
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 pt-1">
+                      <span>Mentor: <strong className="text-slate-700">{task.mentorName || 'N/A'}</strong> ({task.mentorEmail})</span>
+                      <span>•</span>
+                      <span>Hạn chót: <strong className="text-slate-700">{formatDate(task.deadlineAt)}</strong></span>
+                      <span>•</span>
+                      <span>Được giao: <strong>{task.assigneeCount || 0}</strong> thành viên</span>
+                    </div>
+
+                    {/* Latest Submission summary */}
+                    {task.latestSubmissionId && (
+                      <div className="mt-2.5 p-2.5 bg-slate-50 rounded-lg border border-slate-100 text-xs flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-slate-700">v{task.latestSubmissionVersion}</span>
+                          <span className="text-slate-400">•</span>
+                          {task.latestSubmissionType === 'GITHUB_LINK' ? (
+                            <a
+                              href={task.latestGithubUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-blue-600 hover:underline flex items-center gap-1 font-mono text-[11px]"
+                            >
+                              <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                              {task.latestGithubUrl}
+                            </a>
+                          ) : (
+                            <span className="text-slate-700 font-medium flex items-center gap-1">
+                              <span className="material-symbols-outlined text-[14px] text-slate-400">description</span>
+                              {task.latestFileName}
+                            </span>
+                          )}
+                          <span className="text-slate-400">•</span>
+                          <span className="text-slate-500">{formatDate(task.latestSubmissionTime)}</span>
+                        </div>
+
+                        {task.latestScore !== undefined && task.latestScore !== null && (
+                          <div className="flex items-center gap-1.5 px-2 py-0.5 bg-purple-50 text-purple-700 rounded border border-purple-200 font-semibold">
+                            <span>Điểm: {task.latestScore}</span>
+                            {task.latestFeedback && <span className="text-[11px] font-normal italic">({task.latestFeedback})</span>}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex sm:flex-col items-center sm:items-end gap-2 shrink-0 pt-2 sm:pt-0">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenSubmitModal(task)}
+                      disabled={!task.canSubmit}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold shadow-xs flex items-center gap-1.5 transition ${
+                        task.canSubmit
+                          ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
+                          : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[16px]">upload</span>
+                      <span>{task.latestSubmissionId ? 'Nộp lại bài' : 'Nộp bài'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleOpenHistoryModal(task)}
+                      className="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 transition flex items-center gap-1 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">history</span>
+                      <span>Lịch sử nộp ({task.latestSubmissionVersion || 0})</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Submit Modal (Student) */}
+        {isSubmitModalOpen && selectedTaskForSubmit && (
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg p-5 animate-in fade-in zoom-in-95">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    {selectedTaskForSubmit.latestSubmissionId ? 'Nộp Lại Bài Làm' : 'Nộp Bài Cho Nhiệm Vụ'}
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">{selectedTaskForSubmit.title}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsSubmitModalOpen(false)}
+                  className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+                >
+                  <span className="material-symbols-outlined text-[20px]">close</span>
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmitWork} className="py-4 space-y-4">
+                {/* Method selector */}
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1.5">Hình thức nộp bài *</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSubmitMode('GITHUB')}
+                      className={`py-2 px-3 rounded-xl text-xs font-semibold border flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                        submitMode === 'GITHUB'
+                          ? 'border-blue-600 bg-blue-50 text-blue-700'
+                          : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[18px]">code</span>
+                      <span>GitHub Link</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSubmitMode('ZIP')}
+                      className={`py-2 px-3 rounded-xl text-xs font-semibold border flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                        submitMode === 'ZIP'
+                          ? 'border-blue-600 bg-blue-50 text-blue-700'
+                          : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[18px]">folder_zip</span>
+                      <span>Tệp ZIP mã nguồn</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Input depending on mode */}
+                {submitMode === 'GITHUB' ? (
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 block mb-1">
+                      GitHub Repository URL *
+                    </label>
+                    <input
+                      type="url"
+                      required
+                      value={githubUrl}
+                      onChange={(e) => setGithubUrl(e.target.value)}
+                      placeholder="https://github.com/username/project-repo"
+                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-1 focus:ring-blue-500 font-mono"
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 block mb-1">
+                      Chọn file ZIP bài làm (Tối đa 50MB) *
+                    </label>
+                    <input
+                      type="file"
+                      accept=".zip,application/zip"
+                      required={!zipFile}
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          setZipFile(e.target.files[0]);
+                        }
+                      }}
+                      className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                    />
+                  </div>
+                )}
+
+                {/* Note */}
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">
+                    Ghi chú nộp bài (tùy chọn)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={submissionNote}
+                    onChange={(e) => setSubmissionNote(e.target.value)}
+                    placeholder="Mô tả tóm tắt những tính năng đã hoàn thiện, hướng dẫn chạy..."
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setIsSubmitModalOpen(false)}
+                    className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 cursor-pointer"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    {isSubmitting && <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>}
+                    <span>{isSubmitting ? 'Đang gửi...' : 'Xác nhận nộp bài'}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* History Modal (Student) */}
+        {isHistoryModalOpen && historyTask && (
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl p-5 animate-in fade-in zoom-in-95 max-h-[85vh] flex flex-col">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Lịch Sử Nộp Bài</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">{historyTask.title}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsHistoryModalOpen(false)}
+                  className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+                >
+                  <span className="material-symbols-outlined text-[20px]">close</span>
+                </button>
+              </div>
+
+              <div className="py-4 overflow-y-auto space-y-3 flex-1">
+                {loadingHistory ? (
+                  <div className="py-8 text-center text-slate-400">
+                    <span className="material-symbols-outlined text-[24px] animate-spin mb-1">progress_activity</span>
+                    <p className="text-xs">Đang tải lịch sử bài nộp...</p>
+                  </div>
+                ) : taskSubmissions.length === 0 ? (
+                  <div className="py-8 text-center text-slate-400">
+                    <p className="text-xs">Chưa có bài nộp nào cho nhiệm vụ này.</p>
+                  </div>
+                ) : (
+                  taskSubmissions.map((sub) => (
+                    <div key={sub.submissionId} className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-bold font-mono">
+                            Phiên bản v{sub.versionNumber}
+                          </span>
+                          <span className="text-slate-500">{formatDate(sub.submittedAt)}</span>
+                        </div>
+                        {getSubmissionStatusBadge(sub.status)}
+                      </div>
+
+                      <div className="text-xs">
+                        {sub.submissionType === 'GITHUB_LINK' ? (
+                          <a
+                            href={sub.githubUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-blue-600 hover:underline font-mono flex items-center gap-1"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                            {sub.githubUrl}
+                          </a>
+                        ) : (
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-slate-700">{sub.fileName} ({formatFileSize(sub.fileSize)})</span>
+                            <button
+                              type="button"
+                              onClick={() => handleDownloadZip(sub)}
+                              className="px-2.5 py-1 bg-emerald-600 text-white rounded text-[11px] font-semibold flex items-center gap-1 cursor-pointer hover:bg-emerald-700"
+                            >
+                              <span className="material-symbols-outlined text-[14px]">download</span>
+                              Tải file
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {sub.note && (
+                        <p className="text-[11px] text-slate-600 italic bg-white p-2 rounded border border-slate-200">
+                          &quot;{sub.note}&quot;
+                        </p>
+                      )}
+
+                      {/* Mentor Review */}
+                      {sub.reviews && sub.reviews.length > 0 && (
+                        <div className="p-2.5 bg-purple-50 rounded-lg border border-purple-200 text-xs space-y-1">
+                          <div className="flex items-center justify-between font-semibold text-purple-900">
+                            <span>Đánh giá từ {sub.reviews[0].reviewerName}:</span>
+                            <span className="px-2 py-0.5 bg-purple-200 rounded text-purple-900 font-bold">
+                              {sub.reviews[0].score} / 10 điểm
+                            </span>
+                          </div>
+                          {sub.reviews[0].comment && (
+                            <p className="text-purple-800 italic">{sub.reviews[0].comment}</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsHistoryModalOpen(false)}
+                  className="px-4 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 cursor-pointer"
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // RENDER ADMIN / MENTOR OVERSIGHT VIEW
+  // =========================================================================
   return (
     <div className="space-y-4">
       {/* Header banner */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
         <div>
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-blue-600 text-[24px]">upload_file</span>
-            <h1 className="text-lg sm:text-xl font-bold text-slate-900">Bài Nộp Thực Tập</h1>
+            <span className="material-symbols-outlined text-blue-600 text-[24px]">troubleshoot</span>
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900">Giám Sát Nhiệm Vụ & Bài Nộp Nhóm</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Theo dõi, mở mã nguồn GitHub và tải xuống tệp bài làm thực tập của sinh viên
+            Tổng quan tất cả các nhiệm vụ nhóm, tiến độ giao việc và bài nộp thực tập của sinh viên
           </p>
         </div>
 
-        {currentRole === 'Student' && canCreate(currentRole, can, hasFeature) && (
+        {/* Tab switch */}
+        <div className="flex items-center bg-slate-100 p-1 rounded-xl">
           <button
             type="button"
-            onClick={() => setIsSubmitModalOpen(true)}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
+            onClick={() => setOversightTab('TASKS')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+              oversightTab === 'TASKS'
+                ? 'bg-white text-blue-700 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
           >
-            <span className="material-symbols-outlined text-[18px]">add_circle</span>
-            <span>Nộp bài mới</span>
+            Nhiệm vụ ({adminTasks.length})
           </button>
-        )}
-      </div>
-
-      {/* Metric Cards */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200/70 shadow-2xs flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
-            <span className="material-symbols-outlined text-[20px]">inventory_2</span>
-          </div>
-          <div>
-            <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Tổng bài nộp</p>
-            <p className="text-base font-bold text-slate-900">{totalCount}</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200/70 shadow-2xs flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center border border-purple-100">
-            <span className="material-symbols-outlined text-[20px]">code</span>
-          </div>
-          <div>
-            <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">GitHub Links</p>
-            <p className="text-base font-bold text-slate-900">{githubCount}</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200/70 shadow-2xs flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100">
-            <span className="material-symbols-outlined text-[20px]">folder_zip</span>
-          </div>
-          <div>
-            <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Tệp nén ZIP</p>
-            <p className="text-base font-bold text-slate-900">{zipCount}</p>
-          </div>
+          <button
+            type="button"
+            onClick={() => setOversightTab('SUBMISSIONS')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+              oversightTab === 'SUBMISSIONS'
+                ? 'bg-white text-blue-700 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Bài nộp ({adminSubmissions.length})
+          </button>
         </div>
       </div>
 
@@ -246,407 +829,253 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole })
 
       {/* Filters Toolbar */}
       <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-wrap items-center gap-2.5">
-        <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-          {currentRole !== 'Student' && (
-            <form onSubmit={handleSearchSubmit} className="relative flex-1">
-              <input
-                type="text"
-                value={studentCodeQuery}
-                onChange={(e) => setStudentCodeQuery(e.target.value)}
-                placeholder="Tìm mã SV..."
-                className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-hidden focus:ring-1 focus:ring-blue-500 focus:bg-white"
-              />
-              <span className="material-symbols-outlined absolute left-2 top-2 text-slate-400 text-[16px]">
-                search
-              </span>
-            </form>
+        <select
+          value={selectedGroupId}
+          onChange={(e) => setSelectedGroupId(e.target.value ? Number(e.target.value) : '')}
+          className="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+        >
+          <option value="">Tất cả các nhóm thực tập</option>
+          {groups.map((g) => (
+            <option key={g.groupId} value={g.groupId}>
+              {g.groupName} ({g.groupCode})
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={adminStatusFilter}
+          onChange={(e) => setAdminStatusFilter(e.target.value)}
+          className="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+        >
+          <option value="">Tất cả trạng thái</option>
+          {oversightTab === 'TASKS' ? (
+            <>
+              <option value="TODO">TODO</option>
+              <option value="IN_PROGRESS">IN_PROGRESS</option>
+              <option value="REVIEW">REVIEW</option>
+              <option value="DONE">DONE</option>
+            </>
+          ) : (
+            <>
+              <option value="SUBMITTED">SUBMITTED (Mới nộp)</option>
+              <option value="REVIEWED">REVIEWED (Đã chấm điểm)</option>
+            </>
           )}
-
-          {currentRole !== 'Student' && (
-            <select
-              value={selectedPhaseId}
-              onChange={(e) => {
-                setSelectedPhaseId(e.target.value ? Number(e.target.value) : '');
-                setPage(0);
-              }}
-              className="px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
-            >
-              <option value="">Tất cả đợt thực tập</option>
-              {phases.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          )}
-
-          <select
-            value={selectedRoundId}
-            onChange={(e) => {
-              setSelectedRoundId(e.target.value ? Number(e.target.value) : '');
-              setPage(0);
-            }}
-            className="px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="">Tất cả đợt chấm</option>
-            {rounds.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={selectedType}
-            onChange={(e) => {
-              setSelectedType(e.target.value as StudentSubmissionType | '');
-              setPage(0);
-            }}
-            className="px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="">Tất cả hình thức</option>
-            <option value="GITHUB">GitHub URL</option>
-            <option value="ZIP">Tệp ZIP</option>
-          </select>
-        </div>
-
-        {(selectedPhaseId || selectedRoundId || selectedType || studentCodeQuery) && (
-          <button
-            type="button"
-            onClick={handleResetFilters}
-            className="px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[16px]">clear_all</span>
-            <span>Đặt lại bộ lọc</span>
-          </button>
-        )}
+        </select>
       </div>
 
-      {/* Main Table */}
+      {/* Main Content */}
       <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden">
         {loading ? (
           <div className="py-16 text-center text-slate-400 flex flex-col items-center justify-center">
             <span className="material-symbols-outlined text-[32px] animate-spin mb-2">progress_activity</span>
-            <p className="text-xs">Đang tải danh sách bài nộp...</p>
+            <p className="text-xs">Đang tải dữ liệu...</p>
           </div>
-        ) : submissions.length === 0 ? (
-          <div className="py-16 text-center text-slate-400 flex flex-col items-center justify-center">
-            <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 mb-3">
-              <span className="material-symbols-outlined text-[26px]">inbox</span>
+        ) : oversightTab === 'TASKS' ? (
+          /* Tasks Table */
+          adminTasks.length === 0 ? (
+            <div className="py-16 text-center text-slate-400">
+              <p className="text-sm font-semibold text-slate-700">Không có nhiệm vụ nào</p>
             </div>
-            <p className="text-sm font-semibold text-slate-700">Chưa có bài nộp nào</p>
-            <p className="text-xs text-slate-400 mt-1 max-w-sm">
-              {currentRole === 'Student'
-                ? 'Bạn chưa nộp bài làm nào. Hãy bấm "+ Nộp bài mới" để gửi link GitHub hoặc tệp ZIP.'
-                : 'Không tìm thấy bài nộp nào phù hợp với bộ lọc hiện tại.'}
-            </p>
-          </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="py-2.5 px-3.5">Nhiệm vụ</th>
+                    <th className="py-2.5 px-3">Độ ưu tiên</th>
+                    <th className="py-2.5 px-3">Trạng thái</th>
+                    <th className="py-2.5 px-3">Hạn chót</th>
+                    <th className="py-2.5 px-3">Phân công</th>
+                    <th className="py-2.5 px-3">Bình luận</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {adminTasks.map((t) => (
+                    <tr key={t.taskId} className="hover:bg-slate-50/60 transition">
+                      <td className="py-2.5 px-3.5">
+                        <p className="font-bold text-slate-900">{t.title}</p>
+                        {t.description && <p className="text-[11px] text-slate-500 line-clamp-1">{t.description}</p>}
+                      </td>
+                      <td className="py-2.5 px-3">{getPriorityBadge(t.priority)}</td>
+                      <td className="py-2.5 px-3">
+                        <span className="font-semibold text-slate-700">{t.status}</span>
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <div className="flex items-center gap-1">
+                          <span>{formatDate(t.deadlineAt)}</span>
+                          {t.isOverdue && (
+                            <span className="px-1.5 py-0.2 rounded text-[10px] bg-rose-100 text-rose-700 font-bold">
+                              Quá hạn
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span className="font-medium text-slate-700">{t.assignees?.length || 0} thành viên</span>
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-500">
+                        {t.latestSubmissionVersion ? `${t.latestSubmissionVersion} bài nộp` : '0 bài nộp'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  <th className="py-2.5 px-3.5">Sinh viên</th>
-                  <th className="py-2.5 px-3">Đợt đánh giá</th>
-                  <th className="py-2.5 px-3">Hình thức</th>
-                  <th className="py-2.5 px-3">Phiên bản</th>
-                  <th className="py-2.5 px-3">Chi tiết bài nộp</th>
-                  <th className="py-2.5 px-3">Thời gian nộp</th>
-                  <th className="py-2.5 px-3.5 text-right">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
-                {submissions.map((sub) => (
-                  <tr key={sub.submissionId} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="py-2.5 px-3.5">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-[11px] shrink-0">
-                          {sub.studentFullName ? sub.studentFullName.charAt(0).toUpperCase() : 'S'}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-semibold text-slate-900 truncate">{sub.studentFullName}</p>
-                          <p className="text-[11px] text-slate-400 font-mono">{sub.studentCode}</p>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="py-2.5 px-3">
-                      <span className="font-medium text-slate-800">
-                        {sub.roundName || 'Chung cho đợt thực tập'}
-                      </span>
-                    </td>
-
-                    <td className="py-2.5 px-3">
-                      {sub.submissionType === 'GITHUB' ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-700 border border-purple-200">
-                          <span className="material-symbols-outlined text-[13px]">code</span>
-                          GitHub
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                          <span className="material-symbols-outlined text-[13px]">folder_zip</span>
-                          ZIP File
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="py-2.5 px-3">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-mono font-semibold text-slate-700">v{sub.versionNo}</span>
-                        {sub.isLatest && (
-                          <span className="px-1.5 py-0.2 rounded-sm text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                            Mới nhất
-                          </span>
-                        )}
-                      </div>
-                    </td>
-
-                    <td className="py-2.5 px-3">
-                      {sub.submissionType === 'GITHUB' ? (
-                        <a
-                          href={sub.githubUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-blue-600 hover:text-blue-800 font-mono text-[11px] hover:underline flex items-center gap-1 truncate max-w-[220px]"
-                          title={sub.githubUrl}
-                        >
-                          <span className="material-symbols-outlined text-[14px]">open_in_new</span>
-                          <span className="truncate">{sub.githubUrl}</span>
-                        </a>
-                      ) : (
-                        <div className="flex items-center gap-1.5 text-slate-600 truncate max-w-[220px]">
-                          <span className="material-symbols-outlined text-slate-400 text-[15px]">description</span>
-                          <span className="truncate font-medium">{sub.originalFileName}</span>
-                          <span className="text-[10px] text-slate-400 shrink-0">
-                            ({formatFileSize(sub.fileSizeBytes)})
-                          </span>
-                        </div>
-                      )}
-                    </td>
-
-                    <td className="py-2.5 px-3 text-slate-500 whitespace-nowrap">
-                      {formatDate(sub.submittedAt)}
-                    </td>
-
-                    <td className="py-2.5 px-3.5 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          type="button"
-                          onClick={() => setDetailSubmission(sub)}
-                          className="p-1 text-slate-500 hover:text-[#004ac6] hover:bg-blue-50 rounded-md transition-colors cursor-pointer"
-                          title="Xem chi tiết bài nộp"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">visibility</span>
-                        </button>
-
-                        {sub.submissionType === 'GITHUB' ? (
-                          <a
-                            href={sub.githubUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-                            title="Mở liên kết GitHub"
-                          >
-                            <span className="material-symbols-outlined text-[18px]">open_in_new</span>
-                          </a>
-                        ) : (
-                          canDownload(currentRole, can, hasFeature) && (
+          /* Submissions Table */
+          adminSubmissions.length === 0 ? (
+            <div className="py-16 text-center text-slate-400">
+              <p className="text-sm font-semibold text-slate-700">Không có bài nộp nào</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="py-2.5 px-3.5">Sinh viên</th>
+                    <th className="py-2.5 px-3">Nhiệm vụ</th>
+                    <th className="py-2.5 px-3">Phiên bản</th>
+                    <th className="py-2.5 px-3">Hình thức & Tệp</th>
+                    <th className="py-2.5 px-3">Thời gian nộp</th>
+                    <th className="py-2.5 px-3">Điểm / Đánh giá</th>
+                    <th className="py-2.5 px-3.5 text-right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {adminSubmissions.map((sub) => {
+                    const rev = sub.reviews && sub.reviews.length > 0 ? sub.reviews[0] : null;
+                    return (
+                      <tr key={sub.submissionId} className="hover:bg-slate-50/60 transition">
+                        <td className="py-2.5 px-3.5 font-semibold text-slate-900">
+                          {sub.submittedByName}
+                        </td>
+                        <td className="py-2.5 px-3 text-slate-700">
+                          {sub.taskTitle || 'Bài nộp chung'}
+                        </td>
+                        <td className="py-2.5 px-3 font-mono font-bold text-slate-700">
+                          v{sub.versionNumber}
+                        </td>
+                        <td className="py-2.5 px-3">
+                          {sub.submissionType === 'GITHUB_LINK' ? (
+                            <a
+                              href={sub.githubUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-blue-600 hover:underline font-mono text-[11px] flex items-center gap-1"
+                            >
+                              <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                              GitHub
+                            </a>
+                          ) : (
                             <button
                               type="button"
                               onClick={() => handleDownloadZip(sub)}
-                              className="p-1 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors cursor-pointer"
-                              title="Tải xuống tệp ZIP"
+                              className="text-emerald-700 hover:underline font-medium flex items-center gap-1 cursor-pointer"
                             >
-                              <span className="material-symbols-outlined text-[18px]">download</span>
+                              <span className="material-symbols-outlined text-[14px]">download</span>
+                              {sub.fileName}
                             </button>
-                          )
-                        )}
-
-                        {(currentRole === 'Admin' || currentRole === 'Student') && canDelete(currentRole, can, hasFeature) && (
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3 text-slate-500">{formatDate(sub.submittedAt)}</td>
+                        <td className="py-2.5 px-3">
+                          {rev ? (
+                            <span className="font-bold text-purple-700">
+                              {rev.score} đ {rev.comment && `(${rev.comment})`}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 italic">Chưa chấm</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3.5 text-right">
                           <button
                             type="button"
-                            onClick={() => handleDelete(sub)}
-                            className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors cursor-pointer"
-                            title="Xóa bài nộp"
+                            onClick={() => handleOpenReviewModal(sub)}
+                            className="px-2.5 py-1 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-lg font-semibold text-[11px] transition cursor-pointer inline-flex items-center gap-1"
                           >
-                            <span className="material-symbols-outlined text-[18px]">delete</span>
+                            <span className="material-symbols-outlined text-[14px]">rate_review</span>
+                            <span>{rev ? 'Chấm lại' : 'Chấm điểm'}</span>
                           </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )
         )}
-
-        {/* Pagination Bar */}
-        <div className="p-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-          <div>
-            Hiển thị {submissions.length} / {totalElements} bài nộp
-          </div>
-
-          <div className="flex items-center gap-2">
-            <select
-              value={pageSize}
-              onChange={(e) => {
-                setPageSize(Number(e.target.value));
-                setPage(0);
-              }}
-              className="px-2 py-1 text-xs border border-slate-200 rounded-md bg-white focus:outline-hidden"
-            >
-              <option value="10">10 / trang</option>
-              <option value="20">20 / trang</option>
-              <option value="50">50 / trang</option>
-            </select>
-
-            <button
-              type="button"
-              disabled={page === 0}
-              onClick={() => setPage((prev) => Math.max(0, prev - 1))}
-              className="px-2 py-1 border border-slate-200 rounded-md disabled:opacity-40 hover:bg-slate-50 cursor-pointer"
-            >
-              Trước
-            </button>
-            <span>
-              {page + 1} / {totalPages}
-            </span>
-            <button
-              type="button"
-              disabled={page >= totalPages - 1}
-              onClick={() => setPage((prev) => prev + 1)}
-              className="px-2 py-1 border border-slate-200 rounded-md disabled:opacity-40 hover:bg-slate-50 cursor-pointer"
-            >
-              Sau
-            </button>
-          </div>
-        </div>
       </div>
 
-      {/* Submission Detail Modal */}
-      {detailSubmission && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl border border-slate-200/90 w-full max-w-lg p-5 animate-in fade-in zoom-in-95 duration-150">
+      {/* Review Modal (Admin / Mentor) */}
+      {isReviewModalOpen && reviewingSubmission && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-5 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <span className={`px-2 py-0.5 rounded text-[11px] font-semibold uppercase ${
-                  detailSubmission.submissionType === 'GITHUB'
-                    ? 'bg-purple-100 text-purple-700'
-                    : 'bg-emerald-100 text-emerald-700'
-                }`}>
-                  {detailSubmission.submissionType}
-                </span>
-                <h3 className="text-sm font-bold text-slate-900">Chi Tiết Bài Nộp</h3>
-                <span className="font-mono text-xs px-1.5 py-0.2 bg-slate-100 text-slate-700 rounded font-semibold">
-                  v{detailSubmission.versionNo}
-                </span>
-              </div>
+              <h3 className="text-base font-bold text-slate-900">Đánh Giá & Chấm Điểm Bài Nộp</h3>
               <button
                 type="button"
-                onClick={() => setDetailSubmission(null)}
-                className="p-1 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100 transition-colors"
+                onClick={() => setIsReviewModalOpen(false)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
               >
-                <span className="material-symbols-outlined text-[18px]">close</span>
+                <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
 
-            <div className="py-4 space-y-3 text-xs">
-              {/* Student info */}
-              <div className="grid grid-cols-2 gap-2 bg-slate-50/70 p-3 rounded-lg border border-slate-100">
-                <div>
-                  <span className="text-slate-500 block text-[11px]">Sinh viên:</span>
-                  <span className="font-semibold text-slate-800">{detailSubmission.studentFullName}</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block text-[11px]">Mã sinh viên:</span>
-                  <span className="font-mono font-medium text-slate-700">{detailSubmission.studentCode}</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block text-[11px]">Đợt đánh giá:</span>
-                  <span className="text-slate-700">{detailSubmission.roundName || 'Đợt chung'}</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block text-[11px]">Thời gian nộp:</span>
-                  <span className="text-slate-700">{formatDate(detailSubmission.submittedAt)}</span>
-                </div>
+            <form onSubmit={handleSaveReview} className="py-4 space-y-4 text-xs">
+              <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                <p>Sinh viên: <strong className="text-slate-800">{reviewingSubmission.submittedByName}</strong></p>
+                <p>Nhiệm vụ: <strong className="text-slate-800">{reviewingSubmission.taskTitle || 'Chung'}</strong> (v{reviewingSubmission.versionNumber})</p>
               </div>
 
-              {/* Artifact link / download */}
-              <div className="p-3 bg-slate-50/70 rounded-lg border border-slate-100 space-y-2">
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-                  Nội dung bài nộp
-                </span>
-                {detailSubmission.submissionType === 'GITHUB' ? (
-                  <div className="flex items-center justify-between gap-2 p-2 bg-white rounded border border-slate-200">
-                    <span className="font-mono text-blue-600 truncate">{detailSubmission.githubUrl}</span>
-                    <a
-                      href={detailSubmission.githubUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="px-2.5 py-1 bg-purple-600 text-white rounded text-xs font-medium hover:bg-purple-700 transition-colors shrink-0 flex items-center gap-1"
-                    >
-                      <span className="material-symbols-outlined text-[14px]">open_in_new</span>
-                      Mở GitHub
-                    </a>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between gap-2 p-2 bg-white rounded border border-slate-200">
-                    <div>
-                      <p className="font-medium text-slate-800">{detailSubmission.originalFileName || 'submission.zip'}</p>
-                      {detailSubmission.fileSizeBytes && (
-                        <p className="text-[10.5px] text-slate-400">{formatFileSize(detailSubmission.fileSizeBytes)}</p>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleDownloadZip(detailSubmission)}
-                      className="px-2.5 py-1 bg-emerald-600 text-white rounded text-xs font-medium hover:bg-emerald-700 transition-colors shrink-0 flex items-center gap-1 cursor-pointer"
-                    >
-                      <span className="material-symbols-outlined text-[14px]">download</span>
-                      Tải tệp ZIP
-                    </button>
-                  </div>
-                )}
+              <div>
+                <label className="font-semibold text-slate-700 block mb-1">Điểm số (Thang điểm 10) *</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="10"
+                  step="0.1"
+                  required
+                  value={reviewScore}
+                  onChange={(e) => setReviewScore(Number(e.target.value))}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-1 focus:ring-purple-500 font-bold text-sm"
+                />
               </div>
 
-              {/* Note */}
-              <div className="p-3 bg-slate-50/70 rounded-lg border border-slate-100 space-y-1">
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-                  Ghi chú của sinh viên
-                </span>
-                <p className="text-slate-700 italic whitespace-pre-wrap leading-relaxed">
-                  {detailSubmission.note || 'Không có ghi chú nào.'}
-                </p>
+              <div>
+                <label className="font-semibold text-slate-700 block mb-1">Nhận xét chi tiết</label>
+                <textarea
+                  rows={3}
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  placeholder="Góp ý về code chất lượng, logic xử lý, điểm cần hoàn thiện..."
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+                />
               </div>
-            </div>
 
-            <div className="flex justify-end pt-2 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setDetailSubmission(null)}
-                className="px-4 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
-              >
-                Đóng
-              </button>
-            </div>
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsReviewModalOpen(false)}
+                  className="px-4 py-2 font-semibold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 cursor-pointer"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingReview}
+                  className="px-5 py-2 font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {isSavingReview && <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>}
+                  <span>{isSavingReview ? 'Đang lưu...' : 'Lưu đánh giá'}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
-
-
-      {/* Student Submit Modal */}
-      <StudentSubmissionModal
-        isOpen={isSubmitModalOpen}
-        onClose={() => setIsSubmitModalOpen(false)}
-        assignments={assignments}
-        rounds={rounds}
-        onSuccess={() => {
-          setSuccessMsg('Nộp bài làm thành công!');
-          setTimeout(() => setSuccessMsg(''), 3000);
-          loadSubmissions();
-        }}
-      />
     </div>
   );
 };

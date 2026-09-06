@@ -41,7 +41,6 @@ export const ROLE_PAGES: Record<Role, NavPage[]> = {
     'landing',
     'dashboard',
     'companies',
-    'applications',
     'weekly-reports',
     'submissions',
     'mentor-groups',

@@ -108,6 +108,7 @@ export const MentorGroupRoomView: React.FC = () => {
   const [taskPriority, setTaskPriority] = useState<GroupTaskPriority>('MEDIUM');
   const [taskDeadline, setTaskDeadline] = useState('');
   const [taskAssignees, setTaskAssignees] = useState<number[]>([]);
+  const [assignAllMembers, setAssignAllMembers] = useState(true);
   const [isSavingTask, setIsSavingTask] = useState(false);
 
   // Task Comments
@@ -305,6 +306,25 @@ export const MentorGroupRoomView: React.FC = () => {
     }
   };
 
+  // Open Create Task modal with all active members selected by default
+  const openCreateTaskModal = () => {
+    if (overview?.members) {
+      const activeIds = overview.members
+        .filter((m) => m.status === 'ACTIVE' || !m.status)
+        .map((m) => m.studentId);
+      setTaskAssignees(activeIds);
+      setAssignAllMembers(true);
+    } else {
+      setTaskAssignees([]);
+      setAssignAllMembers(true);
+    }
+    setTaskTitle('');
+    setTaskDesc('');
+    setTaskPriority('MEDIUM');
+    setTaskDeadline('');
+    setIsCreateTaskOpen(true);
+  };
+
   // Create Task
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -316,13 +336,15 @@ export const MentorGroupRoomView: React.FC = () => {
         description: taskDesc.trim() || undefined,
         priority: taskPriority,
         deadlineAt: taskDeadline ? `${taskDeadline}:00` : undefined,
-        assigneeStudentIds: taskAssignees,
+        assignAllMembers: assignAllMembers,
+        assigneeStudentIds: assignAllMembers ? undefined : taskAssignees,
       });
       setIsCreateTaskOpen(false);
       setTaskTitle('');
       setTaskDesc('');
       setTaskDeadline('');
       setTaskAssignees([]);
+      setAssignAllMembers(true);
       await loadTasks();
       showToast('Đã tạo nhiệm vụ mới');
     } catch (err: any) {
@@ -1292,7 +1314,7 @@ export const MentorGroupRoomView: React.FC = () => {
                   </div>
                   {canCreateTask && (
                     <button
-                      onClick={() => setIsCreateTaskOpen(true)}
+                      onClick={openCreateTaskModal}
                       className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition"
                     >
                       <Plus className="w-3.5 h-3.5" /> Tạo Task
@@ -1718,25 +1740,91 @@ export const MentorGroupRoomView: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Giao cho thành viên</label>
-                <div className="max-h-32 overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-xl p-2 space-y-1">
-                  {overview.members.map((m) => (
-                    <label key={m.studentId} className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={taskAssignees.includes(m.studentId)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setTaskAssignees([...taskAssignees, m.studentId]);
-                          } else {
-                            setTaskAssignees(taskAssignees.filter((id) => id !== m.studentId));
-                          }
-                        }}
-                        className="rounded text-indigo-600"
-                      />
-                      <span>{m.studentName} ({m.studentCode})</span>
-                    </label>
-                  ))}
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Phân công sinh viên ({taskAssignees.length} / {overview.members?.length || 0} thành viên)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const allIds = overview.members.map((m) => m.studentId);
+                        setTaskAssignees(allIds);
+                        setAssignAllMembers(true);
+                      }}
+                      className="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline font-medium cursor-pointer"
+                    >
+                      Chọn tất cả
+                    </button>
+                    <span className="text-slate-300 dark:text-slate-700">•</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTaskAssignees([]);
+                        setAssignAllMembers(false);
+                      }}
+                      className="text-[11px] text-slate-500 hover:underline font-medium cursor-pointer"
+                    >
+                      Bỏ chọn tất cả
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mb-2">
+                  <label className="flex items-center gap-2 text-xs text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 p-2 rounded-xl border border-indigo-200 dark:border-indigo-800/60 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={assignAllMembers}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setAssignAllMembers(checked);
+                        if (checked) {
+                          setTaskAssignees(overview.members.map((m) => m.studentId));
+                        }
+                      }}
+                      className="rounded text-indigo-600"
+                    />
+                    <span className="font-semibold">Mặc định giao cho tất cả thành viên trong nhóm</span>
+                  </label>
+                </div>
+
+                <div className="max-h-36 overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-xl p-2 space-y-1.5 bg-slate-50/50 dark:bg-slate-900/50">
+                  {overview.members.map((m) => {
+                    const isSelected = taskAssignees.includes(m.studentId);
+                    return (
+                      <label
+                        key={m.studentId}
+                        className={`flex items-center justify-between p-1.5 rounded-lg text-xs cursor-pointer transition ${
+                          isSelected
+                            ? 'bg-indigo-50/80 dark:bg-indigo-950/50 text-indigo-900 dark:text-indigo-200 font-medium'
+                            : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                const next = [...taskAssignees, m.studentId];
+                                setTaskAssignees(next);
+                                if (next.length === overview.members.length) setAssignAllMembers(true);
+                              } else {
+                                setTaskAssignees(taskAssignees.filter((id) => id !== m.studentId));
+                                setAssignAllMembers(false);
+                              }
+                            }}
+                            className="rounded text-indigo-600"
+                          />
+                          <span>{m.studentName}</span>
+                          <span className="text-[10px] text-slate-400 font-mono">({m.studentCode})</span>
+                        </div>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono">
+                          {m.groupRole}
+                        </span>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
 

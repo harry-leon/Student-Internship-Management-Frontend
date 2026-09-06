@@ -644,7 +644,7 @@ export const groupRoomService = {
     return api.get<GroupTaskDTO[]>(`/api/mentor-groups/${groupId}/tasks${queryString ? `?${queryString}` : ''}`);
   },
 
-  createTask: (groupId: number, data: { title: string; description?: string; priority?: string; deadlineAt?: string; assigneeStudentIds?: number[] }) =>
+  createTask: (groupId: number, data: { title: string; description?: string; priority?: string; deadlineAt?: string; assigneeStudentIds?: number[]; assignAllMembers?: boolean; allowGroupSubmission?: boolean }) =>
     api.post<GroupTaskDTO>(`/api/mentor-groups/${groupId}/tasks`, data),
 
   getTask: (groupId: number, taskId: number) =>

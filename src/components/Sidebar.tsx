@@ -23,42 +23,43 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       title: 'OVERVIEW',
       items: [
-        { id: 'dashboard' as NavPage, label: 'Dashboard', icon: 'home' },
+        { id: 'dashboard' as NavPage, path: '/dashboard', label: 'Dashboard', icon: 'home' },
       ],
     },
     {
       title: 'PEOPLE',
       items: [
-        { id: 'users' as NavPage, label: 'Users', icon: 'group' },
-        { id: 'students' as NavPage, label: 'Students', icon: 'school' },
-        { id: 'mentors' as NavPage, label: 'Mentors', icon: 'supervisor_account' },
-        { id: 'mentor-groups' as NavPage, label: 'Mentor Groups', icon: 'groups' },
+        { id: 'users' as NavPage, path: '/users', label: 'Users', icon: 'group' },
+        { id: 'students' as NavPage, path: '/students', label: 'Students', icon: 'school' },
+        { id: 'mentors' as NavPage, path: '/mentors', label: 'Mentors', icon: 'supervisor_account' },
+        { id: 'groups' as NavPage, path: '/groups', label: 'Groups', icon: 'groups' },
       ],
     },
     {
       title: 'INTERNSHIP',
       items: [
-        { id: 'companies' as NavPage, label: 'Companies', icon: 'domain' },
-        { id: 'applications' as NavPage, label: 'Applications', icon: 'post_add' },
-        { id: 'weekly-reports' as NavPage, label: 'Weekly Reports', icon: 'description' },
-        { id: 'submissions' as NavPage, label: currentRole === 'Student' ? 'My Tasks' : 'Submissions', icon: 'assignment_turned_in' },
-        { id: 'internship-phases' as NavPage, label: 'Internship Phases', icon: 'timeline' },
-        { id: 'assignments' as NavPage, label: 'Assignments', icon: 'assignment' },
+        { id: 'companies' as NavPage, path: '/companies', label: 'Companies', icon: 'domain' },
+        { id: 'tasks' as NavPage, path: '/tasks', label: currentRole === 'Student' ? 'My Tasks' : 'Group Tasks', icon: 'task' },
+        { id: 'submissions' as NavPage, path: '/submissions', label: 'Submissions', icon: 'assignment_turned_in' },
+        { id: 'weekly-reports' as NavPage, path: '/weekly-reports', label: 'Weekly Reports', icon: 'description' },
+        { id: 'applications' as NavPage, path: '/applications', label: 'Applications', icon: 'post_add' },
+        { id: 'internship-phases' as NavPage, path: '/internship-phases', label: 'Internship Phases', icon: 'timeline' },
+        { id: 'assignments' as NavPage, path: '/assignments', label: 'Assignments', icon: 'assignment' },
       ],
     },
     {
       title: 'EVALUATION',
       items: [
-        { id: 'evaluation-criteria' as NavPage, label: 'Evaluation Criteria', icon: 'rule' },
-        { id: 'assessment-rounds' as NavPage, label: 'Assessment Rounds', icon: 'event_repeat' },
-        { id: 'assessment-results' as NavPage, label: 'Assessment Results', icon: 'insights' },
+        { id: 'evaluation-criteria' as NavPage, path: '/evaluation-criteria', label: 'Evaluation Criteria', icon: 'rule' },
+        { id: 'assessment-rounds' as NavPage, path: '/assessment-rounds', label: 'Assessment Rounds', icon: 'event_repeat' },
+        { id: 'assessment-results' as NavPage, path: '/assessment-results', label: 'Assessment Results', icon: 'insights' },
       ],
     },
     {
-      title: 'SYSTEM',
+      title: 'SETTINGS',
       items: [
-        { id: 'admin-group-rooms' as NavPage, label: 'Group Rooms Oversight', icon: 'meeting_room' },
-        { id: 'role-permissions' as NavPage, label: 'Role & Permissions', icon: 'security' },
+        { id: 'settings-roles' as NavPage, path: '/settings/roles', label: 'Roles', icon: 'shield_person' },
+        { id: 'settings-permissions' as NavPage, path: '/settings/permissions', label: 'Permissions', icon: 'security' },
       ],
     },
   ];
@@ -112,17 +113,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {sec.title}
               </span>
               {sec.items.map((item) => {
-                const routePath = `/admin/${item.id}`;
-                const isActive = location.pathname.startsWith(routePath);
+                const isActive =
+                  location.pathname === item.path ||
+                  (item.path !== '/' && item.path !== '/dashboard' && location.pathname.startsWith(item.path + '/')) ||
+                  (item.path === '/dashboard' && location.pathname === '/dashboard');
                 return (
                   <button
                     key={item.id}
                     type="button"
                     onClick={() => {
-                      navigate(routePath);
+                      navigate(item.path);
                       onCloseMobile();
                     }}
-                    className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] transition-all ${isActive
+                    className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] transition-all cursor-pointer ${isActive
                       ? 'bg-[#2563eb] font-medium text-white shadow-[0_1px_4px_rgba(37,99,235,0.22)]'
                       : 'text-[#434655] dark:text-slate-300 hover:bg-[#e5eeff]/60 dark:hover:bg-slate-800 hover:text-[#0b1c30] dark:hover:text-white'
                       }`}

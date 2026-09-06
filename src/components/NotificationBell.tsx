@@ -72,13 +72,13 @@ export const NotificationBell: React.FC = () => {
     setIsOpen(false);
 
     if (n.targetType === 'WEEKLY_REPORT') {
-      navigate('/admin/weekly-reports');
+      navigate('/weekly-reports');
     } else if (n.targetType === 'APPLICATION') {
-      navigate('/admin/applications');
+      navigate('/applications');
     } else if (n.targetType === 'ASSESSMENT_RESULT') {
-      navigate('/admin/assessment-results');
+      navigate('/assessment-results');
     } else {
-      navigate('/admin/dashboard');
+      navigate('/dashboard');
     }
   };
 

@@ -40,7 +40,7 @@ export const StudentDashboard: React.FC = () => {
         <div>
           <button
             type="button"
-            onClick={() => navigate('/admin/weekly-reports')}
+            onClick={() => navigate('/weekly-reports')}
             className="rounded-lg bg-white px-3.5 py-1.5 text-xs font-bold text-[#004ac6] shadow-2xs hover:bg-blue-50 transition-colors cursor-pointer"
           >
             + Nộp Báo Cáo Tuần

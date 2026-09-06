@@ -10,9 +10,10 @@ import { mentorGroupService, MentorGroupDTO } from '../api/services';
 
 interface SubmissionsViewProps {
   currentRole: Role;
+  defaultTab?: 'TASKS' | 'SUBMISSIONS';
 }
 
-export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole }) => {
+export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole, defaultTab = 'TASKS' }) => {
   const { user } = useAuth();
 
   // Common State
@@ -45,7 +46,14 @@ export const SubmissionsView: React.FC<SubmissionsViewProps> = ({ currentRole })
   // ==========================================
   // Admin & Mentor Oversight State
   // ==========================================
-  const [oversightTab, setOversightTab] = useState<'TASKS' | 'SUBMISSIONS'>('TASKS');
+  const [oversightTab, setOversightTab] = useState<'TASKS' | 'SUBMISSIONS'>(defaultTab);
+
+  useEffect(() => {
+    if (defaultTab) {
+      setOversightTab(defaultTab);
+    }
+  }, [defaultTab]);
+
   const [adminTasks, setAdminTasks] = useState<StudentTask[]>([]);
   const [adminSubmissions, setAdminSubmissions] = useState<GroupSubmissionItem[]>([]);
   const [groups, setGroups] = useState<MentorGroupDTO[]>([]);

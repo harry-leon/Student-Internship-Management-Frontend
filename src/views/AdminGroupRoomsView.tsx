@@ -287,7 +287,7 @@ export const AdminGroupRoomsView: React.FC = () => {
                     <td className="py-3 px-4 text-right">
                       <div className="inline-flex items-center gap-1">
                         <button
-                          onClick={() => navigate(`/admin/group-rooms/${room.groupId}`)}
+                          onClick={() => navigate(`/groups/${room.groupId}`)}
                           className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 rounded-lg text-xs font-semibold transition"
                           title="Vào phòng trực tiếp"
                         >

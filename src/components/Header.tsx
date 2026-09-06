@@ -19,19 +19,24 @@ const PAGE_TITLES: Record<NavPage, { parent: string; current: string }> = {
   applications: { parent: 'Internship', current: 'Applications' },
   'weekly-reports': { parent: 'Internship', current: 'Weekly Reports' },
   submissions: { parent: 'Internship', current: 'Submissions' },
+  tasks: { parent: 'Internship', current: 'Tasks' },
   users: { parent: 'People', current: 'Users' },
   students: { parent: 'People', current: 'Students' },
   mentors: { parent: 'People', current: 'Mentors' },
+  groups: { parent: 'People', current: 'Groups' },
   'mentor-groups': { parent: 'People', current: 'Mentor Groups' },
   'internship-phases': { parent: 'Internship', current: 'Internship Phases' },
   assignments: { parent: 'Internship', current: 'Assignments' },
   'evaluation-criteria': { parent: 'Evaluation', current: 'Evaluation Criteria' },
   'assessment-rounds': { parent: 'Evaluation', current: 'Assessment Rounds' },
   'assessment-results': { parent: 'Evaluation', current: 'Assessment Results' },
-  'role-permissions': { parent: 'System', current: 'Role & Permissions' },
+  'settings-roles': { parent: 'Settings', current: 'Roles' },
+  'settings-permissions': { parent: 'Settings', current: 'Permissions' },
+  'role-permissions': { parent: 'Settings', current: 'Role & Permissions' },
   'admin-group-rooms': { parent: 'System', current: 'Quản Lý Phòng Nhóm' },
-  'group-rooms': { parent: 'Mentor Groups', current: 'Phòng Làm Việc Nhóm' },
-  'group-room': { parent: 'Mentor Groups', current: 'Phòng Làm Việc Nhóm' },
+  'group-rooms': { parent: 'Groups', current: 'Phòng Làm Việc Nhóm' },
+  'group-room': { parent: 'Groups', current: 'Phòng Làm Việc Nhóm' },
+  profile: { parent: 'Account', current: 'My Profile' },
   'my-profile': { parent: 'Account', current: 'My Profile' },
   login: { parent: 'Account', current: 'Xác thực hệ thống' },
   landing: { parent: 'Overview', current: 'Trang chủ' },
@@ -45,11 +50,32 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const pathParts = location.pathname.split('/');
-  const currentPagePath = pathParts.length > 2 ? pathParts[2] : 'dashboard';
-  const currentPage = (currentPagePath as NavPage) || 'dashboard';
 
-  const breadcrumb = PAGE_TITLES[currentPage] || { parent: 'Dashboard', current: 'Overview' };
+  const getBreadcrumb = (): { parent: string; current: string } => {
+    const path = location.pathname;
+    if (path.startsWith('/settings/roles')) return { parent: 'Settings', current: 'Roles' };
+    if (path.startsWith('/settings/permissions')) return { parent: 'Settings', current: 'Permissions' };
+    if (path.startsWith('/groups/') && path.endsWith('/tasks')) return { parent: 'Groups', current: 'Group Tasks' };
+    if (path.startsWith('/groups/')) return { parent: 'Groups', current: 'Group Room' };
+    if (path === '/groups') return { parent: 'People', current: 'Groups' };
+    if (path === '/tasks') return { parent: 'Internship', current: 'Tasks' };
+    if (path === '/submissions') return { parent: 'Internship', current: 'Submissions' };
+    if (path === '/profile' || path === '/my-profile') return { parent: 'Account', current: 'My Profile' };
+    if (path === '/users') return { parent: 'People', current: 'Users' };
+    if (path === '/students') return { parent: 'People', current: 'Students' };
+    if (path === '/mentors') return { parent: 'People', current: 'Mentors' };
+    if (path === '/companies') return { parent: 'Internship', current: 'Companies' };
+    if (path === '/weekly-reports') return { parent: 'Internship', current: 'Weekly Reports' };
+    if (path === '/applications') return { parent: 'Internship', current: 'Applications' };
+    if (path === '/assignments') return { parent: 'Internship', current: 'Assignments' };
+    if (path === '/internship-phases') return { parent: 'Internship', current: 'Phases' };
+    if (path === '/evaluation-criteria') return { parent: 'Evaluation', current: 'Criteria' };
+    if (path === '/assessment-rounds') return { parent: 'Evaluation', current: 'Assessment Rounds' };
+    if (path === '/assessment-results') return { parent: 'Evaluation', current: 'Assessment Results' };
+    return { parent: 'Dashboard', current: 'Overview' };
+  };
+
+  const breadcrumb = getBreadcrumb();
   const { isAuthenticated, user, logout } = useAuth();
   const { themeMode, isDark, setThemeMode } = useTheme();
   
@@ -250,7 +276,7 @@ export const Header: React.FC<HeaderProps> = ({
                 type="button"
                 onClick={() => {
                   setIsDropdownOpen(false);
-                  navigate('/admin/my-profile');
+                  navigate('/profile');
                 }}
                 className="w-full text-left px-4 py-3 text-[13px] font-medium text-[#0b1c30] dark:text-slate-200 hover:bg-[#f8fafc] dark:hover:bg-slate-800 hover:text-[#004ac6] dark:hover:text-blue-400 transition-colors flex items-center gap-2.5 cursor-pointer"
               >

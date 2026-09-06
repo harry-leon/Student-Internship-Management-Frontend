@@ -43,6 +43,7 @@ import { QuickActionModal } from './components/QuickActionModal';
 import { ExportReportModal } from './components/ExportReportModal';
 import { ConfigurePhaseModal } from './components/ConfigurePhaseModal';
 import { AssignmentDetailModal } from './components/AssignmentDetailModal';
+import { PermissionGuard } from './components/PermissionGuard';
 
 import {
   studentService,
@@ -51,6 +52,30 @@ import {
   criterionService,
 } from './api/services';
 import { ROLE_PAGES, canAccessPage, canManageSystemData, canUpdateAssignmentStatus } from './auth/roleAccess';
+
+const PAGE_ROUTE_MAP: Partial<Record<NavPage, string>> = {
+  dashboard: '/dashboard',
+  users: '/users',
+  students: '/students',
+  mentors: '/mentors',
+  companies: '/companies',
+  groups: '/groups',
+  'mentor-groups': '/groups',
+  tasks: '/tasks',
+  submissions: '/submissions',
+  'assessment-results': '/assessment-results',
+  'settings-roles': '/settings/roles',
+  'settings-permissions': '/settings/permissions',
+  'role-permissions': '/settings/roles',
+  'weekly-reports': '/weekly-reports',
+  applications: '/applications',
+  assignments: '/assignments',
+  'internship-phases': '/internship-phases',
+  'evaluation-criteria': '/evaluation-criteria',
+  'assessment-rounds': '/assessment-rounds',
+  'my-profile': '/profile',
+  profile: '/profile',
+};
 
 function AppRoutes() {
   const { isAuthenticated, user, can, hasFeature } = useAuth();
@@ -75,12 +100,7 @@ function AppRoutes() {
     }
   }, [user]);
 
-  const pathParts = location.pathname.split('/').filter(Boolean);
-  const currentPagePath = pathParts[1] ?? (pathParts[0] === 'login' ? 'login' : 'dashboard');
-  const currentPage = (currentPagePath as NavPage) || 'dashboard';
-  const activeRole = user?.role ? (user.role as Role) : currentRole;
-  const allowedPages = ROLE_PAGES[activeRole] || ROLE_PAGES.Admin;
-  const isCurrentPageAllowed = canAccessPage(activeRole, currentPage, can, hasFeature);
+  const activeRole = (user?.role as Role) || currentRole;
   const canManage = canManageSystemData(activeRole);
 
   const activePhase = phases[0] || {
@@ -191,17 +211,11 @@ function AppRoutes() {
     }
   };
 
-  useEffect(() => {
-    if (isAuthenticated && !allowedPages.includes(currentPage)) {
-      // Route-level guards handle redirection/fallback rendering.
-    }
-  }, [currentRole, user?.role, isAuthenticated, currentPage, allowedPages]);
-
-  if (currentPage === 'login') {
-    return <LoginView onSuccessNavigate={() => {}} />;
+  if (location.pathname === '/login') {
+    return <LoginView onSuccessNavigate={() => navigate('/dashboard')} />;
   }
 
-  if (currentPage === 'landing' || !isAuthenticated) {
+  if (location.pathname === '/landing' || !isAuthenticated) {
     return (
       <>
         <PublicLandingView
@@ -234,92 +248,235 @@ function AppRoutes() {
 
         <main className="flex-1 pt-[56px]">
           <div className="w-full max-w-[1480px] mx-auto p-3 sm:p-4 lg:p-4.5">
-            {!isCurrentPageAllowed && (
-              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-red-200 dark:border-red-900/40 p-8 sm:p-12 text-center max-w-xl mx-auto my-8 shadow-xs">
-                <div className="w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50 flex items-center justify-center mx-auto mb-4">
-                  <span className="material-symbols-outlined text-[32px]">block</span>
-                </div>
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Không Có Quyền Truy Cập (403)</h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 leading-relaxed">
-                  Màn hình <strong className="text-slate-900 dark:text-white font-bold">[{currentPage}]</strong> không thuộc phạm vi truy cập của tài khoản vai trò <strong className="text-indigo-600 dark:text-indigo-400 font-bold">[{activeRole}]</strong>.
-                </p>
-                <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 flex justify-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      window.location.href = '/admin/dashboard';
-                    }}
-                    className="px-6 py-3 bg-[#004ac6] hover:bg-[#003ea8] text-white font-semibold text-xs rounded-xl shadow-xs transition-colors cursor-pointer flex items-center gap-2"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">home</span>
-                    <span>Quay về trang Dashboard được phép</span>
-                  </button>
-                </div>
-              </div>
-            )}
+            <Routes>
+              {/* Primary Resource-Based Routes */}
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route
+                path="/dashboard"
+                element={
+                  <PermissionGuard page="dashboard">
+                    <DashboardView
+                      phase={activePhase}
+                      assignments={[]}
+                      rounds={rounds}
+                      students={[]}
+                      mentors={[]}
+                      currentRole={activeRole}
+                      onOpenConfigurePhase={() => canManage && setIsConfigurePhaseOpen(true)}
+                      onOpenExportReport={() => canManage && setIsExportReportOpen(true)}
+                      onOpenQuickAction={() => canManage && setIsQuickActionOpen(true)}
+                      onSelectAssignment={setSelectedAssignment}
+                    />
+                  </PermissionGuard>
+                }
+              />
+              <Route
+                path="/users"
+                element={
+                  <PermissionGuard page="users" requiredPermission="USER_VIEW">
+                    <UsersView users={[]} onRefreshData={() => {}} />
+                  </PermissionGuard>
+                }
+              />
+              <Route
+                path="/students"
+                element={
+                  <PermissionGuard page="students" requiredPermission="STUDENT_VIEW">
+                    <StudentsView
+                      currentRole={activeRole}
+                      onOpenAddStudent={() => canManage && setIsQuickActionOpen(true)}
+                    />
+                  </PermissionGuard>
+                }
+              />
+              <Route
+                path="/mentors"
+                element={
+                  <PermissionGuard page="mentors" requiredPermission="MENTOR_VIEW">
+                    <MentorsView currentRole={activeRole} />
+                  </PermissionGuard>
+                }
+              />
+              <Route
+                path="/companies"
+                element={
+                  <PermissionGuard page="companies" requiredPermission="COMPANY_VIEW">
+                    <CompaniesView currentRole={activeRole} />
+                  </PermissionGuard>
+                }
+              />
+              <Route
+                path="/groups"
+                element={
+                  <PermissionGuard page="groups" requiredPermission="GROUP_VIEW">
+                    <MentorGroupsView currentRole={activeRole} />
+                  </PermissionGuard>
+                }
+              />
+              <Route
+                path="/groups/:groupId"
+                element={
+                  <PermissionGuard page="groups" requiredPermission="GROUP_ROOM_VIEW">
+                    <MentorGroupRoomView />
+                  </PermissionGuard>
+                }
+              />
+              <Route
+                path="/groups/:groupId/tasks"
+                element={
+                  <PermissionGuard page="groups" requiredPermission="GROUP_ROOM_VIEW">
+                    <MentorGroupRoomView />
+                  </PermissionGuard>
+                }
+              />
+              <Route
+                path="/tasks"
+                element={
+                  <PermissionGuard page="tasks" requiredPermission="SUBMISSION_VIEW">
+                    <SubmissionsView currentRole={activeRole} defaultTab="TASKS" />
+                  </PermissionGuard>
+                }
+              />
+              <Route
+                path="/submissions"
+                element={
+                  <PermissionGuard page="submissions" requiredPermission="SUBMISSION_VIEW">
+                    <SubmissionsView currentRole={activeRole} defaultTab="SUBMISSIONS" />
+                  </PermissionGuard>
+                }
+              />
+              <Route
+                path="/assessment-results"
+                element={
+                  <PermissionGuard page="assessment-results" requiredPermission="ASSESSMENT_VIEW">
+                    <AssessmentResultsView students={[]} currentRole={activeRole} />
+                  </PermissionGuard>
+                }
+              />
+              <Route
+                path="/settings/roles"
+                element={
+                  <PermissionGuard page="settings-roles" requiredPermission="ROLE_PERMISSION_VIEW">
+                    <RolePermissionsView currentRole={activeRole} defaultTab="roles" />
+                  </PermissionGuard>
+                }
+              />
+              <Route
+                path="/settings/permissions"
+                element={
+                  <PermissionGuard page="settings-permissions" requiredPermission="ROLE_PERMISSION_VIEW">
+                    <RolePermissionsView currentRole={activeRole} defaultTab="permissions" />
+                  </PermissionGuard>
+                }
+              />
 
-            {isCurrentPageAllowed && (
-              <Routes>
-                <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
-                <Route path="/admin/dashboard" element={
-                  <DashboardView
-                    phase={activePhase}
-                    assignments={[]}
-                    rounds={rounds}
-                    students={[]}
-                    mentors={[]}
-                    currentRole={activeRole}
-                    onOpenConfigurePhase={() => canManage && setIsConfigurePhaseOpen(true)}
-                    onOpenExportReport={() => canManage && setIsExportReportOpen(true)}
-                    onOpenQuickAction={() => canManage && setIsQuickActionOpen(true)}
-                    onSelectAssignment={setSelectedAssignment}
-                  />
-                } />
-                <Route path="/admin/companies" element={<CompaniesView currentRole={activeRole} />} />
-                <Route path="/admin/applications" element={<InternshipApplicationsView currentRole={activeRole} />} />
-                <Route path="/admin/weekly-reports" element={<WeeklyReportsView currentRole={activeRole} />} />
-                <Route path="/admin/submissions" element={<SubmissionsView currentRole={activeRole} />} />
-                <Route path="/admin/assignments" element={
-                  <AssignmentsView
-                    currentRole={activeRole}
-                    onSelectAssignment={setSelectedAssignment}
-                    onOpenQuickAction={() => canManage && setIsQuickActionOpen(true)}
-                  />
-                } />
-                <Route path="/admin/students" element={
-                  <StudentsView
-                    currentRole={activeRole}
-                    onOpenAddStudent={() => canManage && setIsQuickActionOpen(true)}
-                  />
-                } />
-                <Route path="/admin/mentors" element={<MentorsView currentRole={activeRole} />} />
-                <Route path="/admin/mentor-groups" element={<MentorGroupsView currentRole={activeRole} />} />
-                <Route path="/admin/group-rooms/:groupId" element={<MentorGroupRoomView />} />
-                <Route path="/admin/admin-group-rooms" element={<AdminGroupRoomsView />} />
-                <Route path="/admin/internship-phases" element={
-                  <PhasesView
-                    phases={phases}
-                    currentRole={activeRole}
-                    onConfigurePhase={() => {
-                      if (canManage) setIsConfigurePhaseOpen(true);
-                    }}
-                  />
-                } />
-                <Route path="/admin/evaluation-criteria" element={
-                  <EvaluationCriteriaView
-                    criteria={[]}
-                    currentRole={activeRole}
-                    onAddCriterion={handleAddCriterion}
-                  />
-                } />
-                <Route path="/admin/assessment-rounds" element={<AssessmentRoundsView rounds={rounds} />} />
-                <Route path="/admin/assessment-results" element={<AssessmentResultsView students={[]} currentRole={activeRole} />} />
-                <Route path="/admin/users" element={<UsersView users={[]} onRefreshData={() => {}} />} />
-                <Route path="/admin/role-permissions" element={<RolePermissionsView currentRole={activeRole} />} />
-                <Route path="/admin/my-profile" element={<ProfileView currentRole={activeRole} onRoleChange={setCurrentRole} />} />
-                <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
-              </Routes>
-            )}
+              {/* Auxiliary System Routes */}
+              <Route
+                path="/weekly-reports"
+                element={
+                  <PermissionGuard page="weekly-reports">
+                    <WeeklyReportsView currentRole={activeRole} />
+                  </PermissionGuard>
+                }
+              />
+              <Route
+                path="/applications"
+                element={
+                  <PermissionGuard page="applications">
+                    <InternshipApplicationsView currentRole={activeRole} />
+                  </PermissionGuard>
+                }
+              />
+              <Route
+                path="/assignments"
+                element={
+                  <PermissionGuard page="assignments" requiredPermission="ASSIGNMENT_VIEW">
+                    <AssignmentsView
+                      currentRole={activeRole}
+                      onSelectAssignment={setSelectedAssignment}
+                      onOpenQuickAction={() => canManage && setIsQuickActionOpen(true)}
+                    />
+                  </PermissionGuard>
+                }
+              />
+              <Route
+                path="/internship-phases"
+                element={
+                  <PermissionGuard page="internship-phases" requiredPermission="PHASE_VIEW">
+                    <PhasesView
+                      phases={phases}
+                      currentRole={activeRole}
+                      onConfigurePhase={() => {
+                        if (canManage) setIsConfigurePhaseOpen(true);
+                      }}
+                    />
+                  </PermissionGuard>
+                }
+              />
+              <Route
+                path="/evaluation-criteria"
+                element={
+                  <PermissionGuard page="evaluation-criteria" requiredPermission="ASSESSMENT_VIEW">
+                    <EvaluationCriteriaView
+                      criteria={[]}
+                      currentRole={activeRole}
+                      onAddCriterion={handleAddCriterion}
+                    />
+                  </PermissionGuard>
+                }
+              />
+              <Route
+                path="/assessment-rounds"
+                element={
+                  <PermissionGuard page="assessment-rounds" requiredPermission="ASSESSMENT_VIEW">
+                    <AssessmentRoundsView rounds={rounds} />
+                  </PermissionGuard>
+                }
+              />
+              <Route
+                path="/admin-group-rooms"
+                element={
+                  <PermissionGuard page="admin-group-rooms" requiredPermission="ADMIN_GROUP_ROOM_VIEW_ALL">
+                    <AdminGroupRoomsView />
+                  </PermissionGuard>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <PermissionGuard page="profile">
+                    <ProfileView currentRole={activeRole} onRoleChange={setCurrentRole} />
+                  </PermissionGuard>
+                }
+              />
+              <Route path="/my-profile" element={<Navigate to="/profile" replace />} />
+
+              {/* Backward Compatibility Redirects from old /admin/* URLs */}
+              <Route path="/admin/dashboard" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/admin/users" element={<Navigate to="/users" replace />} />
+              <Route path="/admin/students" element={<Navigate to="/students" replace />} />
+              <Route path="/admin/mentors" element={<Navigate to="/mentors" replace />} />
+              <Route path="/admin/companies" element={<Navigate to="/companies" replace />} />
+              <Route path="/admin/mentor-groups" element={<Navigate to="/groups" replace />} />
+              <Route path="/admin/groups" element={<Navigate to="/groups" replace />} />
+              <Route path="/admin/group-rooms/:groupId" element={<Navigate to="/groups/:groupId" replace />} />
+              <Route path="/admin/admin-group-rooms" element={<Navigate to="/groups" replace />} />
+              <Route path="/admin/tasks" element={<Navigate to="/tasks" replace />} />
+              <Route path="/admin/submissions" element={<Navigate to="/submissions" replace />} />
+              <Route path="/admin/assessment-results" element={<Navigate to="/assessment-results" replace />} />
+              <Route path="/admin/role-permissions" element={<Navigate to="/settings/roles" replace />} />
+              <Route path="/admin/weekly-reports" element={<Navigate to="/weekly-reports" replace />} />
+              <Route path="/admin/applications" element={<Navigate to="/applications" replace />} />
+              <Route path="/admin/assignments" element={<Navigate to="/assignments" replace />} />
+              <Route path="/admin/internship-phases" element={<Navigate to="/internship-phases" replace />} />
+              <Route path="/admin/evaluation-criteria" element={<Navigate to="/evaluation-criteria" replace />} />
+              <Route path="/admin/assessment-rounds" element={<Navigate to="/assessment-rounds" replace />} />
+              <Route path="/admin/my-profile" element={<Navigate to="/profile" replace />} />
+              <Route path="/admin/*" element={<Navigate to="/dashboard" replace />} />
+
+              {/* Catch-all */}
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
           </div>
         </main>
       </div>
@@ -334,9 +491,8 @@ function AppRoutes() {
         onClose={() => setIsSearchOpen(false)}
         currentRole={activeRole}
         onNavigate={(page) => {
-          if (allowedPages.includes(page)) {
-            navigate(`/admin/${page}`);
-          }
+          const target = PAGE_ROUTE_MAP[page] || '/dashboard';
+          navigate(target);
         }}
         students={[]}
         mentors={[]}

@@ -469,7 +469,7 @@ export const MentorGroupsView: React.FC<MentorGroupsViewProps> = ({ currentRole 
                         </button>
                         <button
                           type="button"
-                          onClick={() => navigate(`/admin/group-rooms/${g.groupId}`)}
+                          onClick={() => navigate(`/groups/${g.groupId}`)}
                           className="px-2 py-0.5 rounded bg-emerald-600 text-white hover:bg-emerald-700 text-[11px] font-semibold transition-colors cursor-pointer flex items-center gap-1"
                           title="Vào phòng làm việc nhóm"
                         >
@@ -708,7 +708,7 @@ export const MentorGroupsView: React.FC<MentorGroupsViewProps> = ({ currentRole 
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             type="button"
-                            onClick={() => navigate(`/admin/group-rooms/${g.groupId}`)}
+                            onClick={() => navigate(`/groups/${g.groupId}`)}
                             className="px-2.5 py-1 rounded bg-[#004ac6] text-white hover:bg-[#003eb3] text-[11px] font-semibold transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
                             title="Vào phòng làm việc nhóm"
                           >
@@ -790,7 +790,7 @@ export const MentorGroupsView: React.FC<MentorGroupsViewProps> = ({ currentRole 
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => navigate(`/admin/group-rooms/${selectedGroupDetail.groupId}`)}
+                  onClick={() => navigate(`/groups/${selectedGroupDetail.groupId}`)}
                   className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors cursor-pointer shadow-xs"
                 >
                   <span className="material-symbols-outlined text-[16px]">forum</span>

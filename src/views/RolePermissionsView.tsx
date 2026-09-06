@@ -11,11 +11,18 @@ import { useAuth } from '../context/AuthContext';
 
 interface RolePermissionsViewProps {
   currentRole: Role;
+  defaultTab?: 'roles' | 'permissions' | 'features';
 }
 
-export const RolePermissionsView: React.FC<RolePermissionsViewProps> = ({ currentRole }) => {
+export const RolePermissionsView: React.FC<RolePermissionsViewProps> = ({ currentRole, defaultTab = 'permissions' }) => {
   const { reloadCapabilities } = useAuth();
-  const [activeTab, setActiveTab] = useState<'permissions' | 'features'>('permissions');
+  const [activeTab, setActiveTab] = useState<'roles' | 'permissions' | 'features'>(defaultTab);
+
+  useEffect(() => {
+    if (defaultTab) {
+      setActiveTab(defaultTab);
+    }
+  }, [defaultTab]);
 
   // Permissions state
   const [roles, setRoles] = useState<RoleDTO[]>([]);
@@ -222,7 +229,7 @@ export const RolePermissionsView: React.FC<RolePermissionsViewProps> = ({ curren
               </span>
               {isSaving ? 'Đang lưu...' : 'Lưu Phân Quyền'}
             </button>
-          ) : (
+          ) : activeTab === 'features' ? (
             <button
               type="button"
               disabled={isSaving || isLoading}
@@ -233,6 +240,15 @@ export const RolePermissionsView: React.FC<RolePermissionsViewProps> = ({ curren
                 {isSaving ? 'sync' : 'save'}
               </span>
               {isSaving ? 'Đang lưu...' : 'Lưu Cờ Tính Năng'}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setActiveTab('permissions')}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[16px]">tune</span>
+              <span>Chỉnh Sửa Quyền Hạn</span>
             </button>
           )}
 
@@ -277,6 +293,18 @@ export const RolePermissionsView: React.FC<RolePermissionsViewProps> = ({ curren
       <div className="flex border-b border-slate-200">
         <button
           type="button"
+          onClick={() => setActiveTab('roles')}
+          className={`flex items-center gap-2 border-b-2 px-4 py-2 text-xs font-semibold transition-colors cursor-pointer ${
+            activeTab === 'roles'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <span className="material-symbols-outlined text-[16px]">shield_person</span>
+          <span>Vai Trò Hệ Thống ({roles.length})</span>
+        </button>
+        <button
+          type="button"
           onClick={() => setActiveTab('permissions')}
           className={`flex items-center gap-2 border-b-2 px-4 py-2 text-xs font-semibold transition-colors cursor-pointer ${
             activeTab === 'permissions'
@@ -308,6 +336,67 @@ export const RolePermissionsView: React.FC<RolePermissionsViewProps> = ({ curren
             progress_activity
           </span>
           Đang tải cấu hình phân quyền hệ thống...
+        </div>
+      ) : activeTab === 'roles' ? (
+        /* Roles Tab */
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {roles.map((r) => {
+              const permCount = rolePermsMap[r.roleCode]?.size ?? 0;
+              const featCount = Object.values(roleFeaturesMap[r.roleCode] || {}).filter(Boolean).length;
+              return (
+                <div
+                  key={r.roleCode}
+                  className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs hover:border-blue-300 dark:hover:border-blue-700 transition-all flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                        r.roleCode === 'ADMIN'
+                          ? 'bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
+                          : r.roleCode === 'MENTOR'
+                          ? 'bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+                          : 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                      }`}>
+                        {r.roleCode}
+                      </span>
+                      <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                        <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                        Đang hoạt động
+                      </span>
+                    </div>
+
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">
+                      {r.roleName}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
+                      {r.description || `Vai trò ${r.roleName} trong hệ thống quản lý thực tập.`}
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 mb-4">
+                      <div>
+                        <div className="text-[10.5px] font-medium text-slate-400 dark:text-slate-500">Quyền hạn cấp</div>
+                        <div className="text-base font-bold text-slate-800 dark:text-slate-200 mt-0.5">{permCount} permissions</div>
+                      </div>
+                      <div>
+                        <div className="text-[10.5px] font-medium text-slate-400 dark:text-slate-500">Feature Flags</div>
+                        <div className="text-base font-bold text-slate-800 dark:text-slate-200 mt-0.5">{featCount} enabled</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('permissions')}
+                    className="w-full py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/60 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">settings</span>
+                    <span>Cấu hình quyền vai trò</span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
       ) : activeTab === 'permissions' ? (
         /* Permissions Tab */

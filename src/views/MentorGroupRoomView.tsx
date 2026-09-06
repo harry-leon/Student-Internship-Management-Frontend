@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   groupRoomService,
@@ -52,8 +52,11 @@ import {
 export const MentorGroupRoomView: React.FC = () => {
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const numericGroupId = Number(groupId);
+
+  const isTasksRoute = location.pathname.endsWith('/tasks');
 
   // Core Room State
   const [overview, setOverview] = useState<GroupRoomOverviewDTO | null>(null);
@@ -67,6 +70,14 @@ export const MentorGroupRoomView: React.FC = () => {
   // Active Tab on Desktop Right Column / Mobile
   const [rightTab, setRightTab] = useState<'tasks' | 'submissions' | 'announcements' | 'settings'>('tasks');
   const [mobileTab, setMobileTab] = useState<'chat' | 'tasks' | 'submissions' | 'members'>('chat');
+
+  useEffect(() => {
+    if (isTasksRoute) {
+      setRightTab('tasks');
+      setMobileTab('tasks');
+      setIsRightCollapsed(false);
+    }
+  }, [isTasksRoute]);
 
   // Section Collapse State
   const [isLeftCollapsed, setIsLeftCollapsed] = useState<boolean>(() => {
@@ -554,7 +565,7 @@ export const MentorGroupRoomView: React.FC = () => {
           <h2 className="text-xl font-bold mb-2">Không thể truy cập phòng nhóm</h2>
           <p className="text-sm mb-6">{error || 'Bạn không có quyền truy cập nhóm này hoặc nhóm không tồn tại.'}</p>
           <button
-            onClick={() => navigate('/admin/mentor-groups')}
+            onClick={() => navigate('/groups')}
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white font-medium rounded-xl hover:bg-red-700 transition"
           >
             <ArrowLeft className="w-4 h-4" /> Quay lại danh sách nhóm
@@ -578,7 +589,7 @@ export const MentorGroupRoomView: React.FC = () => {
       <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center justify-between shadow-sm shrink-0">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate('/admin/mentor-groups')}
+            onClick={() => navigate('/groups')}
             className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg transition"
             title="Quay lại danh sách nhóm"
           >

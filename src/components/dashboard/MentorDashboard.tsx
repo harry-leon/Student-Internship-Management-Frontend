@@ -40,14 +40,14 @@ export const MentorDashboard: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => navigate('/admin/weekly-reports')}
+            onClick={() => navigate('/weekly-reports')}
             className="rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#003eb3] transition-colors"
           >
             Review Báo Cáo Tuần
           </button>
           <button
             type="button"
-            onClick={() => navigate('/admin/assessment-results')}
+            onClick={() => navigate('/assessment-results')}
             className="rounded-lg border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors"
           >
             Chấm Điểm Rubric
@@ -99,7 +99,7 @@ export const MentorDashboard: React.FC = () => {
                   </div>
                   <button
                     type="button"
-                    onClick={() => navigate('/admin/weekly-reports')}
+                    onClick={() => navigate('/weekly-reports')}
                     className="rounded-lg bg-[#004ac6] px-3 py-1 text-xs font-medium text-white hover:bg-[#003eb3] transition-colors"
                   >
                     Review
@@ -116,7 +116,7 @@ export const MentorDashboard: React.FC = () => {
             <div className="space-y-1.5">
               <button
                 type="button"
-                onClick={() => navigate('/admin/weekly-reports')}
+                onClick={() => navigate('/weekly-reports')}
                 className="w-full text-left p-2.5 rounded-lg bg-slate-50/80 hover:bg-slate-100 text-xs font-medium text-slate-700 flex items-center justify-between transition-colors"
               >
                 <span>📝 Phê duyệt báo cáo tuần</span>
@@ -124,7 +124,7 @@ export const MentorDashboard: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => navigate('/admin/assessment-results')}
+                onClick={() => navigate('/assessment-results')}
                 className="w-full text-left p-2.5 rounded-lg bg-slate-50/80 hover:bg-slate-100 text-xs font-medium text-slate-700 flex items-center justify-between transition-colors"
               >
                 <span>✏️ Nhập điểm theo Rubric</span>

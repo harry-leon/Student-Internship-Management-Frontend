@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { dashboardService } from '../../api/dashboardService';
+import { Can } from '../Can';
 
 export const MentorDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -37,21 +38,41 @@ export const MentorDashboard: React.FC = () => {
             Theo dõi tiến độ, review báo cáo tuần và chấm điểm Rubric cho sinh viên.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Can permission="GROUP_VIEW">
+            <button
+              type="button"
+              onClick={() => navigate('/groups')}
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors cursor-pointer"
+            >
+              Nhóm Hướng Dẫn
+            </button>
+          </Can>
+          <Can permission="SUBMISSION_VIEW">
+            <button
+              type="button"
+              onClick={() => navigate('/submissions')}
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors cursor-pointer"
+            >
+              Bài Nộp Sinh Viên
+            </button>
+          </Can>
           <button
             type="button"
             onClick={() => navigate('/weekly-reports')}
-            className="rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#003eb3] transition-colors"
+            className="rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#003eb3] transition-colors cursor-pointer"
           >
             Review Báo Cáo Tuần
           </button>
-          <button
-            type="button"
-            onClick={() => navigate('/assessment-results')}
-            className="rounded-lg border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors"
-          >
-            Chấm Điểm Rubric
-          </button>
+          <Can permission="ASSESSMENT_SCORE">
+            <button
+              type="button"
+              onClick={() => navigate('/assessment-results')}
+              className="rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-1.5 text-xs font-semibold text-amber-800 shadow-2xs hover:bg-amber-100 transition-colors cursor-pointer"
+            >
+              Chấm Điểm Rubric
+            </button>
+          </Can>
         </div>
       </div>
 

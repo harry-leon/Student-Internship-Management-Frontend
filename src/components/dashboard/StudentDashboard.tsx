@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { dashboardService } from '../../api/dashboardService';
 import { useAuth } from '../../context/AuthContext';
+import { Can } from '../Can';
 
 export const StudentDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -37,13 +38,40 @@ export const StudentDashboard: React.FC = () => {
             Hệ thống quản lý thực tập sinh viên
           </p>
         </div>
-        <div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Can permission="GROUP_VIEW">
+            <button
+              type="button"
+              onClick={() => navigate('/groups')}
+              className="rounded-lg bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 text-xs font-semibold backdrop-blur-xs transition-colors cursor-pointer"
+            >
+              Nhóm Của Tôi
+            </button>
+          </Can>
+          <Can permission="GROUP_TASK_VIEW">
+            <button
+              type="button"
+              onClick={() => navigate('/tasks')}
+              className="rounded-lg bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 text-xs font-semibold backdrop-blur-xs transition-colors cursor-pointer"
+            >
+              Nhiệm Vụ
+            </button>
+          </Can>
+          <Can permission="SUBMISSION_VIEW">
+            <button
+              type="button"
+              onClick={() => navigate('/submissions')}
+              className="rounded-lg bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 text-xs font-semibold backdrop-blur-xs transition-colors cursor-pointer"
+            >
+              Bài Nộp
+            </button>
+          </Can>
           <button
             type="button"
             onClick={() => navigate('/weekly-reports')}
             className="rounded-lg bg-white px-3.5 py-1.5 text-xs font-bold text-[#004ac6] shadow-2xs hover:bg-blue-50 transition-colors cursor-pointer"
           >
-            + Nộp Báo Cáo Tuần
+            + Nộp Báo Cáo
           </button>
         </div>
       </div>

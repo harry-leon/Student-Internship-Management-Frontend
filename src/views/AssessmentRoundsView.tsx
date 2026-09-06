@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Role } from '../types';
 import { roundService, phaseService, AssessmentRoundDTO, InternshipPhaseDTO } from '../api/services';
-import { canManageSystemData } from '../auth/roleAccess';
+import { Can } from '../components/Can';
 
 interface AssessmentRoundsViewProps {
   rounds?: any[];
@@ -14,7 +14,6 @@ export const AssessmentRoundsView: React.FC<AssessmentRoundsViewProps> = ({
   const [roundsList, setRoundsList] = useState<AssessmentRoundDTO[]>([]);
   const [phases, setPhases] = useState<InternshipPhaseDTO[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const canManage = canManageSystemData(currentRole as Role);
 
   // Modal State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -162,7 +161,7 @@ export const AssessmentRoundsView: React.FC<AssessmentRoundsViewProps> = ({
             Quản lý các mốc đánh giá giữa kỳ, bảo vệ đồ án tốt nghiệp và phân bổ tiêu chí chấm điểm.
           </p>
         </div>
-        {canManage && (
+        <Can permission="ASSESSMENT_CREATE">
           <button
             type="button"
             onClick={handleOpenCreate}
@@ -171,7 +170,7 @@ export const AssessmentRoundsView: React.FC<AssessmentRoundsViewProps> = ({
             <span className="material-symbols-outlined text-[16px]">add</span>
             <span>Thêm Vòng Đánh Giá</span>
           </button>
-        )}
+        </Can>
       </div>
 
       {isLoading ? (
@@ -187,14 +186,14 @@ export const AssessmentRoundsView: React.FC<AssessmentRoundsViewProps> = ({
           <p className="mt-0.5 text-xs text-slate-500">
             Tạo các mốc đánh giá (Checkpoints) để giảng viên có thể chấm điểm bài nộp của sinh viên.
           </p>
-          {canManage && (
+          <Can permission="ASSESSMENT_CREATE">
             <button
               onClick={handleOpenCreate}
               className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-[#003896] transition-colors"
             >
               + Thêm Vòng Đánh Giá
             </button>
-          )}
+          </Can>
         </div>
       ) : (
         /* Rounds Grid */
@@ -261,8 +260,8 @@ export const AssessmentRoundsView: React.FC<AssessmentRoundsViewProps> = ({
                     <span>Xem {criteriaCount} tiêu chí</span>
                   </button>
 
-                  {canManage && (
-                    <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1">
+                    <Can permission="ASSESSMENT_UPDATE">
                       <button
                         type="button"
                         onClick={() => handleOpenEdit(round)}
@@ -271,6 +270,8 @@ export const AssessmentRoundsView: React.FC<AssessmentRoundsViewProps> = ({
                       >
                         <span className="material-symbols-outlined text-[15px]">edit</span>
                       </button>
+                    </Can>
+                    <Can permission="ASSESSMENT_DELETE">
                       <button
                         type="button"
                         onClick={() => setDeletingRound(round)}
@@ -279,8 +280,8 @@ export const AssessmentRoundsView: React.FC<AssessmentRoundsViewProps> = ({
                       >
                         <span className="material-symbols-outlined text-[15px]">delete</span>
                       </button>
-                    </div>
-                  )}
+                    </Can>
+                  </div>
                 </div>
               </div>
             );

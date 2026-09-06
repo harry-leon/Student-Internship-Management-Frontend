@@ -51,7 +51,7 @@ import {
   assignmentService,
   criterionService,
 } from './api/services';
-import { ROLE_PAGES, canAccessPage, canManageSystemData, canUpdateAssignmentStatus } from './auth/roleAccess';
+import { ROLE_PAGES, canAccessPage } from './auth/roleAccess';
 
 const PAGE_ROUTE_MAP: Partial<Record<NavPage, string>> = {
   dashboard: '/dashboard',
@@ -78,7 +78,7 @@ const PAGE_ROUTE_MAP: Partial<Record<NavPage, string>> = {
 };
 
 function AppRoutes() {
-  const { isAuthenticated, user, can, hasFeature } = useAuth();
+  const { isAuthenticated, user, can, hasFeature, hasPermission } = useAuth();
   const [currentRole, setCurrentRole] = useState<Role>('Admin');
   const location = useLocation();
   const navigate = useNavigate();
@@ -101,7 +101,6 @@ function AppRoutes() {
   }, [user]);
 
   const activeRole = (user?.role as Role) || currentRole;
-  const canManage = canManageSystemData(activeRole);
 
   const activePhase = phases[0] || {
     id: '0',
@@ -130,7 +129,7 @@ function AppRoutes() {
   }, []);
 
   const handleAddAssignment = async (newAsg: Assignment) => {
-    if (isAuthenticated && canManage) {
+    if (isAuthenticated && hasPermission('ASSIGNMENT_CREATE')) {
       try {
         await assignmentService.create({
           studentId: Number(newAsg.id) || 1,
@@ -144,7 +143,7 @@ function AppRoutes() {
   };
 
   const handleAddStudent = async (newStd: Student) => {
-    if (isAuthenticated && canManage) {
+    if (isAuthenticated && hasPermission('STUDENT_CREATE')) {
       try {
         await studentService.create({
           userId: 1,
@@ -158,7 +157,7 @@ function AppRoutes() {
   };
 
   const handleUpdatePhase = async (updated: InternshipPhase) => {
-    if (isAuthenticated && canManage && updated.id && updated.id !== '0') {
+    if (isAuthenticated && hasPermission('PHASE_UPDATE') && updated.id && updated.id !== '0') {
       try {
         await phaseService.update(Number(updated.id), {
           phaseName: updated.name,
@@ -172,7 +171,7 @@ function AppRoutes() {
   };
 
   const handleUpdateAssignmentStatus = async (id: string, newStatus: AssignmentStatus) => {
-    if (isAuthenticated && canUpdateAssignmentStatus(activeRole) && !isNaN(Number(id))) {
+    if (isAuthenticated && (hasPermission('ASSIGNMENT_UPDATE') || hasPermission('ASSIGNMENT_CHANGE_STATUS')) && !isNaN(Number(id))) {
       try {
         await assignmentService.updateStatus(Number(id), newStatus);
       } catch (err) {
@@ -185,7 +184,7 @@ function AppRoutes() {
   };
 
   const handleDeleteAssignment = async (id: string) => {
-    if (isAuthenticated && canManage && !isNaN(Number(id))) {
+    if (isAuthenticated && hasPermission('ASSIGNMENT_DELETE') && !isNaN(Number(id))) {
       try {
         await assignmentService.delete(Number(id));
       } catch (err) {
@@ -198,7 +197,7 @@ function AppRoutes() {
   };
 
   const handleAddCriterion = async (newCrit: EvaluationCriterion) => {
-    if (isAuthenticated && canManage) {
+    if (isAuthenticated && hasPermission('ASSESSMENT_CREATE')) {
       try {
         await criterionService.create({
           criterionName: newCrit.name,

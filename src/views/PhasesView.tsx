@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { InternshipPhase, Role } from '../types';
 import { phaseService, InternshipPhaseDTO } from '../api/services';
-import { canManageSystemData } from '../auth/roleAccess';
+import { Can } from '../components/Can';
 
 interface PhasesViewProps {
   phases?: InternshipPhase[];
@@ -15,7 +15,6 @@ export const PhasesView: React.FC<PhasesViewProps> = ({
 }) => {
   const [phasesList, setPhasesList] = useState<InternshipPhase[]>(propPhases || []);
   const [isLoading, setIsLoading] = useState(false);
-  const canManage = canManageSystemData(currentRole as Role);
 
   // CRUD State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -179,7 +178,7 @@ export const PhasesView: React.FC<PhasesViewProps> = ({
           </p>
         </div>
 
-        {canManage && (
+        <Can permission="PHASE_CREATE">
           <button
             type="button"
             onClick={handleOpenCreate}
@@ -188,7 +187,7 @@ export const PhasesView: React.FC<PhasesViewProps> = ({
             <span className="material-symbols-outlined text-[16px]">add</span>
             <span>Thêm Đợt Thực Tập</span>
           </button>
-        )}
+        </Can>
       </div>
 
       {isLoading ? (
@@ -204,14 +203,14 @@ export const PhasesView: React.FC<PhasesViewProps> = ({
           <p className="mt-0.5 text-xs text-slate-500">
             Tạo mới một đợt thực tập để bắt đầu phân công sinh viên và thiết lập các mốc đánh giá.
           </p>
-          {canManage && (
+          <Can permission="PHASE_CREATE">
             <button
               onClick={handleOpenCreate}
               className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-[#003896] transition-colors"
             >
               + Thêm Đợt Thực Tập
             </button>
-          )}
+          </Can>
         </div>
       ) : (
         /* Phase Cards List */
@@ -261,26 +260,28 @@ export const PhasesView: React.FC<PhasesViewProps> = ({
                     </div>
                   </div>
 
-                  {canManage && (
                     <div className="flex items-center gap-1.5 self-start sm:self-auto">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEdit(p)}
-                        className="px-3 py-1.5 rounded-lg bg-blue-50/70 hover:bg-blue-100 text-[#004ac6] text-xs font-semibold border border-blue-200 transition-colors flex items-center gap-1 cursor-pointer"
-                      >
-                        <span className="material-symbols-outlined text-[15px]">edit</span>
-                        <span>Chỉnh sửa</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setDeletingPhase(p)}
-                        className="px-3 py-1.5 rounded-lg bg-rose-50/70 hover:bg-rose-100 text-rose-600 text-xs font-semibold border border-rose-200 transition-colors flex items-center gap-1 cursor-pointer"
-                      >
-                        <span className="material-symbols-outlined text-[15px]">delete</span>
-                        <span>Xóa</span>
-                      </button>
+                      <Can permission="PHASE_UPDATE">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEdit(p)}
+                          className="px-3 py-1.5 rounded-lg bg-blue-50/70 hover:bg-blue-100 text-[#004ac6] text-xs font-semibold border border-blue-200 transition-colors flex items-center gap-1 cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-[15px]">edit</span>
+                          <span>Chỉnh sửa</span>
+                        </button>
+                      </Can>
+                      <Can permission="PHASE_DELETE">
+                        <button
+                          type="button"
+                          onClick={() => setDeletingPhase(p)}
+                          className="px-3 py-1.5 rounded-lg bg-rose-50/70 hover:bg-rose-100 text-rose-600 text-xs font-semibold border border-rose-200 transition-colors flex items-center gap-1 cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-[15px]">delete</span>
+                          <span>Xóa</span>
+                        </button>
+                      </Can>
                     </div>
-                  )}
                 </div>
 
                 {/* Progress and Milestone */}

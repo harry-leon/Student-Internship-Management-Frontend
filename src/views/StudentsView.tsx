@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Role, Student } from '../types';
 import { studentService } from '../api/services';
 import { mapStudentFromDTO } from '../api/mappers';
-import { canManageSystemData } from '../auth/roleAccess';
 import { StudentDetailModal } from '../components/StudentDetailModal';
 import { Can } from '../components/Can';
 
@@ -19,7 +18,6 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
   const [search, setSearch] = useState('');
   const [deptFilter, setDeptFilter] = useState('ALL');
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
-  const canManage = canManageSystemData(currentRole);
 
   // CRUD Modals State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);

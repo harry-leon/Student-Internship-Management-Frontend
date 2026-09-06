@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Assignment, Role } from '../types';
 import { assignmentService, studentService, mentorService, phaseService, StudentDTO, MentorDTO, InternshipPhaseDTO } from '../api/services';
 import { mapAssignmentFromDTO } from '../api/mappers';
-import { canManageSystemData } from '../auth/roleAccess';
+import { Can } from '../components/Can';
 
 interface AssignmentsViewProps {
   currentRole: Role;
@@ -19,7 +19,6 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [phaseFilter, setPhaseFilter] = useState<string>('ALL');
-  const canManage = canManageSystemData(currentRole);
 
   // Create Modal State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -141,7 +140,7 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
             Quản lý phân công sinh viên - giảng viên hướng dẫn, doanh nghiệp thực tập và trạng thái.
           </p>
         </div>
-        {canManage && (
+        <Can permission="ASSIGNMENT_CREATE">
           <button
             type="button"
             onClick={handleOpenCreate}
@@ -150,7 +149,7 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
             <span className="material-symbols-outlined text-[16px]">add</span>
             <span>Phân Công Mới</span>
           </button>
-        )}
+        </Can>
       </div>
 
       {/* Toolbar Filters */}
@@ -319,7 +318,7 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
                         <span className="material-symbols-outlined text-[13px]">visibility</span>
                         Chi tiết
                       </button>
-                      {canManage && (
+                      <Can permission="ASSIGNMENT_DELETE">
                         <button
                           type="button"
                           onClick={(e) => {
@@ -332,7 +331,7 @@ export const AssignmentsView: React.FC<AssignmentsViewProps> = ({
                           <span className="material-symbols-outlined text-[13px]">delete</span>
                           Xóa
                         </button>
-                      )}
+                      </Can>
                     </td>
                   </tr>
                 ))

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Mentor, Role } from '../types';
 import { mentorService } from '../api/services';
 import { mapMentorFromDTO } from '../api/mappers';
-import { canManageSystemData } from '../auth/roleAccess';
 import { Can } from '../components/Can';
 
 interface MentorsViewProps {
@@ -13,7 +12,6 @@ export const MentorsView: React.FC<MentorsViewProps> = ({ currentRole = 'Admin' 
   const [mentors, setMentors] = useState<Mentor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const canManage = canManageSystemData(currentRole as Role);
 
   // CRUD Modals State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);

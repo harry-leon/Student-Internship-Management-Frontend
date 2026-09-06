@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Role } from '../types';
 import { criterionService, EvaluationCriterionDTO } from '../api/services';
-import { canManageSystemData } from '../auth/roleAccess';
+import { Can } from '../components/Can';
 
 interface EvaluationCriteriaViewProps {
   criteria?: any[];
@@ -14,7 +14,6 @@ export const EvaluationCriteriaView: React.FC<EvaluationCriteriaViewProps> = ({
 }) => {
   const [criteriaList, setCriteriaList] = useState<EvaluationCriterionDTO[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const canManage = canManageSystemData(currentRole as Role);
 
   // Modal State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -136,7 +135,7 @@ export const EvaluationCriteriaView: React.FC<EvaluationCriteriaViewProps> = ({
             Quản lý các tiêu chuẩn chấm điểm, mô tả chỉ số đánh giá và thang điểm tối đa cho sinh viên.
           </p>
         </div>
-        {canManage && (
+        <Can permission="ASSESSMENT_CREATE">
           <button
             type="button"
             onClick={handleOpenCreate}
@@ -145,7 +144,7 @@ export const EvaluationCriteriaView: React.FC<EvaluationCriteriaViewProps> = ({
             <span className="material-symbols-outlined text-[16px]">add</span>
             <span>Thêm Tiêu Chí Mới</span>
           </button>
-        )}
+        </Can>
       </div>
 
       {isLoading ? (
@@ -161,14 +160,14 @@ export const EvaluationCriteriaView: React.FC<EvaluationCriteriaViewProps> = ({
           <p className="mt-0.5 text-xs text-slate-500">
             Tạo mới tiêu chuẩn đánh giá để áp dụng vào các vòng chấm điểm thực tập.
           </p>
-          {canManage && (
+          <Can permission="ASSESSMENT_CREATE">
             <button
               onClick={handleOpenCreate}
               className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-[#003896] transition-colors"
             >
               + Thêm Tiêu Chí Mới
             </button>
-          )}
+          </Can>
         </div>
       ) : (
         /* Criteria Cards Grid */
@@ -205,26 +204,28 @@ export const EvaluationCriteriaView: React.FC<EvaluationCriteriaViewProps> = ({
                   Thang điểm chuẩn hóa: 0 – {crit.maxScore}
                 </span>
 
-                {canManage && (
                   <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => handleOpenEdit(crit)}
-                      className="p-1 rounded text-[#004ac6] hover:bg-blue-50 transition-colors"
-                      title="Sửa tiêu chí"
-                    >
-                      <span className="material-symbols-outlined text-[15px]">edit</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDeletingCriterion(crit)}
-                      className="p-1 rounded text-rose-600 hover:bg-rose-50 transition-colors"
-                      title="Xóa tiêu chí"
-                    >
-                      <span className="material-symbols-outlined text-[15px]">delete</span>
-                    </button>
+                    <Can permission="ASSESSMENT_UPDATE">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEdit(crit)}
+                        className="p-1 rounded text-[#004ac6] hover:bg-blue-50 transition-colors"
+                        title="Sửa tiêu chí"
+                      >
+                        <span className="material-symbols-outlined text-[15px]">edit</span>
+                      </button>
+                    </Can>
+                    <Can permission="ASSESSMENT_DELETE">
+                      <button
+                        type="button"
+                        onClick={() => setDeletingCriterion(crit)}
+                        className="p-1 rounded text-rose-600 hover:bg-rose-50 transition-colors"
+                        title="Xóa tiêu chí"
+                      >
+                        <span className="material-symbols-outlined text-[15px]">delete</span>
+                      </button>
+                    </Can>
                   </div>
-                )}
               </div>
             </div>
           ))}

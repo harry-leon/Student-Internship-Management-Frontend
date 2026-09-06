@@ -12,6 +12,7 @@ import {
 } from './types';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LoginModal } from './components/LoginModal';
 import { Sidebar } from './components/Sidebar';
@@ -216,7 +217,7 @@ function AppRoutes() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f9ff] text-[#0b1c30]">
+    <div className="min-h-screen bg-[#f8f9ff] dark:bg-[#0b1329] text-[#0b1c30] dark:text-slate-100 transition-colors duration-200">
       <Sidebar
         currentRole={activeRole}
         isMobileOpen={isMobileSidebarOpen}
@@ -234,15 +235,15 @@ function AppRoutes() {
         <main className="flex-1 pt-[56px]">
           <div className="w-full max-w-[1480px] mx-auto p-3 sm:p-4 lg:p-4.5">
             {!isCurrentPageAllowed && (
-              <div className="bg-white rounded-3xl border border-red-200 p-8 sm:p-12 text-center max-w-xl mx-auto my-8 shadow-xs">
-                <div className="w-16 h-16 rounded-2xl bg-red-50 text-red-600 border border-red-200 flex items-center justify-center mx-auto mb-4">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-red-200 dark:border-red-900/40 p-8 sm:p-12 text-center max-w-xl mx-auto my-8 shadow-xs">
+                <div className="w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50 flex items-center justify-center mx-auto mb-4">
                   <span className="material-symbols-outlined text-[32px]">block</span>
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900">Không Có Quyền Truy Cập (403)</h3>
-                <p className="text-sm text-slate-600 mt-2 leading-relaxed">
-                  Màn hình <strong className="text-slate-900 font-bold">[{currentPage}]</strong> không thuộc phạm vi truy cập của tài khoản vai trò <strong className="text-indigo-600 font-bold">[{activeRole}]</strong>.
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Không Có Quyền Truy Cập (403)</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 leading-relaxed">
+                  Màn hình <strong className="text-slate-900 dark:text-white font-bold">[{currentPage}]</strong> không thuộc phạm vi truy cập của tài khoản vai trò <strong className="text-indigo-600 dark:text-indigo-400 font-bold">[{activeRole}]</strong>.
                 </p>
-                <div className="mt-6 pt-6 border-t border-slate-100 flex justify-center">
+                <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 flex justify-center">
                   <button
                     type="button"
                     onClick={() => {
@@ -379,11 +380,13 @@ function AppRoutes() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </AuthProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

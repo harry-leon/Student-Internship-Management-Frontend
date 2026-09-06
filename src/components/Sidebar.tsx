@@ -80,25 +80,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
       )}
 
       <aside
-        className={`fixed left-0 top-0 z-50 flex h-screen w-[228px] flex-col border-r border-[#e2e8f0] bg-white shadow-[0_1px_8px_rgba(0,0,0,0.04)] transition-transform duration-200 ease-in-out ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+        className={`fixed left-0 top-0 z-50 flex h-screen w-[228px] flex-col border-r border-[#e2e8f0] dark:border-slate-800 bg-white dark:bg-slate-900 shadow-[0_1px_8px_rgba(0,0,0,0.04)] transition-colors duration-200 ease-in-out ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
-        <div className="flex h-[56px] items-center justify-between border-b border-[#f1f5f9] px-4">
+        <div className="flex h-[56px] items-center justify-between border-b border-[#f1f5f9] dark:border-slate-800 px-4">
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#004ac6] text-[11px] font-bold text-white shadow-xs">
               IMS
             </div>
             <div className="flex flex-col">
-              <span className="text-[14px] font-semibold leading-none tracking-tight text-[#0b1c30]">
+              <span className="text-[14px] font-semibold leading-none tracking-tight text-[#0b1c30] dark:text-white">
                 IMS PORTAL
               </span>
-              <span className="mt-0.5 text-[10px] leading-tight text-[#64748b]">
+              <span className="mt-0.5 text-[10px] leading-tight text-[#64748b] dark:text-slate-400">
                 Internship Management
               </span>
             </div>
           </div>
           <button
             onClick={onCloseMobile}
-            className="rounded-md p-1 text-slate-400 hover:text-slate-700 lg:hidden"
+            className="rounded-md p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 lg:hidden"
             type="button"
           >
             <span className="material-symbols-outlined text-[18px]">close</span>
@@ -108,7 +108,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <nav className="no-scrollbar flex-1 space-y-3 overflow-y-auto px-2.5 py-2">
           {filteredSections.map((sec) => (
             <div key={sec.title} className="space-y-1">
-              <span className="mb-1 block px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#94a3b8]">
+              <span className="mb-1 block px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#94a3b8] dark:text-slate-500">
                 {sec.title}
               </span>
               {sec.items.map((item) => {
@@ -124,7 +124,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     }}
                     className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] transition-all ${isActive
                       ? 'bg-[#2563eb] font-medium text-white shadow-[0_1px_4px_rgba(37,99,235,0.22)]'
-                      : 'text-[#434655] hover:bg-[#e5eeff]/60 hover:text-[#0b1c30]'
+                      : 'text-[#434655] dark:text-slate-300 hover:bg-[#e5eeff]/60 dark:hover:bg-slate-800 hover:text-[#0b1c30] dark:hover:text-white'
                       }`}
                   >
                     <span className="material-symbols-outlined text-[18px]">
@@ -138,17 +138,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
           ))}
         </nav>
 
-        <div className="border-t border-[#dce9ff] bg-[#eff4ff] p-3">
+        <div className="border-t border-[#dce9ff] dark:border-slate-800 bg-[#eff4ff] dark:bg-slate-800/60 p-3">
           <div className="flex items-center gap-2.5">
             <div className="relative flex items-center justify-center">
               <div className="h-2.5 w-2.5 rounded-full bg-[#004ac6]"></div>
               <div className="absolute h-4 w-4 rounded-full bg-[#004ac6]/25 animate-ping"></div>
             </div>
             <div className="min-w-0 flex flex-col">
-              <span className="truncate text-[12px] font-medium leading-tight text-[#0b1c30]">
+              <span className="truncate text-[12px] font-medium leading-tight text-[#0b1c30] dark:text-slate-200">
                 Academic Term 2024-2
               </span>
-              <span className="truncate text-[10px] leading-tight text-[#64748b]">
+              <span className="truncate text-[10px] leading-tight text-[#64748b] dark:text-slate-400">
                 Active Operational Phase
               </span>
             </div>

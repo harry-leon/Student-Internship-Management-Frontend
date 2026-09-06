@@ -38,7 +38,9 @@ import {
   AlertCircle,
   CheckCircle2,
   ChevronRight,
+  ChevronLeft,
   ChevronDown,
+  ChevronUp,
   ArrowLeft,
   Calendar,
   Award,
@@ -65,6 +67,31 @@ export const MentorGroupRoomView: React.FC = () => {
   // Active Tab on Desktop Right Column / Mobile
   const [rightTab, setRightTab] = useState<'tasks' | 'submissions' | 'announcements' | 'settings'>('tasks');
   const [mobileTab, setMobileTab] = useState<'chat' | 'tasks' | 'submissions' | 'members'>('chat');
+
+  // Section Collapse State
+  const [isLeftCollapsed, setIsLeftCollapsed] = useState<boolean>(() => {
+    return localStorage.getItem('group_room_left_collapsed') === 'true';
+  });
+  const [isRightCollapsed, setIsRightCollapsed] = useState<boolean>(() => {
+    return localStorage.getItem('group_room_right_collapsed') === 'true';
+  });
+  const [isPinnedCollapsed, setIsPinnedCollapsed] = useState<boolean>(false);
+
+  const toggleLeftCollapse = () => {
+    setIsLeftCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem('group_room_left_collapsed', String(next));
+      return next;
+    });
+  };
+
+  const toggleRightCollapse = () => {
+    setIsRightCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem('group_room_right_collapsed', String(next));
+      return next;
+    });
+  };
 
   // Chat State
   const [chatInput, setChatInput] = useState('');
@@ -571,12 +598,41 @@ export const MentorGroupRoomView: React.FC = () => {
         </div>
 
         {/* Header Right Action Tools */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Toggle Left Column (Members) */}
+          <button
+            onClick={toggleLeftCollapse}
+            className={`p-2 rounded-xl transition cursor-pointer ${
+              !isLeftCollapsed
+                ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400'
+                : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400'
+            }`}
+            title={isLeftCollapsed ? 'Hiện danh sách thành viên' : 'Thu gọn danh sách thành viên'}
+          >
+            <Users className="w-5 h-5" />
+          </button>
+
+          {/* Toggle Right Column (Tasks & Submissions) */}
+          <button
+            onClick={toggleRightCollapse}
+            className={`p-2 rounded-xl transition cursor-pointer ${
+              !isRightCollapsed
+                ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400'
+                : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400'
+            }`}
+            title={isRightCollapsed ? 'Hiện bảng công việc & nộp bài' : 'Thu gọn bảng công việc & nộp bài'}
+          >
+            <CheckSquare className="w-5 h-5" />
+          </button>
+
           {canManageRoom && (
             <button
-              onClick={() => setRightTab('settings')}
-              className={`p-2 rounded-xl transition ${
-                rightTab === 'settings'
+              onClick={() => {
+                setRightTab('settings');
+                setIsRightCollapsed(false);
+              }}
+              className={`p-2 rounded-xl transition cursor-pointer ${
+                rightTab === 'settings' && !isRightCollapsed
                   ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30'
                   : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400'
               }`}
@@ -593,7 +649,7 @@ export const MentorGroupRoomView: React.FC = () => {
               loadSubmissions();
               showToast('Đã làm mới dữ liệu');
             }}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl transition"
+            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl transition cursor-pointer"
             title="Làm mới"
           >
             <RefreshCw className="w-5 h-5" />
@@ -650,127 +706,179 @@ export const MentorGroupRoomView: React.FC = () => {
         {/* ========================================================
             LEFT COLUMN: MEMBERS & ROLES (Hidden on mobile if not active tab)
         ======================================================== */}
-        <div className={`w-72 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col shrink-0 overflow-hidden ${
-          mobileTab !== 'members' ? 'hidden md:flex' : 'flex w-full'
-        }`}>
-          <div className="p-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-slate-500" />
-              <span className="font-bold text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                Thành viên ({overview.memberCount})
+        {isLeftCollapsed ? (
+          <div className={`w-14 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col shrink-0 items-center py-3 transition-all duration-200 ${
+            mobileTab !== 'members' ? 'hidden md:flex' : 'flex w-full'
+          }`}>
+            <button
+              onClick={toggleLeftCollapse}
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600 rounded-xl transition mb-2 cursor-pointer"
+              title="Mở rộng danh sách thành viên"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+            <div className="flex flex-col items-center gap-1 pt-2 border-t border-slate-100 dark:border-slate-800 w-full px-2">
+              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter">TV</span>
+              <span className="w-7 h-7 rounded-full bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xs font-bold shadow-xs">
+                {overview.memberCount}
               </span>
             </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-3 space-y-2">
-            {/* Mentor Card */}
-            <div className="p-2.5 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-900/10">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-500 to-orange-400 text-white flex items-center justify-center font-bold text-sm shadow-sm">
-                  {overview.mentorName.charAt(0)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                      {overview.mentorName}
-                    </p>
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-900 dark:bg-amber-900/60 dark:text-amber-200">
-                      OWNER
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 truncate">{overview.mentorEmail}</p>
-                </div>
+            <div className="flex-1 overflow-y-auto w-full flex flex-col items-center gap-2 py-3">
+              {/* Mentor Avatar */}
+              <div
+                onClick={toggleLeftCollapse}
+                className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 to-orange-400 text-white flex items-center justify-center font-bold text-xs shadow-xs ring-2 ring-amber-300 dark:ring-amber-800 cursor-pointer"
+                title={`Mentor: ${overview.mentorName} (Bấm để mở rộng)`}
+              >
+                {overview.mentorName.charAt(0)}
               </div>
-            </div>
-
-            {/* Students List */}
-            {overview.members.map((m: GroupMemberDTO) => {
-              const isMuted = Boolean(m.isMuted);
-              const isStudentLeader = m.groupRole === 'LEADER';
-              return (
+              {/* Student Avatars */}
+              {overview.members.slice(0, 8).map((m: GroupMemberDTO) => (
                 <div
                   key={m.memberId}
-                  className="p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 bg-white dark:bg-slate-900/80 transition"
+                  onClick={toggleLeftCollapse}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-xs cursor-pointer ${
+                    m.groupRole === 'LEADER'
+                      ? 'bg-blue-600 text-white ring-2 ring-blue-300'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+                  }`}
+                  title={`${m.studentName} (${m.groupRole === 'LEADER' ? 'Trưởng nhóm' : 'Thành viên'}) - Bấm để mở rộng`}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
-                        {m.studentName.charAt(0)}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
-                            {m.studentName}
-                          </p>
-                          {isStudentLeader && (
-                            <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
-                              LEADER
-                            </span>
-                          )}
-                          {isMuted && (
-                            <VolumeX className="w-3.5 h-3.5 text-rose-500 shrink-0" title="Bị khóa chat" />
-                          )}
-                        </div>
-                        <p className="text-[10px] text-slate-500 truncate">
-                          {m.studentCode} • {m.studentMajor || 'IT'}
-                        </p>
-                      </div>
+                  {m.studentName.charAt(0)}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className={`w-72 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col shrink-0 overflow-hidden transition-all duration-200 ${
+            mobileTab !== 'members' ? 'hidden md:flex' : 'flex w-full'
+          }`}>
+            <div className="p-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-slate-500" />
+                <span className="font-bold text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                  Thành viên ({overview.memberCount})
+                </span>
+              </div>
+              <button
+                onClick={toggleLeftCollapse}
+                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg transition cursor-pointer"
+                title="Thu gọn danh sách thành viên"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+              {/* Mentor Card */}
+              <div className="p-2.5 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-900/10">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-500 to-orange-400 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                    {overview.mentorName.charAt(0)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                        {overview.mentorName}
+                      </p>
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-900 dark:bg-amber-900/60 dark:text-amber-200">
+                        OWNER
+                      </span>
                     </div>
-
-                    {/* Mentor moderation dropdown/buttons */}
-                    {canManageRoom && (
-                      <div className="flex items-center gap-1 shrink-0">
-                        {isStudentLeader ? (
-                          <button
-                            onClick={() => handleUpdateRole(m.studentId, 'MEMBER')}
-                            className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-blue-600 rounded transition"
-                            title="Hạ quyền xuống Member"
-                          >
-                            <UserCheck className="w-3.5 h-3.5" />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleUpdateRole(m.studentId, 'LEADER')}
-                            className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-blue-600 rounded transition"
-                            title="Bổ nhiệm làm Leader"
-                          >
-                            <Shield className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-
-                        {isMuted ? (
-                          <button
-                            onClick={() => handleUnmuteMember(m.studentId)}
-                            className="p-1 hover:bg-emerald-50 text-emerald-600 rounded transition"
-                            title="Mở khóa chat"
-                          >
-                            <Volume2 className="w-3.5 h-3.5" />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => setMuteStudentId(m.studentId)}
-                            className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded transition"
-                            title="Khóa chat"
-                          >
-                            <VolumeX className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-
-                        <button
-                          onClick={() => handleRemoveMember(m.studentId, m.studentName)}
-                          className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded transition"
-                          title="Xóa khỏi nhóm"
-                        >
-                          <UserX className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    )}
+                    <p className="text-[11px] text-slate-500 truncate">{overview.mentorEmail}</p>
                   </div>
                 </div>
-              );
-            })}
+              </div>
+
+              {/* Students List */}
+              {overview.members.map((m: GroupMemberDTO) => {
+                const isMuted = Boolean(m.isMuted);
+                const isStudentLeader = m.groupRole === 'LEADER';
+                return (
+                  <div
+                    key={m.memberId}
+                    className="p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 bg-white dark:bg-slate-900/80 transition"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
+                          {m.studentName.charAt(0)}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                              {m.studentName}
+                            </p>
+                            {isStudentLeader && (
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
+                                LEADER
+                              </span>
+                            )}
+                            {isMuted && (
+                              <VolumeX className="w-3.5 h-3.5 text-rose-500 shrink-0" title="Bị khóa chat" />
+                            )}
+                          </div>
+                          <p className="text-[10px] text-slate-500 truncate">
+                            {m.studentCode} • {m.studentMajor || 'IT'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Mentor moderation dropdown/buttons */}
+                      {canManageRoom && (
+                        <div className="flex items-center gap-1 shrink-0">
+                          {isStudentLeader ? (
+                            <button
+                              onClick={() => handleUpdateRole(m.studentId, 'MEMBER')}
+                              className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-blue-600 rounded transition"
+                              title="Hạ quyền xuống Member"
+                            >
+                              <UserCheck className="w-3.5 h-3.5" />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleUpdateRole(m.studentId, 'LEADER')}
+                              className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-blue-600 rounded transition"
+                              title="Bổ nhiệm làm Leader"
+                            >
+                              <Shield className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
+                          {isMuted ? (
+                            <button
+                              onClick={() => handleUnmuteMember(m.studentId)}
+                              className="p-1 hover:bg-emerald-50 text-emerald-600 rounded transition"
+                              title="Mở khóa chat"
+                            >
+                              <Volume2 className="w-3.5 h-3.5" />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => setMuteStudentId(m.studentId)}
+                              className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded transition"
+                              title="Khóa chat"
+                            >
+                              <VolumeX className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() => handleRemoveMember(m.studentId, m.studentName)}
+                            className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded transition"
+                            title="Xóa khỏi nhóm"
+                          >
+                            <UserX className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* ========================================================
             CENTER COLUMN: CHAT FEED & ANNOUNCEMENT BANNER
@@ -780,35 +888,43 @@ export const MentorGroupRoomView: React.FC = () => {
         }`}>
           {/* Pinned Announcements Top Banner */}
           {overview.pinnedAnnouncements && overview.pinnedAnnouncements.length > 0 && (
-            <div className="bg-indigo-50/80 dark:bg-indigo-950/40 border-b border-indigo-100 dark:border-indigo-900/50 p-2.5 px-4 shrink-0">
-              <div className="flex items-center justify-between mb-1">
+            <div className="bg-indigo-50/80 dark:bg-indigo-950/40 border-b border-indigo-100 dark:border-indigo-900/50 p-2.5 px-4 shrink-0 transition-all">
+              <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5">
-                  <Pin className="w-3.5 h-3.5 text-indigo-600" /> Thông báo ghim
+                  <Pin className="w-3.5 h-3.5 text-indigo-600" /> Thông báo ghim ({overview.pinnedAnnouncements.length})
                 </span>
-                <span className="text-[10px] text-indigo-600/80 dark:text-indigo-400">
-                  {overview.pinnedAnnouncements.length} thông báo
-                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsPinnedCollapsed(!isPinnedCollapsed)}
+                  className="flex items-center gap-1 text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                  title={isPinnedCollapsed ? 'Mở rộng thông báo ghim' : 'Thu gọn thông báo ghim'}
+                >
+                  <span>{isPinnedCollapsed ? 'Mở rộng' : 'Thu gọn'}</span>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isPinnedCollapsed ? '-rotate-90' : ''}`} />
+                </button>
               </div>
-              <div className="space-y-1.5 max-h-24 overflow-y-auto">
-                {overview.pinnedAnnouncements.map((ann) => (
-                  <div
-                    key={ann.announcementId}
-                    className="text-xs bg-white dark:bg-slate-900 p-2 rounded-lg border border-indigo-100 dark:border-indigo-900 flex items-start justify-between gap-2 shadow-xs"
-                  >
-                    <div>
-                      <span className="font-semibold text-slate-900 dark:text-white mr-1.5">
-                        {ann.title}:
-                      </span>
-                      <span className="text-slate-600 dark:text-slate-300">{ann.content}</span>
+              {!isPinnedCollapsed && (
+                <div className="space-y-1.5 max-h-24 overflow-y-auto mt-1.5">
+                  {overview.pinnedAnnouncements.map((ann) => (
+                    <div
+                      key={ann.announcementId}
+                      className="text-xs bg-white dark:bg-slate-900 p-2 rounded-lg border border-indigo-100 dark:border-indigo-900 flex items-start justify-between gap-2 shadow-xs"
+                    >
+                      <div>
+                        <span className="font-semibold text-slate-900 dark:text-white mr-1.5">
+                          {ann.title}:
+                        </span>
+                        <span className="text-slate-600 dark:text-slate-300">{ann.content}</span>
+                      </div>
+                      {ann.priority === 'URGENT' && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 shrink-0">
+                          Khẩn cấp
+                        </span>
+                      )}
                     </div>
-                    {ann.priority === 'URGENT' && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 shrink-0">
-                        Khẩn cấp
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -1037,44 +1153,131 @@ export const MentorGroupRoomView: React.FC = () => {
         {/* ========================================================
             RIGHT COLUMN: TASKS / SUBMISSIONS / SETTINGS
         ======================================================== */}
-        <div className={`w-88 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col shrink-0 overflow-hidden ${
-          mobileTab === 'chat' || mobileTab === 'members' ? 'hidden md:flex' : 'flex w-full'
-        }`}>
-          {/* Sub-tabs header */}
-          <div className="flex border-b border-slate-200 dark:border-slate-800 p-1.5 bg-slate-50 dark:bg-slate-900/50 shrink-0">
+        {isRightCollapsed ? (
+          <div className={`w-14 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col shrink-0 items-center py-3 transition-all duration-200 ${
+            mobileTab === 'chat' || mobileTab === 'members' ? 'hidden md:flex' : 'flex w-full'
+          }`}>
             <button
-              onClick={() => setRightTab('tasks')}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition ${
-                rightTab === 'tasks'
-                  ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800'
-              }`}
+              onClick={toggleRightCollapse}
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600 rounded-xl transition mb-2 cursor-pointer"
+              title="Mở rộng bảng công việc & nộp bài"
             >
-              Tasks ({tasks.length})
+              <ChevronLeft className="w-5 h-5" />
             </button>
-            <button
-              onClick={() => setRightTab('submissions')}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition ${
-                rightTab === 'submissions'
-                  ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              Nộp bài ({submissions.length})
-            </button>
-            <button
-              onClick={() => setRightTab('announcements')}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition ${
-                rightTab === 'announcements'
-                  ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              Tin ({announcements.length})
-            </button>
+            <div className="flex flex-col items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-800 w-full px-1">
+              <button
+                onClick={() => {
+                  setRightTab('tasks');
+                  setIsRightCollapsed(false);
+                }}
+                className={`p-2 rounded-xl transition relative cursor-pointer ${
+                  rightTab === 'tasks' ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+                title={`Công việc (${tasks.length}) - Bấm để mở rộng`}
+              >
+                <CheckSquare className="w-5 h-5" />
+                {tasks.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-indigo-600 text-white text-[9px] font-bold flex items-center justify-center">
+                    {tasks.length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  setRightTab('submissions');
+                  setIsRightCollapsed(false);
+                }}
+                className={`p-2 rounded-xl transition relative cursor-pointer ${
+                  rightTab === 'submissions' ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+                title={`Bài nộp (${submissions.length}) - Bấm để mở rộng`}
+              >
+                <Upload className="w-5 h-5" />
+                {submissions.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-600 text-white text-[9px] font-bold flex items-center justify-center">
+                    {submissions.length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  setRightTab('announcements');
+                  setIsRightCollapsed(false);
+                }}
+                className={`p-2 rounded-xl transition relative cursor-pointer ${
+                  rightTab === 'announcements' ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+                title={`Thông báo (${announcements.length}) - Bấm để mở rộng`}
+              >
+                <Pin className="w-5 h-5" />
+                {announcements.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-600 text-white text-[9px] font-bold flex items-center justify-center">
+                    {announcements.length}
+                  </span>
+                )}
+              </button>
+              {canManageRoom && (
+                <button
+                  onClick={() => {
+                    setRightTab('settings');
+                    setIsRightCollapsed(false);
+                  }}
+                  className={`p-2 rounded-xl transition cursor-pointer ${
+                    rightTab === 'settings' ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  }`}
+                  title="Cài đặt phòng - Bấm để mở rộng"
+                >
+                  <Settings className="w-5 h-5" />
+                </button>
+              )}
+            </div>
           </div>
+        ) : (
+          <div className={`w-88 lg:w-96 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col shrink-0 overflow-hidden transition-all duration-200 ${
+            mobileTab === 'chat' || mobileTab === 'members' ? 'hidden md:flex' : 'flex w-full'
+          }`}>
+            {/* Sub-tabs header */}
+            <div className="flex items-center border-b border-slate-200 dark:border-slate-800 p-1.5 bg-slate-50 dark:bg-slate-900/50 shrink-0 gap-1">
+              <button
+                onClick={() => setRightTab('tasks')}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
+                  rightTab === 'tasks'
+                    ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                Tasks ({tasks.length})
+              </button>
+              <button
+                onClick={() => setRightTab('submissions')}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
+                  rightTab === 'submissions'
+                    ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                Nộp bài ({submissions.length})
+              </button>
+              <button
+                onClick={() => setRightTab('announcements')}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
+                  rightTab === 'announcements'
+                    ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                Tin ({announcements.length})
+              </button>
+              <button
+                onClick={toggleRightCollapse}
+                className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg transition cursor-pointer"
+                title="Thu gọn bảng công việc"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {/* ==================== TASKS SUBTAB ==================== */}
             {rightTab === 'tasks' && (
               <div>
@@ -1457,6 +1660,7 @@ export const MentorGroupRoomView: React.FC = () => {
             )}
           </div>
         </div>
+        )}
       </div>
 
       {/* ==================== MODALS ==================== */}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Role, WeeklyReport, WeeklyReportStatus } from '../types';
 import { weeklyReportService } from '../api/weeklyReportService';
+import { Can } from '../components/Can';
 
 interface WeeklyReportsViewProps {
   currentRole: Role;
@@ -165,7 +166,7 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
           </div>
           <p className="text-xs text-slate-500 mt-0.5">Theo dõi tiến độ thực tập hàng tuần, nhận xét & phê duyệt báo cáo sinh viên.</p>
         </div>
-        {currentRole === 'Student' && (
+        <Can permission="SUBMISSION_CREATE">
           <button
             type="button"
             onClick={() => setIsCreateOpen(true)}
@@ -174,7 +175,7 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
             <span className="material-symbols-outlined text-[16px]">add</span>
             <span>Tạo Báo Cáo Tuần</span>
           </button>
-        )}
+        </Can>
       </div>
 
       {/* KPI Cards */}
@@ -339,28 +340,32 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
 
             {/* Action buttons */}
             <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
-              {currentRole === 'Student' && (selectedReport.status === 'DRAFT' || selectedReport.status === 'NEEDS_REVISION') && (
-                <button
-                  type="button"
-                  onClick={() => handleSubmitReport(selectedReport.reportId)}
-                  className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 shadow-xs"
-                >
-                  Nộp Báo Cáo
-                </button>
-              )}
+              <Can permission="SUBMISSION_CREATE">
+                {(selectedReport.status === 'DRAFT' || selectedReport.status === 'NEEDS_REVISION') && (
+                  <button
+                    type="button"
+                    onClick={() => handleSubmitReport(selectedReport.reportId)}
+                    className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 shadow-xs cursor-pointer"
+                  >
+                    Nộp Báo Cáo
+                  </button>
+                )}
+              </Can>
 
-              {(currentRole === 'Mentor' || currentRole === 'Admin') && selectedReport.status === 'SUBMITTED' && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMentorComment(selectedReport.mentorComment || '');
-                    setIsReviewOpen(true);
-                  }}
-                  className="rounded-xl bg-[#004ac6] px-4 py-2 text-xs font-semibold text-white hover:bg-[#003eb3] shadow-xs"
-                >
-                  Nhận Xét & Duyệt Báo Cáo
-                </button>
-              )}
+              <Can permission="SUBMISSION_GRADE">
+                {selectedReport.status === 'SUBMITTED' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMentorComment(selectedReport.mentorComment || '');
+                      setIsReviewOpen(true);
+                    }}
+                    className="rounded-xl bg-[#004ac6] px-4 py-2 text-xs font-semibold text-white hover:bg-[#003eb3] shadow-xs cursor-pointer"
+                  >
+                    Nhận Xét & Duyệt Báo Cáo
+                  </button>
+                )}
+              </Can>
             </div>
           </div>
         )}
@@ -456,9 +461,10 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
       )}
 
       {/* Review Modal */}
-      {isReviewOpen && selectedReport && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl space-y-4">
+      <Can permission="SUBMISSION_GRADE">
+        {isReviewOpen && selectedReport && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
+            <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-base font-bold text-slate-900">Duyệt Báo Cáo - Tuần {selectedReport.weekNumber}</h3>
               <button onClick={() => setIsReviewOpen(false)} className="text-slate-400 hover:text-slate-600">
@@ -525,7 +531,8 @@ export const WeeklyReportsView: React.FC<WeeklyReportsViewProps> = ({ currentRol
             </form>
           </div>
         </div>
-      )}
+        )}
+      </Can>
     </div>
   );
 };

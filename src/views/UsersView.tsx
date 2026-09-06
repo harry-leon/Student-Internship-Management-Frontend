@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { UserAccount, Role } from '../types';
 import { userService, UserQueryParams } from '../api/services';
 import { mapUserFromDTO } from '../api/mappers';
+import { Can } from '../components/Can';
 
 interface UsersViewProps {
   users: UserAccount[];
@@ -219,14 +220,16 @@ export const UsersView: React.FC<UsersViewProps> = ({ users: initialUsers, onRef
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setIsAddModalOpen(true)}
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition-all hover:bg-[#003ea8]"
-          >
-            <span className="material-symbols-outlined text-[16px]">person_add</span>
-            <span>Thêm tài khoản</span>
-          </button>
+          <Can permission="USER_CREATE">
+            <button
+              type="button"
+              onClick={() => setIsAddModalOpen(true)}
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition-all hover:bg-[#003ea8]"
+            >
+              <span className="material-symbols-outlined text-[16px]">person_add</span>
+              <span>Thêm tài khoản</span>
+            </button>
+          </Can>
         </div>
       </div>
 
@@ -398,36 +401,40 @@ export const UsersView: React.FC<UsersViewProps> = ({ users: initialUsers, onRef
                         </span>
                       </td>
                       <td className="px-2.5 py-2 text-right space-x-1 whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEdit(u)}
-                          className="rounded-md p-1 text-[#004ac6] transition-colors hover:bg-[#dce9ff]"
-                          title="Chỉnh sửa tài khoản"
-                        >
-                          <span className="material-symbols-outlined text-[16px]">edit</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleToggleStatus(u)}
-                          className={`rounded-md p-1 transition-colors ${
-                            u.status !== 'Inactive'
-                              ? 'text-emerald-600 hover:bg-emerald-50 hover:text-red-600'
-                              : 'text-slate-400 hover:bg-slate-100 hover:text-emerald-600'
-                          }`}
-                          title={u.status !== 'Inactive' ? 'Vô hiệu hóa tài khoản' : 'Kích hoạt tài khoản'}
-                        >
-                          <span className="material-symbols-outlined text-[16px]">
-                            {u.status !== 'Inactive' ? 'check_circle' : 'block'}
-                          </span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeletingUser(u)}
-                          className="rounded-md p-1 text-rose-600 transition-colors hover:bg-rose-50"
-                          title="Xóa tài khoản"
-                        >
-                          <span className="material-symbols-outlined text-[16px]">delete</span>
-                        </button>
+                        <Can permission="USER_UPDATE">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEdit(u)}
+                            className="rounded-md p-1 text-[#004ac6] transition-colors hover:bg-[#dce9ff]"
+                            title="Chỉnh sửa tài khoản"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">edit</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleStatus(u)}
+                            className={`rounded-md p-1 transition-colors ${
+                              u.status !== 'Inactive'
+                                ? 'text-emerald-600 hover:bg-emerald-50 hover:text-red-600'
+                                : 'text-slate-400 hover:bg-slate-100 hover:text-emerald-600'
+                            }`}
+                            title={u.status !== 'Inactive' ? 'Vô hiệu hóa tài khoản' : 'Kích hoạt tài khoản'}
+                          >
+                            <span className="material-symbols-outlined text-[16px]">
+                              {u.status !== 'Inactive' ? 'check_circle' : 'block'}
+                            </span>
+                          </button>
+                        </Can>
+                        <Can permission="USER_DELETE">
+                          <button
+                            type="button"
+                            onClick={() => setDeletingUser(u)}
+                            className="rounded-md p-1 text-rose-600 transition-colors hover:bg-rose-50"
+                            title="Xóa tài khoản"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">delete</span>
+                          </button>
+                        </Can>
                       </td>
                     </tr>
                   );

@@ -3,6 +3,7 @@ import { Mentor, Role } from '../types';
 import { mentorService } from '../api/services';
 import { mapMentorFromDTO } from '../api/mappers';
 import { canManageSystemData } from '../auth/roleAccess';
+import { Can } from '../components/Can';
 
 interface MentorsViewProps {
   currentRole?: Role;
@@ -154,7 +155,7 @@ export const MentorsView: React.FC<MentorsViewProps> = ({ currentRole = 'Admin' 
           <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-[#004ac6]">
             Tổng số: {mentors.length} giảng viên
           </div>
-          {canManage && (
+          <Can permission="MENTOR_CREATE">
             <button
               type="button"
               onClick={() => setIsCreateModalOpen(true)}
@@ -163,7 +164,7 @@ export const MentorsView: React.FC<MentorsViewProps> = ({ currentRole = 'Admin' 
               <span className="material-symbols-outlined text-[16px]">person_add</span>
               <span>Thêm Giảng Viên</span>
             </button>
-          )}
+          </Can>
         </div>
       </div>
 
@@ -279,26 +280,26 @@ export const MentorsView: React.FC<MentorsViewProps> = ({ currentRole = 'Admin' 
                         <span className="material-symbols-outlined text-[12px]">visibility</span>
                         Chi tiết
                       </button>
-                      {canManage && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEdit(mentor)}
-                            className="rounded p-1 text-[#004ac6] hover:bg-blue-50"
-                            title="Sửa thông tin"
-                          >
-                            <span className="material-symbols-outlined text-[14px]">edit</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDeletingMentor(mentor)}
-                            className="rounded p-1 text-rose-600 hover:bg-rose-50"
-                            title="Xóa giảng viên"
-                          >
-                            <span className="material-symbols-outlined text-[14px]">delete</span>
-                          </button>
-                        </>
-                      )}
+                      <Can permission="MENTOR_UPDATE">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEdit(mentor)}
+                          className="rounded p-1 text-[#004ac6] hover:bg-blue-50"
+                          title="Sửa thông tin"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">edit</span>
+                        </button>
+                      </Can>
+                      <Can permission="MENTOR_DELETE">
+                        <button
+                          type="button"
+                          onClick={() => setDeletingMentor(mentor)}
+                          className="rounded p-1 text-rose-600 hover:bg-rose-50"
+                          title="Xóa giảng viên"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">delete</span>
+                        </button>
+                      </Can>
                     </div>
                   </div>
                 </div>

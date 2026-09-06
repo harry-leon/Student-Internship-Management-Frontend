@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Role } from '../types';
 import { companyService, Company, CompanyCreateDTO } from '../api/companyService';
 import { Building2, Plus, Search, Filter, Mail, Phone, Globe, Edit2, Power, CheckCircle, AlertCircle, X, ShieldAlert, Trash2 } from 'lucide-react';
+import { Can } from '../components/Can';
 
 interface CompaniesViewProps {
   currentRole: Role;
@@ -148,7 +149,7 @@ export const CompaniesView: React.FC<CompaniesViewProps> = ({ currentRole }) => 
           </p>
         </div>
 
-        {currentRole === 'Admin' && (
+        <Can permission="COMPANY_CREATE">
           <button
             onClick={handleOpenCreateModal}
             className="px-3.5 py-1.5 bg-[#004ac6] hover:bg-[#003ea8] text-white text-xs font-semibold rounded-lg shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
@@ -156,7 +157,7 @@ export const CompaniesView: React.FC<CompaniesViewProps> = ({ currentRole }) => 
             <Plus className="w-3.5 h-3.5" />
             <span>Thêm Công Ty Mới</span>
           </button>
-        )}
+        </Can>
       </div>
 
       {/* Stats Quick View */}
@@ -230,7 +231,9 @@ export const CompaniesView: React.FC<CompaniesViewProps> = ({ currentRole }) => 
                   <th className="py-2.5 px-3">Email / ĐT</th>
                   <th className="py-2.5 px-3 text-center">Chỉ Tiêu (Slot)</th>
                   <th className="py-2.5 px-3 text-center">Trạng Thái</th>
-                  {currentRole === 'Admin' && <th className="py-2.5 px-3.5 text-right">Thao Tác</th>}
+                  <Can any={['COMPANY_UPDATE', 'COMPANY_DELETE']}>
+                    <th className="py-2.5 px-3.5 text-right">Thao Tác</th>
+                  </Can>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -289,33 +292,37 @@ export const CompaniesView: React.FC<CompaniesViewProps> = ({ currentRole }) => 
                         {comp.isActive ? 'Hoạt động' : 'Tạm ngưng'}
                       </span>
                     </td>
-                    {currentRole === 'Admin' && (
+                    <Can any={['COMPANY_UPDATE', 'COMPANY_DELETE']}>
                       <td className="py-2.5 px-3.5 text-right space-x-1 whitespace-nowrap">
-                        <button
-                          onClick={() => handleOpenEditModal(comp)}
-                          className="p-1 hover:bg-slate-100 rounded-md text-slate-600 hover:text-[#004ac6] transition-colors cursor-pointer"
-                          title="Sửa công ty"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleToggleStatus(comp)}
-                          className={`p-1 hover:bg-slate-100 rounded-md transition-colors cursor-pointer ${
-                            comp.isActive ? 'text-emerald-600 hover:text-red-600' : 'text-slate-400 hover:text-emerald-600'
-                          }`}
-                          title={comp.isActive ? 'Tắt hoạt động' : 'Bật hoạt động'}
-                        >
-                          <Power className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => setDeletingCompany(comp)}
-                          className="p-1 hover:bg-rose-50 rounded-md text-rose-600 transition-colors cursor-pointer"
-                          title="Xóa công ty"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        <Can permission="COMPANY_UPDATE">
+                          <button
+                            onClick={() => handleOpenEditModal(comp)}
+                            className="p-1 hover:bg-slate-100 rounded-md text-slate-600 hover:text-[#004ac6] transition-colors cursor-pointer"
+                            title="Sửa công ty"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleToggleStatus(comp)}
+                            className={`p-1 hover:bg-slate-100 rounded-md transition-colors cursor-pointer ${
+                              comp.isActive ? 'text-emerald-600 hover:text-red-600' : 'text-slate-400 hover:text-emerald-600'
+                            }`}
+                            title={comp.isActive ? 'Tắt hoạt động' : 'Bật hoạt động'}
+                          >
+                            <Power className="w-3.5 h-3.5" />
+                          </button>
+                        </Can>
+                        <Can permission="COMPANY_DELETE">
+                          <button
+                            onClick={() => setDeletingCompany(comp)}
+                            className="p-1 hover:bg-rose-50 rounded-md text-rose-600 transition-colors cursor-pointer"
+                            title="Xóa công ty"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </Can>
                       </td>
-                    )}
+                    </Can>
                   </tr>
                 ))}
               </tbody>

@@ -4,6 +4,7 @@ import { studentService } from '../api/services';
 import { mapStudentFromDTO } from '../api/mappers';
 import { canManageSystemData } from '../auth/roleAccess';
 import { StudentDetailModal } from '../components/StudentDetailModal';
+import { Can } from '../components/Can';
 
 interface StudentsViewProps {
   currentRole: Role;
@@ -167,7 +168,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {canManage && (
+          <Can permission="STUDENT_CREATE">
             <button
               type="button"
               onClick={() => setIsCreateModalOpen(true)}
@@ -176,7 +177,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
               <span className="material-symbols-outlined text-[16px]">person_add</span>
               <span>Thêm Sinh Viên Mới</span>
             </button>
-          )}
+          </Can>
         </div>
       </div>
 
@@ -325,28 +326,28 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                         <span className="material-symbols-outlined text-[13px]">visibility</span>
                         Chi tiết
                       </button>
-                      {canManage && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEdit(s)}
-                            className="inline-flex items-center gap-0.5 px-2 py-1 text-[11px] font-medium text-[#004ac6] bg-blue-50/70 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors shadow-2xs"
-                            title="Sửa thông tin"
-                          >
-                            <span className="material-symbols-outlined text-[13px]">edit</span>
-                            Sửa
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDeletingStudent(s)}
-                            className="inline-flex items-center gap-0.5 px-2 py-1 text-[11px] font-medium text-rose-600 bg-rose-50/70 border border-rose-200 rounded-md hover:bg-rose-100 transition-colors shadow-2xs"
-                            title="Xóa sinh viên"
-                          >
-                            <span className="material-symbols-outlined text-[13px]">delete</span>
-                            Xóa
-                          </button>
-                        </>
-                      )}
+                      <Can permission="STUDENT_UPDATE">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEdit(s)}
+                          className="inline-flex items-center gap-0.5 px-2 py-1 text-[11px] font-medium text-[#004ac6] bg-blue-50/70 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors shadow-2xs"
+                          title="Sửa thông tin"
+                        >
+                          <span className="material-symbols-outlined text-[13px]">edit</span>
+                          Sửa
+                        </button>
+                      </Can>
+                      <Can permission="STUDENT_DELETE">
+                        <button
+                          type="button"
+                          onClick={() => setDeletingStudent(s)}
+                          className="inline-flex items-center gap-0.5 px-2 py-1 text-[11px] font-medium text-rose-600 bg-rose-50/70 border border-rose-200 rounded-md hover:bg-rose-100 transition-colors shadow-2xs"
+                          title="Xóa sinh viên"
+                        >
+                          <span className="material-symbols-outlined text-[13px]">delete</span>
+                          Xóa
+                        </button>
+                      </Can>
                     </td>
                   </tr>
                 ))}
@@ -428,26 +429,26 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                   <span className="material-symbols-outlined text-[13px]">visibility</span>
                   Chi tiết
                 </button>
-                {canManage && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => handleOpenEdit(student)}
-                      className="p-1 text-[#004ac6] bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors"
-                      title="Sửa thông tin"
-                    >
-                      <span className="material-symbols-outlined text-[14px]">edit</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDeletingStudent(student)}
-                      className="p-1 text-rose-600 bg-rose-50 border border-rose-200 rounded-md hover:bg-rose-100 transition-colors"
-                      title="Xóa sinh viên"
-                    >
-                      <span className="material-symbols-outlined text-[14px]">delete</span>
-                    </button>
-                  </>
-                )}
+                <Can permission="STUDENT_UPDATE">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenEdit(student)}
+                    className="p-1 text-[#004ac6] bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors"
+                    title="Sửa thông tin"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">edit</span>
+                  </button>
+                </Can>
+                <Can permission="STUDENT_DELETE">
+                  <button
+                    type="button"
+                    onClick={() => setDeletingStudent(student)}
+                    className="p-1 text-rose-600 bg-rose-50 border border-rose-200 rounded-md hover:bg-rose-100 transition-colors"
+                    title="Xóa sinh viên"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">delete</span>
+                  </button>
+                </Can>
               </div>
             </div>
           ))}

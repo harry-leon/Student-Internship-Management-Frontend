@@ -10,6 +10,7 @@ import {
   GroupMemberDTO,
   InternshipPhaseDTO,
 } from '../api/services';
+import { Can } from '../components/Can';
 
 interface MentorGroupsViewProps {
   currentRole?: Role;
@@ -352,7 +353,7 @@ export const MentorGroupsView: React.FC<MentorGroupsViewProps> = ({ currentRole 
           </p>
         </div>
 
-        {(isMentor || isAdmin) && (
+        <Can permission="GROUP_CREATE">
           <button
             type="button"
             onClick={() => {
@@ -364,7 +365,7 @@ export const MentorGroupsView: React.FC<MentorGroupsViewProps> = ({ currentRole 
             <span className="material-symbols-outlined text-[16px]">add_circle</span>
             <span>Tạo Nhóm Mới</span>
           </button>
-        )}
+        </Can>
       </div>
 
       {/* Success Banner */}
@@ -577,22 +578,24 @@ export const MentorGroupsView: React.FC<MentorGroupsViewProps> = ({ currentRole 
                             )}
                           </td>
                           <td className="py-2.5 px-3.5 text-right">
-                            <button
-                              type="button"
-                              disabled={!canJoin}
-                              onClick={() => {
-                                setJoinError(null);
-                                setJoinPassword('');
-                                setJoinModalGroup(item);
-                              }}
-                              className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors cursor-pointer ${
-                                canJoin
-                                  ? 'bg-[#004ac6] text-white hover:bg-[#003eb3]'
-                                  : 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                              }`}
-                            >
-                              {isFull ? 'Đã Đầy' : !item.allowSelfJoin ? 'Khóa Join' : 'Tham Gia'}
-                            </button>
+                            <Can permission="GROUP_JOIN">
+                              <button
+                                type="button"
+                                disabled={!canJoin}
+                                onClick={() => {
+                                  setJoinError(null);
+                                  setJoinPassword('');
+                                  setJoinModalGroup(item);
+                                }}
+                                className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors cursor-pointer ${
+                                  canJoin
+                                    ? 'bg-[#004ac6] text-white hover:bg-[#003eb3]'
+                                    : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                }`}
+                              >
+                                {isFull ? 'Đã Đầy' : !item.allowSelfJoin ? 'Khóa Join' : 'Tham Gia'}
+                              </button>
+                            </Can>
                           </td>
                         </tr>
                       );
@@ -722,39 +725,41 @@ export const MentorGroupsView: React.FC<MentorGroupsViewProps> = ({ currentRole 
                           >
                             Chi Tiết ({g.memberCount})
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEdit(g)}
-                            className="p-1 rounded text-slate-600 hover:bg-slate-100 cursor-pointer"
-                            title="Chỉnh sửa nhóm"
-                          >
-                            <span className="material-symbols-outlined text-[16px]">edit</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setPasswordModalGroup(g);
-                              setNewGroupPassword('');
-                            }}
-                            className="p-1 rounded text-amber-600 hover:bg-amber-50 cursor-pointer"
-                            title="Đổi mật khẩu tham gia"
-                          >
-                            <span className="material-symbols-outlined text-[16px]">key</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleToggleStatus(g)}
-                            className={`p-1 rounded cursor-pointer ${
-                              g.isActive
-                                ? 'text-rose-600 hover:bg-rose-50'
-                                : 'text-emerald-600 hover:bg-emerald-50'
-                            }`}
-                            title={g.isActive ? 'Đóng nhóm' : 'Mở lại nhóm'}
-                          >
-                            <span className="material-symbols-outlined text-[16px]">
-                              {g.isActive ? 'lock' : 'lock_open'}
-                            </span>
-                          </button>
+                          <Can permission="GROUP_UPDATE">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEdit(g)}
+                              className="p-1 rounded text-slate-600 hover:bg-slate-100 cursor-pointer"
+                              title="Chỉnh sửa nhóm"
+                            >
+                              <span className="material-symbols-outlined text-[16px]">edit</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPasswordModalGroup(g);
+                                setNewGroupPassword('');
+                              }}
+                              className="p-1 rounded text-amber-600 hover:bg-amber-50 cursor-pointer"
+                              title="Đổi mật khẩu tham gia"
+                            >
+                              <span className="material-symbols-outlined text-[16px]">key</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleStatus(g)}
+                              className={`p-1 rounded cursor-pointer ${
+                                g.isActive
+                                  ? 'text-rose-600 hover:bg-rose-50'
+                                  : 'text-emerald-600 hover:bg-emerald-50'
+                              }`}
+                              title={g.isActive ? 'Đóng nhóm' : 'Mở lại nhóm'}
+                            >
+                              <span className="material-symbols-outlined text-[16px]">
+                                {g.isActive ? 'lock' : 'lock_open'}
+                              </span>
+                            </button>
+                          </Can>
                         </div>
                       </td>
                     </tr>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Can } from '../components/Can';
 import {
   groupRoomService,
   fileService,
@@ -173,7 +174,9 @@ export const MentorGroupRoomView: React.FC = () => {
   const isOwnerOrAdmin = isMentor || isAdmin || myRole === 'OWNER';
   const isLeader = myRole === 'LEADER';
   const canManageRoom = isOwnerOrAdmin;
-  const canCreateTask = isOwnerOrAdmin || (isLeader && overview?.settings.taskCreateMode === 'MENTOR_AND_LEADER');
+  const { can } = useAuth();
+  const hasTaskCreatePerm = can ? can('GROUP_TASK_CREATE') : true;
+  const canCreateTask = (isOwnerOrAdmin || (isLeader && overview?.settings.taskCreateMode === 'MENTOR_AND_LEADER')) && hasTaskCreatePerm;
   const canSubmit = isOwnerOrAdmin || overview?.settings.submissionMode === 'ANY_MEMBER' || (isLeader && overview?.settings.submissionMode === 'LEADER_ONLY');
 
   // Load Room Data
@@ -1538,19 +1541,19 @@ export const MentorGroupRoomView: React.FC = () => {
                             )}
 
                             {/* Mentor Scoring Action */}
-                            {canManageRoom && (
+                            <Can permission="SUBMISSION_GRADE">
                               <button
                                 onClick={() => {
                                   setReviewSubmissionId(sub.submissionId);
                                   setReviewScore(latestReview?.score || 8.5);
                                   setReviewComment(latestReview?.comment || '');
                                 }}
-                                className="inline-flex items-center gap-1 px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg text-xs font-semibold transition"
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg text-xs font-semibold transition cursor-pointer"
                               >
                                 <Award className="w-3 h-3" />
                                 {isReviewed ? 'Chấm lại' : 'Chấm điểm'}
                               </button>
-                            )}
+                            </Can>
                           </div>
 
                           {/* Reviews score and rubric comment display */}
@@ -1971,11 +1974,12 @@ export const MentorGroupRoomView: React.FC = () => {
       )}
 
       {/* REVIEW & SCORE MODAL (MENTOR) */}
-      {reviewSubmissionId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl p-6 shadow-xl border border-slate-200 dark:border-slate-800">
-            <h2 className="text-base font-bold text-slate-900 dark:text-white mb-4">Chấm điểm & Nhận xét bài nộp nhóm</h2>
-            <form onSubmit={handleReviewSubmission} className="space-y-4">
+      <Can permission="SUBMISSION_GRADE">
+        {reviewSubmissionId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl p-6 shadow-xl border border-slate-200 dark:border-slate-800">
+              <h2 className="text-base font-bold text-slate-900 dark:text-white mb-4">Chấm điểm & Nhận xét bài nộp nhóm</h2>
+              <form onSubmit={handleReviewSubmission} className="space-y-4">
               <div>
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Điểm số (Thang điểm 10) *</label>
                 <input
@@ -2019,7 +2023,8 @@ export const MentorGroupRoomView: React.FC = () => {
             </form>
           </div>
         </div>
-      )}
+        )}
+      </Can>
 
       {/* CREATE ANNOUNCEMENT MODAL */}
       {isCreateAnnounceOpen && (

@@ -1,0 +1,529 @@
+import React, { useState, useEffect } from 'react';
+import { Role, Student } from '../types';
+import { GradingFormModal } from '../components/GradingFormModal';
+import { assignmentService, assessmentResultService } from '../api/services';
+import { assessmentGradingService, AssessmentGradingForm } from '../api/assessmentGradingService';
+import { useAuth } from '../context/AuthContext';
+import { canGrade } from '../auth/roleAccess';
+
+interface AssessmentResultsViewProps {
+  students: Student[];
+  currentRole?: Role;
+}
+
+interface AssessmentResultData {
+  assignmentId: number;
+  roundId: number;
+  studentName: string;
+  studentCode: string;
+  studentEmail: string;
+  studentMajor: string;
+  mentorName: string;
+  companyName: string;
+  phaseName: string;
+  totalScore?: number;
+  weightedScore?: number;
+  evaluatedAt?: string;
+  status: 'GRADED' | 'NOT_GRADED' | 'PENDING';
+}
+
+export const AssessmentResultsView: React.FC<AssessmentResultsViewProps> = ({
+  students,
+  currentRole = 'Admin',
+}) => {
+  const { can, hasFeature } = useAuth();
+  const [isGradingOpen, setIsGradingOpen] = useState(false);
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState<number>(1);
+  const [selectedRoundId, setSelectedRoundId] = useState<number>(1);
+  const [displayList, setDisplayList] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string>('');
+
+  // Student-specific state
+  const [myResults, setMyResults] = useState<AssessmentGradingForm[]>([]);
+  const [studentLoading, setStudentLoading] = useState(false);
+  const [studentError, setStudentError] = useState<string>('');
+
+  const isStudent = currentRole === 'Student';
+  const isMentor = currentRole === 'Mentor';
+  const isAdmin = currentRole === 'Admin';
+  const userCanGrade = canGrade((currentRole as Role) || 'Admin', can, hasFeature);
+
+  const getInitialAvatar = (name: string): string => {
+    if (!name) return '';
+    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase();
+    const colors = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'];
+    const colorIndex = name.charCodeAt(0) % colors.length;
+    const bgColor = colors[colorIndex];
+    return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><rect width="40" height="40" fill="${bgColor}"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" font-size="16" fill="white" font-weight="bold" font-family="system-ui">${initials}</text></svg>`;
+  };
+
+  useEffect(() => {
+    if (isStudent) {
+      setStudentLoading(true);
+      setStudentError('');
+      assessmentGradingService.getResults()
+        .then((res) => {
+          setMyResults(Array.isArray(res) ? res : []);
+        })
+        .catch((err) => {
+          console.error('Error fetching student assessment results:', err);
+          setStudentError('Không thể tải kết quả đánh giá. Vui lòng thử lại sau.');
+          setMyResults([]);
+        })
+        .finally(() => setStudentLoading(false));
+    } else {
+      setLoading(true);
+      setError('');
+      Promise.all([
+        assignmentService.getAll(),
+        assessmentResultService.getAll(0, 1000) // Fetch all assessment results
+      ])
+        .then(([assignRes, assessRes]) => {
+          let assignments = [];
+          if (Array.isArray(assignRes)) assignments = assignRes;
+          else if (typeof assignRes === 'object' && Array.isArray((assignRes as any).content)) assignments = (assignRes as any).content;
+          else if (typeof assignRes === 'object' && Array.isArray((assignRes as any).data)) assignments = (assignRes as any).data;
+
+          // Extract assessment results from response
+          let assessmentResults: any[] = [];
+          if (assessRes && typeof assessRes === 'object') {
+            if (assessRes.data && Array.isArray(assessRes.data)) assessmentResults = assessRes.data;
+            else if (assessRes.content && Array.isArray(assessRes.content)) assessmentResults = assessRes.content;
+            else if (Array.isArray(assessRes)) assessmentResults = assessRes;
+          }
+
+          if (assignments.length > 0) {
+            // Create score map: assignmentId -> totalScore
+            const scoreMap = new Map<number, number>();
+            assessmentResults.forEach((ar: any) => {
+              if (ar.assignmentId && ar.totalScore !== null && ar.totalScore !== undefined) {
+                scoreMap.set(ar.assignmentId, ar.totalScore);
+              }
+            });
+
+            // Map assignments to Student[] with real scores
+            const mapped: Student[] = assignments.map((a: any) => {
+              const score = scoreMap.get(a.assignmentId || a.id);
+              return {
+                id: String(a.assignmentId || a.id),
+                name: a.studentName || 'N/A',
+                code: a.studentCode || 'N/A',
+                email: a.studentEmail || 'N/A',
+                department: a.studentMajor || 'N/A',
+                avatar: getInitialAvatar(a.studentName),
+                phase: a.phaseName || 'N/A',
+                mentor: a.mentorName || 'Chưa phân công',
+                company: a.companyName || 'N/A',
+                status: 'IN PROGRESS',
+                progress: score !== undefined ? Math.min(100, Math.round((score / 10) * 100)) : 0,
+                score: score, // undefined = not graded, 0 = graded with 0 points
+              };
+            });
+            setDisplayList(mapped);
+          } else {
+            setError('Không có dữ liệu phân công');
+          }
+        })
+        .catch((err) => {
+          console.error('Error fetching data:', err);
+          setError('Không thể tải dữ liệu. Vui lòng thử lại sau.');
+          setDisplayList([]);
+        })
+        .finally(() => setLoading(false));
+    }
+  }, [currentRole, isStudent]);
+
+  const handleOpenGrading = (assignmentIdNum: number, roundIdNum: number) => {
+    if (!userCanGrade) return;
+    setSelectedAssignmentId(assignmentIdNum);
+    setSelectedRoundId(roundIdNum);
+    setIsGradingOpen(true);
+  };
+
+  // =========================================================================
+  // STUDENT VIEW: Dedicated Personal Evaluation Scorecard (Zero Grading Tools)
+  // =========================================================================
+  if (isStudent) {
+    return (
+      <div className="flex flex-col w-full animate-in fade-in duration-200 space-y-4">
+        {/* Title */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#004ac6] text-[20px]">workspace_premium</span>
+              <h1 className="text-[20px] font-bold text-[#0b1c30] tracking-tight">
+                Kết Quả Đánh Giá Thực Tập
+              </h1>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Bảng điểm chi tiết theo tiêu chí Rubric và nhận xét đánh giá từ Giảng viên hướng dẫn.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 flex items-center gap-1">
+              <span className="material-symbols-outlined text-[14px]">verified_user</span>
+              Cổng Sinh Viên
+            </span>
+          </div>
+        </div>
+
+        {studentError && (
+          <div className="bg-red-50 p-4 rounded-xl border border-red-200 text-sm text-red-700 flex items-center gap-2">
+            <span className="material-symbols-outlined text-[16px]">error</span>
+            {studentError}
+          </div>
+        )}
+        {studentLoading ? (
+          <div className="bg-white p-12 rounded-xl border border-slate-200 text-center text-xs text-slate-500">
+            Đang tải kết quả đánh giá của bạn...
+          </div>
+        ) : myResults.length === 0 ? (
+          <div className="bg-white p-10 rounded-2xl border border-slate-200 text-center max-w-lg mx-auto my-6 shadow-2xs">
+            <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center mx-auto mb-3">
+              <span className="material-symbols-outlined text-[28px]">pending_actions</span>
+            </div>
+            <h3 className="text-base font-bold text-slate-900">Chưa Có Kết Quả Đánh Giá Công Bố</h3>
+            <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+              Kết quả đánh giá đợt thực tập của bạn hiện đang trong quá trình chấm điểm hoặc chưa được Quản trị viên công bố chính thức. Vui lòng quay lại kiểm tra sau.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {myResults.map((res, index) => {
+              const totalScore = res.totalScore ?? 0;
+              const weightedScore = res.weightedScore ?? totalScore;
+              const isHonors = (weightedScore || totalScore) >= 9.0;
+              const isGood = (weightedScore || totalScore) >= 8.0;
+
+              return (
+                <div key={res.submissionId || index} className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
+                  {/* Score Header Summary */}
+                  <div className="p-4 sm:p-5 border-b border-slate-100 bg-gradient-to-r from-blue-50/50 via-slate-50/30 to-transparent">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">
+                            {res.roundName || 'Đợt đánh giá thực tập'}
+                          </span>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            ✓ ĐÃ CÔNG BỐ
+                          </span>
+                        </div>
+                        <h2 className="text-base font-bold text-[#0b1c30] mt-1">
+                          Phiếu Đánh Giá Sinh Viên
+                        </h2>
+                        <div className="text-xs text-slate-500 mt-0.5">
+                          Giảng viên chấm: <strong className="text-slate-700">{res.evaluatedByName || 'Giảng viên hướng dẫn'}</strong>
+                          {res.publishedAt && (
+                            <span className="ml-2 text-slate-400">
+                              (Công bố: {new Date(res.publishedAt).toLocaleDateString('vi-VN')})
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Overall Scores */}
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <div className="text-[10.5px] uppercase font-semibold text-slate-400">Điểm Trọng Số</div>
+                          <div className="text-[26px] font-bold text-[#004ac6] leading-none mt-0.5 font-mono">
+                            {weightedScore.toFixed(2)}
+                            <span className="text-xs font-normal text-slate-400 ml-1">/ 10</span>
+                          </div>
+                        </div>
+                        <div className="h-10 w-px bg-slate-200 hidden sm:block"></div>
+                        <div>
+                          {isHonors ? (
+                            <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                              XUẤT SẮC
+                            </span>
+                          ) : isGood ? (
+                            <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                              GIỎI
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              ĐẠT
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Criteria Breakdown Table */}
+                  <div className="overflow-x-auto no-scrollbar">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="bg-slate-50/80 text-[11px] font-semibold uppercase text-slate-600 tracking-wider border-b border-slate-200">
+                          <th className="py-2.5 px-4 w-12 text-center">STT</th>
+                          <th className="py-2.5 px-4">Tiêu Chí Đánh Giá Rubric</th>
+                          <th className="py-2.5 px-3 text-center w-28">Trọng Số</th>
+                          <th className="py-2.5 px-3 text-center w-28">Điểm Tối Đa</th>
+                          <th className="py-2.5 px-3 text-center w-28">Điểm Đạt Được</th>
+                          <th className="py-2.5 px-4">Nhận Xét Của Giảng Viên</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-slate-800">
+                        {(res.criteria || []).map((c, cIdx) => (
+                          <tr key={c.criterionId || cIdx} className="hover:bg-blue-50/30 transition-colors">
+                            <td className="py-3 px-4 text-center font-mono text-slate-400">{cIdx + 1}</td>
+                            <td className="py-3 px-4">
+                              <div className="font-semibold text-slate-900">{c.criterionName}</div>
+                              {c.description && <div className="text-[11px] text-slate-500 mt-0.5">{c.description}</div>}
+                            </td>
+                            <td className="py-3 px-3 text-center font-mono font-medium text-slate-700">
+                              {c.weight}%
+                            </td>
+                            <td className="py-3 px-3 text-center font-mono text-slate-500">
+                              {c.maxScore}
+                            </td>
+                            <td className="py-3 px-3 text-center font-mono font-bold text-[#004ac6] text-sm">
+                              {c.score != null ? c.score.toFixed(1) : '--'}
+                            </td>
+                            <td className="py-3 px-4 text-slate-600 italic">
+                              {c.comments || 'Không có nhận xét thêm.'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // ADMIN & MENTOR VIEW: Grading Management & Rubric Assessment
+  // =========================================================================
+  // =========================================================================
+  // ADMIN & MENTOR VIEW: Grading Management & Rubric Assessment
+  // =========================================================================
+  const displayStudents = displayList;
+  const scoredStudents = displayStudents.filter((s) => s.score !== undefined && s.score > 0);
+  const avgScore = scoredStudents.length > 0
+    ? (scoredStudents.reduce((acc, s) => acc + (s.score || 0), 0) / scoredStudents.length).toFixed(2)
+    : '--';
+  const passedStudents = scoredStudents.filter((s) => (s.score || 0) >= 5.0);
+  const passRate = scoredStudents.length > 0
+    ? `${((passedStudents.length / scoredStudents.length) * 100).toFixed(1)}%`
+    : '--';
+  const honorsRate = scoredStudents.length > 0
+    ? `${((scoredStudents.filter((s) => (s.score || 0) >= 9.0).length / scoredStudents.length) * 100).toFixed(1)}%`
+    : '--';
+
+  return (
+    <div className="flex flex-col w-full animate-in fade-in duration-200 space-y-3.5">
+      {/* Title */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#004ac6] dark:text-blue-400 text-[20px]">grading</span>
+            <h1 className="text-[20px] font-bold text-[#0b1c30] dark:text-slate-100 tracking-tight">
+              Bảng Điểm Đánh Giá & Rubric Grading
+            </h1>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            {isMentor
+              ? 'Quản lý bảng điểm thực tập & chấm điểm theo Rubric cho sinh viên hướng dẫn.'
+              : 'Quản lý bảng điểm thực tập, chấm điểm theo Rubric & công bố kết quả đánh giá.'}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {userCanGrade && displayStudents.length > 0 && (
+            <button
+              type="button"
+              onClick={() => handleOpenGrading(Number(displayStudents[0].id) || 1, 1)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#004ac6] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#003eb3] transition-colors cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[16px]">edit_note</span>
+              <span>Chấm Điểm Rubric</span>
+            </button>
+          )}
+          <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800">
+            {passRate} Đã Đạt
+          </span>
+        </div>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 p-4 rounded-xl border border-red-200 text-sm text-red-700 flex items-center gap-2">
+          <span className="material-symbols-outlined text-[16px]">error</span>
+          {error}
+        </div>
+      )}
+      {loading ? (
+        <div className="bg-white dark:bg-slate-900 p-12 rounded-xl border border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
+          Đang tải danh sách đánh giá...
+        </div>
+      ) : displayStudents.length === 0 ? (
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center shadow-2xs">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-950/50 text-[#004ac6] dark:text-blue-400">
+            <span className="material-symbols-outlined text-[28px]">assignment_turned_in</span>
+          </div>
+          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Chưa Có Dữ Liệu Đánh Giá</h3>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+            Hiện tại chưa có phân công thực tập hoặc kết quả đánh giá nào cho đợt này. Sinh viên được phân công sẽ hiển thị tại đây khi bắt đầu kỳ thực tập.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Analytics KPI Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs">
+              <div className="text-[11px] font-semibold uppercase text-slate-500 dark:text-slate-400 tracking-wider">
+                Điểm Trung Bình Đợt
+              </div>
+              <div className="flex items-baseline gap-1.5 mt-1">
+                <span className="text-[24px] font-bold text-[#0b1c30] dark:text-slate-100">{avgScore}</span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">/ 10.0</span>
+              </div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Tính trên {scoredStudents.length} sinh viên đã có điểm
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs">
+              <div className="text-[11px] font-semibold uppercase text-slate-500 dark:text-slate-400 tracking-wider">
+                Xuất Sắc (Grade A)
+              </div>
+              <div className="flex items-baseline gap-1.5 mt-1">
+                <span className="text-[24px] font-bold text-[#004ac6] dark:text-blue-400">{honorsRate}</span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">sinh viên</span>
+              </div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Điểm từ 9.0 trở lên
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs">
+              <div className="text-[11px] font-semibold uppercase text-slate-500 dark:text-slate-400 tracking-wider">
+                Tỷ Lệ Đạt (Passed)
+              </div>
+              <div className="flex items-baseline gap-1.5 mt-1">
+                <span className="text-[24px] font-bold text-[#712ae2] dark:text-purple-400">{passRate}</span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">tổng số</span>
+              </div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Điểm đạt chuẩn từ 5.0 trở lên
+              </div>
+            </div>
+          </div>
+
+          {/* Student Scorecards Table */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-2xs overflow-hidden">
+            <div className="px-3.5 py-2.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <h3 className="text-xs font-bold text-[#0b1c30] dark:text-slate-100">
+                Bảng Tổng Hợp Điểm Đánh Giá Sinh Viên
+              </h3>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                {displayStudents.length} sinh viên trong danh sách
+              </span>
+            </div>
+
+            <div className="overflow-x-auto no-scrollbar">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-slate-50/80 dark:bg-slate-800/80 text-[11px] font-semibold uppercase text-slate-600 dark:text-slate-300 tracking-wider border-b border-slate-200 dark:border-slate-800">
+                    <th className="py-2.5 px-3.5">Sinh Viên</th>
+                    <th className="py-2.5 px-3">Giảng Viên Hướng Dẫn</th>
+                    <th className="py-2.5 px-3">Doanh Nghiệp</th>
+                    <th className="py-2.5 px-3">Điểm Đánh Giá</th>
+                    <th className="py-2.5 px-3">Trạng Thái</th>
+                    <th className="py-2.5 px-3.5 text-right">Thao Tác</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
+                  {displayStudents.map((s, idx) => {
+                    const score = s.score;
+                    const isHonors = score !== undefined && score >= 9.0;
+                    const assignmentIdNum = Number(s.id) || (idx + 1);
+
+                    return (
+                      <tr key={s.id} className="hover:bg-blue-50/40 dark:hover:bg-slate-800/50 transition-colors">
+                        <td className="py-2.5 px-3.5">
+                          <div className="flex items-center gap-2.5">
+                            <img
+                              src={s.avatar}
+                              alt={s.name}
+                              className="w-7 h-7 rounded-full object-cover border border-slate-200 dark:border-slate-700"
+                            />
+                            <div>
+                              <div className="font-semibold text-[#0b1c30] dark:text-slate-100">{s.name}</div>
+                              <div className="text-[10.5px] font-mono text-slate-500 dark:text-slate-400">{s.code}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-3 text-slate-600 dark:text-slate-400">{s.mentor}</td>
+                        <td className="py-2.5 px-3 text-slate-600 dark:text-slate-400">{s.company}</td>
+                        <td className="py-2.5 px-3 font-mono font-bold text-[#004ac6] dark:text-blue-400">
+                          {score === undefined ? (
+                            <span className="text-amber-600 dark:text-amber-400 font-semibold">Chưa chấm</span>
+                          ) : (
+                            score.toFixed(2)
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3">
+                          {score === undefined ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                              CHỜ CHẤM
+                            </span>
+                          ) : isHonors ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                              XUẤT SẮC
+                            </span>
+                          ) : score >= 8.0 ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                              GIỎI
+                            </span>
+                          ) : score >= 5.0 ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                              ĐẠT
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                              CHƯA ĐẠT
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3.5 text-right">
+                          {userCanGrade ? (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenGrading(assignmentIdNum, 1)}
+                              className="rounded-md bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1 text-[11px] font-semibold text-[#004ac6] dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors cursor-pointer"
+                            >
+                              Chấm / Sửa
+                            </button>
+                          ) : (
+                            <span className="text-[11px] text-slate-400 italic">Chỉ xem</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+
+      {userCanGrade && (
+        <GradingFormModal
+          isOpen={isGradingOpen}
+          onClose={() => setIsGradingOpen(false)}
+          assignmentId={selectedAssignmentId}
+          roundId={selectedRoundId}
+          currentRole={currentRole}
+        />
+      )}
+    </div>
+  );
+};

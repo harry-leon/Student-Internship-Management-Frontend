@@ -1,0 +1,8 @@
+{
+  "name": "Remix TSUBASA+ Internship Management",
+  "description": "Comprehensive university internship management system for tracking phases, assignments, mentors, and evaluations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
